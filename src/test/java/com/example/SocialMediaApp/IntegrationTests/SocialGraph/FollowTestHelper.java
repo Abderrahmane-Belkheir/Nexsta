@@ -39,7 +39,7 @@ public class FollowTestHelper {
     }
 
     public String createFollowRecord(Follow.Status status, FollowQueryHelper.Position position){
-        String currentUserId=authenticatedUserService.getcurrentuser();
+        String currentUserId=authenticatedUserService.getCurrentUser();
         String targetUserId=UUID.randomUUID().toString();
         Follow follow=position== FollowQueryHelper.Position.FOLLOWERS?
                 new Follow(targetUserId,currentUserId,status):new Follow(currentUserId,targetUserId,status);
@@ -48,7 +48,7 @@ public class FollowTestHelper {
     }
 
     public String createBlockRecord(boolean isCurrentBlocked){
-        String currentUserId=authenticatedUserService.getcurrentuser();
+        String currentUserId=authenticatedUserService.getCurrentUser();
         String targetUserId=UUID.randomUUID().toString();
         Block block=null;
         if(isCurrentBlocked){

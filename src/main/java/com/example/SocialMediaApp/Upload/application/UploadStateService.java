@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 
         UploadSession uploadSession;
 
-
         if(uploadPhase==UploadPhase.CONFIRMED){
             uploadSession=(UploadSession) redisTemplate.opsForValue().get(key);
         }else{

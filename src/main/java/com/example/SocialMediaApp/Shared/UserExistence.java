@@ -1,9 +1,9 @@
 package com.example.SocialMediaApp.Shared;
 
-import com.example.SocialMediaApp.Messaging.api.dto.sendMessageToChatDTO;
-import com.example.SocialMediaApp.Messaging.api.dto.sendMessageToUserDTO;
+import com.example.SocialMediaApp.Messaging.api.dto.SendMessageToChatDTO;
+import com.example.SocialMediaApp.Messaging.api.dto.SendMessageToUserDTO;
+import com.example.SocialMediaApp.User.Exceptions.UserNotFoundException;
 import com.example.SocialMediaApp.User.persistence.UserRepo;
-import com.example.SocialMediaApp.Shared.Exceptions.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
@@ -26,15 +26,15 @@ public class UserExistence {
         String userId=getUserId(args[0]);
                 log.info("checking user existence for "+userId);
                 if (!userRepo.existsById(userId)) {
-                    throw new UserNotFoundException("User not found");
+                    throw new UserNotFoundException(userId);
                 }
     }
 
     private String getUserId(Object object){
         return switch (object.getClass().getSimpleName()){
             case "String" -> (String) object;
-            case "sendMessageToUserDTO" -> ((sendMessageToUserDTO) object).getUserId();
-            case "sendMessageToChatDTO" -> ((sendMessageToChatDTO) object).getChatId();
+            case "sendMessageToUserDTO" -> ((SendMessageToUserDTO) object).getUserId();
+            case "sendMessageToChatDTO" -> ((SendMessageToChatDTO) object).getChatId();
             default -> throw new IllegalStateException("Unexpected value: " + object.getClass().getSimpleName());
         };
     }

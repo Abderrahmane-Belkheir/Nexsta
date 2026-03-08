@@ -7,10 +7,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class chatSummary {
-    private String chatId;
-    private String chatPreview;
+public class ChatUser {
     private String userId;
     private String username;
     private String avatarurl;
+    private Boolean online;
+    private String lastActivity;
 }

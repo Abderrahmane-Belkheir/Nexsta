@@ -17,12 +17,11 @@ public class BlockService {
     private final BlocksRepo blocksRepo;
     private final AuthenticatedUserService authenticatedUserService;
     private final FollowRepo followRepo;
-    private final FollowRequestService followRequestService;
     private final FollowService followService;
 
     @CheckUserExistence
     public void block(String targetUserId) {
-        String currentUserId = authenticatedUserService.getcurrentuser();
+        String currentUserId = authenticatedUserService.getCurrentUser();
         if(currentUserId.equals(targetUserId)){throw new BadFollowRequestException("you cant block yourself");}
         boolean alreadyBlocked= blocksRepo.
                 existsByBlockerIdAndBlockedId(currentUserId,targetUserId);
@@ -48,8 +47,8 @@ public class BlockService {
 
 
     @CheckUserExistence
-    public void unblock(String targetUserId) {
-        String currentUserId = authenticatedUserService.getcurrentuser();
+    public void unBlock(String targetUserId) {
+        String currentUserId = authenticatedUserService.getCurrentUser();
         blocksRepo.
                 deleteByBlockerIdAndBlockedId(currentUserId, targetUserId);
     }

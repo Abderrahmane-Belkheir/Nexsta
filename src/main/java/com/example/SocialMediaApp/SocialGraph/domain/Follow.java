@@ -22,7 +22,7 @@ import java.util.UUID;
 public class Follow {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @CreatedDate

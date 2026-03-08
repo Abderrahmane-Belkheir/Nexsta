@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 public class StorySettings {
 
-    private Boolean hideViewCount;
+    private boolean hideViewCount;
     private StoryAudience audience;
 
     public enum StoryAudience{

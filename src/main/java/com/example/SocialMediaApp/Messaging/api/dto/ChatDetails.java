@@ -1,16 +1,16 @@
 package com.example.SocialMediaApp.Messaging.api.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
+@NoArgsConstructor
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
-public class sendMessageToChatDTO {
-    @NotBlank
+public class ChatDetails {
     private String chatId;
-    @NotBlank
-    private String content;
+    private ChatUser chatUser;
+    private List<MessageDTO> messages;
 }

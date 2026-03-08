@@ -2,9 +2,8 @@ package com.example.SocialMediaApp.Profile.application;
 
 import com.example.SocialMediaApp.SocialGraph.application.cache.FollowCacheWriter;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
-import com.example.SocialMediaApp.User.domain.User;
-import com.example.SocialMediaApp.Profile.api.dto.profileDetails;
-import com.example.SocialMediaApp.Profile.api.dto.profilesettings;
+import com.example.SocialMediaApp.Profile.api.dto.ProfileDetails;
+import com.example.SocialMediaApp.Profile.api.dto.ProfileSettings;
 import com.example.SocialMediaApp.Profile.application.cache.ProfileCacheManager;
 import com.example.SocialMediaApp.Profile.domain.Profile;
 
@@ -35,10 +34,10 @@ public class ProfileQueryService {
     private final FollowCacheWriter followCacheWriter;
 
     @CheckUserExistence
-    public profileDetails getUserProfile(String targetUserId){
-       String currentUserId=authenticatedUserService.getcurrentuser();
+    public ProfileDetails getUserProfile(String targetUserId){
+       String currentUserId=authenticatedUserService.getCurrentUser();
        ProfileInfo profileInfo= getUserProfileInfo(targetUserId);
-        profileDetails profileDetails=profilemapper.toprofileDetails(profileInfo);
+        ProfileDetails profileDetails=profilemapper.toprofileDetails(profileInfo);
 
         profileDetails.setFollowers(followCacheWriter.UserFollowerCount(targetUserId));
         profileDetails.setFollowings(followCacheWriter.UserFollowingCount(targetUserId));
@@ -76,8 +75,8 @@ public class ProfileQueryService {
         return status;
     }
 
-    public profilesettings getMyProfileSettings(){
-        String currentUserId=authenticatedUserService.getcurrentuser();
+    public ProfileSettings getMyProfileSettings(){
+        String currentUserId=authenticatedUserService.getCurrentUser();
         Profile profile=getUserProfile(currentUserId,true);
         return profilemapper.toprofilesettings(profile);
     }

@@ -29,7 +29,7 @@ public class CommentInteractionService {
     // toggle between Comment liked and not liked
     public LikeResponse addCommentLike(String commentId){
 
-        String currentUserId=authenticatedUserService.getcurrentuser();
+        String currentUserId=authenticatedUserService.getCurrentUser();
 
         Comment comment=commentRepo.findById(commentId).orElseThrow(()-> new ContentNotFoundException("Comment Not Found"));
 
@@ -55,7 +55,7 @@ public class CommentInteractionService {
     }
 
     public void addCommentReply(String commentId, CommentRequest commentRequest){
-        String currentUserId=authenticatedUserService.getcurrentuser();
+        String currentUserId=authenticatedUserService.getCurrentUser();
 
         Comment comment=commentRepo.findById(commentId).orElseThrow(()-> new ContentNotFoundException("Comment Not Found"));
 

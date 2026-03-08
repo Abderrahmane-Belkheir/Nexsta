@@ -25,6 +25,8 @@ public class Securityconfig {
                         "/swagger-ui/**",
                         "/ws/**",
                         "/v3/api-docs/**",
+                        "/create-post.html",
+                        "/create-story.html",
                         "api/v1/upload/confirm").permitAll().anyRequest().authenticated());
         return http.build();
     }

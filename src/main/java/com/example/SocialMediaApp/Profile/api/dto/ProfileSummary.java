@@ -6,12 +6,12 @@ import lombok.Data;
 
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class profileSummary {
+public class ProfileSummary {
     private String userId;
     private String username;
     private String avatarurl;
     private RelationshipStatus status;
-    public profileSummary(String userId){
+    public ProfileSummary(String userId){
         this.userId=userId;
     }
 }

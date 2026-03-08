@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @AllArgsConstructor
 @NoArgsConstructor
-public class notification {
+public class NotificationResponse {
     private String message;
     private String pfpurl;
     private String userid;

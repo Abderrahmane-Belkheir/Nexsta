@@ -12,7 +12,7 @@ import java.time.LocalDate;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class userregistration {
+public class UserRegistration {
     @Size(min = 6,max = 10)
     @NotNull
     private String firstname;

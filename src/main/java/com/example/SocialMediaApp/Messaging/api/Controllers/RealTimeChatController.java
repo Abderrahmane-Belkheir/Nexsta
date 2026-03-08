@@ -1,7 +1,7 @@
 package com.example.SocialMediaApp.Messaging.api.Controllers;
 
-import com.example.SocialMediaApp.Messaging.api.dto.chatHearbeatDTO;
-import com.example.SocialMediaApp.Messaging.api.dto.sendMessageToChatDTO;
+import com.example.SocialMediaApp.Messaging.api.dto.ChatHearbeatDTO;
+import com.example.SocialMediaApp.Messaging.api.dto.SendMessageToChatDTO;
 import com.example.SocialMediaApp.Messaging.application.ChatActivityTracker;
 import com.example.SocialMediaApp.Messaging.application.ChatMessageService;
 import lombok.RequiredArgsConstructor;
@@ -18,12 +18,12 @@ public class RealTimeChatController {
     private final ChatMessageService chatMessageService;
 
     @MessageMapping("/chat.join")
-    public void join(Principal principal, chatHearbeatDTO chatHearbeatDTO){
+    public void join(Principal principal, ChatHearbeatDTO chatHearbeatDTO){
         chatActivityTracker.setChat_UserStatus(principal.getName(),chatHearbeatDTO.getChatId());
     }
 
     @MessageMapping("chat.send")
-    public void sendMessage(Principal principal, sendMessageToChatDTO sendMessageToChatDTO){
+    public void sendMessage(Principal principal, SendMessageToChatDTO sendMessageToChatDTO){
         chatMessageService.sendMessageToChat(principal,sendMessageToChatDTO);
     }
 

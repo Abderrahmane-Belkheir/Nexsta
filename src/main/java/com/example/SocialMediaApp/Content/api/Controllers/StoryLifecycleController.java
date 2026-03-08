@@ -11,6 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.io.IOException;
 
 @RestController
 @RequiredArgsConstructor
@@ -21,8 +24,13 @@ public class StoryLifecycleController {
 
 
     @GetMapping("/new")
-    public void redirectPost(@AuthenticationPrincipal Jwt jwt, HttpServletResponse response){
-        // this will redirect user to the page where he can upload files and create post
+    public void redirectPost(@AuthenticationPrincipal Jwt jwt, HttpServletResponse response) throws IOException {
+        String token = jwt.getTokenValue();
+        String redirectUrl = UriComponentsBuilder.fromUriString("/create-story.html")
+                .queryParam("token", token)
+                .build()
+                .toUriString();
+        response.sendRedirect(redirectUrl);
     }
 
     @PostMapping

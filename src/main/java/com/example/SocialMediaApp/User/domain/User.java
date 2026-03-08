@@ -22,8 +22,7 @@ import java.time.LocalDate;
 public class User {
 
     @Id
-    @GeneratedValue(generator = "uuid")
-    @GenericGenerator(name = "uuid", strategy = "org.hibernate.id.UUIDGenerator")
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     @CreatedDate
@@ -44,6 +43,12 @@ public class User {
     private String email;
 
     private LocalDate birthday;
+
+    private Long followerCount=0L;
+
+    private Long followingCount=0L;
+
+    private Long postCount=0L;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Profile profile;

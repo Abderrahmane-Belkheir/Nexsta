@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class notificationsettings {
+public class NotificationSettings {
     private Boolean onfollowingrequestAccepted;
     private Boolean onfollowingrequestRejected;
     private Boolean Onfollow;

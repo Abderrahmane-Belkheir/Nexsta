@@ -19,7 +19,7 @@ public class UploadExceptionHandler {
     @ExceptionHandler(UploadFailedException.class)
     public ResponseEntity<UploadFailedResponse>  handleFailedUploads(UploadFailedException e){
         List<String> failedUploadIds=e.getFailedUploadIds();
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(new UploadFailedResponse("some request Ids failed",failedUploadIds));
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(new UploadFailedResponse("some files failed uploading :",failedUploadIds));
     }
 
     @ExceptionHandler(FileTooLargeException.class)

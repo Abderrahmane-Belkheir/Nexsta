@@ -10,10 +10,10 @@ import com.example.SocialMediaApp.Content.persistence.PostLikeRepo;
 import com.example.SocialMediaApp.Content.persistence.PostRepo;
 import com.example.SocialMediaApp.Profile.application.ProfileQueryService;
 import com.example.SocialMediaApp.Profile.domain.cache.ProfileInfo;
+import com.example.SocialMediaApp.Shared.CheckUserExistence;
 import com.example.SocialMediaApp.Shared.Mappers.Contentmapper;
 import com.example.SocialMediaApp.Shared.ViewerType;
 import com.example.SocialMediaApp.Shared.VisibilityPolicy;
-import com.example.SocialMediaApp.User.Exceptions.UserNotFoundException;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
 import com.example.SocialMediaApp.User.persistence.UserRepo;
 import lombok.RequiredArgsConstructor;
@@ -44,17 +44,17 @@ public class PostQueryService {
 
 
     public Page<PostRepresentation> getMyPosts(Post.PostStatus postStatus, int page){
-        String currentUserId=authenticatedUserService.getcurrentuser();
+        String currentUserId=authenticatedUserService.getCurrentUser();
         Pageable pageable=getPageable(page,postStatus);
         return getPostsRepresentation(currentUserId,postStatus,pageable,ViewerType.OWNER,null);
     }
 
+    @CheckUserExistence
     public Page<PostRepresentation> getUserPosts(String targetId, int page){
-        String currentUserId=authenticatedUserService.getcurrentuser();
+        String currentUserId=authenticatedUserService.getCurrentUser();
 
         if(currentUserId.equals(targetId)) return getMyPosts(Post.PostStatus.PUBLISHED,page);
-        if(!userRepo.existsById(targetId)) throw new UserNotFoundException("User Not Found");
-        if(visibilityPolicy.isAllowed(currentUserId,targetId)) throw new ContentNotAvailableException("");
+        if(!visibilityPolicy.isAllowed(currentUserId,targetId)) throw new ContentNotAvailableException("");
 
         ProfileInfo profileInfo =profileQueryService.getUserProfileInfo(targetId);
         Post.PostStatus postStatus= Post.PostStatus.PUBLISHED;

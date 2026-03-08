@@ -2,7 +2,7 @@ package com.example.SocialMediaApp.User.application;
 
 
 import com.example.SocialMediaApp.User.Exceptions.UserProvisioningException;
-import com.example.SocialMediaApp.User.api.dto.userregistration;
+import com.example.SocialMediaApp.User.api.dto.UserRegistration;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +48,7 @@ public class KeycloakService implements IdentityService {
     // method responsible for creating the user record inside the identity provider
 
 
-    public String  UserProvision(userregistration userregistration){
+    public String  UserProvision(UserRegistration userregistration){
         org.keycloak.representations.idm.UserRepresentation userRepresentation= new org.keycloak.representations.idm.UserRepresentation();
         userRepresentation.setEmail(userregistration.getEmail());
         userRepresentation.setUsername(userregistration.getUsername());

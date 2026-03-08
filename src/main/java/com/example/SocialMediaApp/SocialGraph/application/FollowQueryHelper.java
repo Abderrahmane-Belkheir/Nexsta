@@ -1,8 +1,7 @@
 package com.example.SocialMediaApp.SocialGraph.application;
 
 import com.example.SocialMediaApp.Profile.application.ProfileSummaryBuilder;
-import com.example.SocialMediaApp.User.domain.User;
-import com.example.SocialMediaApp.Profile.api.dto.profileSummary;
+import com.example.SocialMediaApp.Profile.api.dto.ProfileSummary;
 import com.example.SocialMediaApp.SocialGraph.application.cache.FollowCacheWriter;
 import com.example.SocialMediaApp.SocialGraph.domain.Follow;
 import com.example.SocialMediaApp.SocialGraph.persistence.FollowRepo;
@@ -28,7 +27,7 @@ public class FollowQueryHelper {
     public enum Position {FOLLOWERS, FOLLOWINGS}
 
     // no cache is supposed to be here since its  viewed  by the owing user only so fetching directly from db
-    public List<profileSummary> listCurrentUserPendingFollows(String currentUserId, Position position, int page){
+    public List<ProfileSummary> listCurrentUserPendingFollows(String currentUserId, Position position, int page){
         Pageable pageable= PageRequest.of(page,10);
         Page<Follow> pendingFollowsPage=position==Position.FOLLOWERS?
                 followRepo.findByFollowingIdAndStatus(currentUserId, Follow.Status.PENDING,pageable):
@@ -36,23 +35,23 @@ public class FollowQueryHelper {
         List<Follow> pendingFollows=pendingFollowsPage.getContent();
         List<String> followsIds=pendingFollows.stream().
                 map(follow -> position==Position.FOLLOWERS?follow.getFollower_id():follow.getFollowing_id()).toList();
-       List<profileSummary> profileSummaries= profileSummaryService.buildProfileSummaries(followsIds);
+       List<ProfileSummary> profileSummaries= profileSummaryService.buildProfileSummaries(followsIds);
         followRelationShipResolver.
                 resolveCurrentUserFollowRelationShip(profileSummaries, currentUserId,position, Follow.Status.PENDING);
         return profileSummaries;
     }
 
-    public List<profileSummary> listCurrentUserFollows(String userId, Position position, int page){
+    public List<ProfileSummary> listCurrentUserFollows(String userId, Position position, int page){
      Set<String> followsIds= followCacheWriter.cacheWindow(userId,page,position);
-     List<profileSummary> profileSummaries= profileSummaryService.buildProfileSummaries(followsIds.stream().toList());
+     List<ProfileSummary> profileSummaries= profileSummaryService.buildProfileSummaries(followsIds.stream().toList());
      followRelationShipResolver.
              resolveCurrentUserFollowRelationShip(profileSummaries,userId,position, Follow.Status.ACCEPTED);
      return profileSummaries;
        }
 
-       public List<profileSummary> listUserFollows(String viewerId,String targetedId, Position position, int page){
+       public List<ProfileSummary> listUserFollows(String viewerId, String targetedId, Position position, int page){
            Set<String> followsIds= followCacheWriter.cacheWindow(targetedId,page,position);
-          List<profileSummary> profileSummaries=  profileSummaryService.buildProfileSummaries(followsIds.stream().toList());
+          List<ProfileSummary> profileSummaries=  profileSummaryService.buildProfileSummaries(followsIds.stream().toList());
           followRelationShipResolver.
                   resolveViewerFollowRelationShip(profileSummaries,viewerId);
             return profileSummaries;

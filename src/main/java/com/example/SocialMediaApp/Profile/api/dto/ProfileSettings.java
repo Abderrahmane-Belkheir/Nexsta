@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class profilesettings {
-    private boolean isprivate;
-    private boolean showifonline;
+public class ProfileSettings {
+    private boolean isPrivate;
+    private boolean showAcitivity;
 }

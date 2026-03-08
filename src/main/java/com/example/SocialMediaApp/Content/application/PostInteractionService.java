@@ -28,7 +28,7 @@ public class PostInteractionService {
 
     // toggle between Post liked and not liked
     public LikeResponse addPostLike(String postId){
-        String currentUserId=authenticatedUserService.getcurrentuser();
+        String currentUserId=authenticatedUserService.getCurrentUser();
 
         Post post=postRepo.findById(postId).orElseThrow(()-> new ContentNotFoundException("Post Not Found"));
 
@@ -59,7 +59,7 @@ public class PostInteractionService {
 
 
     public CommentResponse addPostComment(String postId, CommentRequest commentRequest){
-        String currentUserId=authenticatedUserService.getcurrentuser();
+        String currentUserId=authenticatedUserService.getCurrentUser();
 
         Post post=postRepo.findById(postId).orElseThrow(()-> new ContentNotFoundException("Post Not Found"));
 
@@ -79,7 +79,7 @@ public class PostInteractionService {
     }
 
     public void removePostComment(String commentId){
-        String currentUserId=authenticatedUserService.getcurrentuser();
+        String currentUserId=authenticatedUserService.getCurrentUser();
         int updated=commentRepo.deleteByIdAndUserId(currentUserId,commentId);
         if(updated==0){
             throw new ActionNotAllowedException("Unable to remove comment");

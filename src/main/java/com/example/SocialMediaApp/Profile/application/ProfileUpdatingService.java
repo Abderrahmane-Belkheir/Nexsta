@@ -8,10 +8,9 @@ import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
 import com.example.SocialMediaApp.User.application.IdentityService;
 import com.example.SocialMediaApp.User.domain.User;
 import com.example.SocialMediaApp.User.persistence.UserRepo;
-import com.example.SocialMediaApp.Profile.api.dto.profile;
-import com.example.SocialMediaApp.Profile.api.dto.profilesettings;
+import com.example.SocialMediaApp.Profile.api.dto.Profile;
+import com.example.SocialMediaApp.Profile.api.dto.ProfileSettings;
 import com.example.SocialMediaApp.Profile.application.cache.ProfileCacheManager;
-import com.example.SocialMediaApp.Profile.domain.Profile;
 import com.example.SocialMediaApp.Profile.persistence.ProfileRepo;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -36,24 +35,24 @@ public class ProfileUpdatingService {
     private final FollowRepo followRepo;
     private final IdentityService identityService;
 
-    public void UpdateProfileSettings(profilesettings profilesettings){
-        String currentUserId= authenticatedUserService.getcurrentuser();
-        Profile currentprofile= profileQueryService.getUserProfile(currentUserId,false);
-        boolean preStatus=currentprofile.isIsprivate();
-        currentprofile.setIsprivate(profilesettings.isIsprivate());
-        currentprofile.setShowifonline(profilesettings.isShowifonline());
+    public void UpdateProfileSettings(ProfileSettings profilesettings){
+        String currentUserId= authenticatedUserService.getCurrentUser();
+        com.example.SocialMediaApp.Profile.domain.Profile currentprofile= profileQueryService.getUserProfile(currentUserId,false);
+        ProfileSettings profileSettings=currentprofile.getProfileSettings();
+        boolean preStatus=profileSettings.isPrivate();
+        currentprofile.setProfileSettings(profileSettings);
         profileRepo.save(currentprofile);
         profileCacheManager.cacheUserProfile(currentprofile);
         // if profile was set from private to public all follow request to this user must be deleted
-        if(preStatus&&!profilesettings.isIsprivate()){
+        if(preStatus&&!profilesettings.isPrivate()){
             followRepo.deleteByFollowingIdAndStatus(currentUserId, Follow.Status.PENDING);
         }
     }
 
     public void changeProfileAvatar(MultipartFile file) throws IOException {
-        String currentUserId= authenticatedUserService.getcurrentuser();
+        String currentUserId= authenticatedUserService.getCurrentUser();
 
-        Profile currentprofile= profileQueryService.getUserProfile(currentUserId,false);
+        com.example.SocialMediaApp.Profile.domain.Profile currentprofile= profileQueryService.getUserProfile(currentUserId,false);
 
         String oldAvatarUri=currentprofile.getAvatarPath();
 
@@ -72,10 +71,10 @@ public class ProfileUpdatingService {
     }
 
     @Transactional
-    public void UpdateProfile(profile profile){
-        String currentUserId=authenticatedUserService.getcurrentuser();
+    public void UpdateProfile(Profile profile){
+        String currentUserId=authenticatedUserService.getCurrentUser();
         User  currentuser= userRepo.findById(currentUserId).get();
-        Profile currentprofile= profileQueryService.getUserProfile(currentuser.getId(),false);
+        com.example.SocialMediaApp.Profile.domain.Profile currentprofile= profileQueryService.getUserProfile(currentuser.getId(),false);
         currentprofile.setUsername(profile.getUsername());
         currentprofile.setBio(profile.getBio());
         currentuser.setUsername(profile.getUsername());

@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Story</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800&family=Instrument+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+          --bg: #08080c;
+          --surface: #0f0f16;
+          --surface2: #141420;
+          --border: #1c1c2e;
+          --border2: #252538;
+          --text: #f0eff8;
+          --muted: #7878a0;
+          --dim: #3a3a55;
+          --accent: #a855f7;
+          --accent2: #ec4899;
+          --grad: linear-gradient(135deg, #a855f7, #ec4899);
+          --grad-glow: rgba(168,85,247,0.2);
+          --success: #22c55e;
+          --r: 20px;
+          --r-sm: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+          font-family: 'Instrument Sans', sans-serif;
+          background: var(--bg);
+          color: var(--text);
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+        }
+
+        /* Ambient glows */
+        body::before {
+          content: '';
+          position: fixed;
+          top: -300px; left: -200px;
+          width: 700px; height: 700px;
+          background: radial-gradient(circle, rgba(168,85,247,0.07) 0%, transparent 65%);
+          pointer-events: none; z-index: 0;
+        }
+        body::after {
+          content: '';
+          position: fixed;
+          bottom: -200px; right: -100px;
+          width: 600px; height: 600px;
+          background: radial-gradient(circle, rgba(236,72,153,0.06) 0%, transparent 65%);
+          pointer-events: none; z-index: 0;
+        }
+
+        /* NAV */
+        .nav {
+          position: sticky; top: 0; z-index: 50;
+          background: rgba(8,8,12,0.85);
+          backdrop-filter: blur(16px);
+          border-bottom: 1px solid var(--border);
+          height: 60px;
+          display: flex; align-items: center;
+          justify-content: space-between;
+          padding: 0 32px;
+        }
+
+        .nav-brand {
+          font-family: 'Cabinet Grotesk', sans-serif;
+          font-size: 18px; font-weight: 800;
+          background: var(--grad);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .nav-title {
+          font-family: 'Cabinet Grotesk', sans-serif;
+          font-size: 14px; font-weight: 700;
+          color: var(--muted);
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+        }
+
+        .nav-actions { display: flex; align-items: center; gap: 10px; }
+
+        .btn {
+          display: inline-flex; align-items: center; gap: 7px;
+          padding: 8px 18px;
+          border-radius: 40px;
+          font-family: 'Cabinet Grotesk', sans-serif;
+          font-size: 13px; font-weight: 700;
+          cursor: pointer; border: none;
+          transition: all 0.18s;
+        }
+
+        .btn-ghost {
+          background: transparent;
+          color: var(--muted);
+          border: 1px solid var(--border2);
+        }
+        .btn-ghost:hover { border-color: var(--muted); color: var(--text); }
+
+        .btn-primary {
+          background: var(--grad);
+          color: white;
+          box-shadow: 0 4px 20px rgba(168,85,247,0.3);
+        }
+        .btn-primary:hover {
+          box-shadow: 0 6px 28px rgba(168,85,247,0.45);
+          transform: translateY(-1px);
+        }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-primary:disabled {
+          background: var(--border2); color: var(--dim);
+          box-shadow: none; cursor: not-allowed; transform: none;
+        }
+
+        /* MAIN LAYOUT */
+        .main {
+          position: relative; z-index: 1;
+          flex: 1;
+          display: flex;
+          align-items: flex-start;
+          justify-content: center;
+          gap: 40px;
+          padding: 40px 32px 80px;
+          max-width: 1000px;
+          margin: 0 auto;
+          width: 100%;
+        }
+
+        /* PHONE PREVIEW */
+        .phone-wrap {
+          position: sticky;
+          top: 80px;
+          flex-shrink: 0;
+        }
+
+        .phone {
+          width: 240px;
+          height: 480px;
+          background: var(--surface);
+          border-radius: 36px;
+          border: 2px solid var(--border2);
+          overflow: hidden;
+          position: relative;
+          box-shadow:
+            0 0 0 6px var(--surface2),
+            0 0 0 7px var(--border),
+            0 32px 64px rgba(0,0,0,0.6);
+        }
+
+        /* notch */
+        .phone::before {
+          content: '';
+          position: absolute;
+          top: 10px; left: 50%;
+          transform: translateX(-50%);
+          width: 60px; height: 18px;
+          background: var(--bg);
+          border-radius: 10px;
+          z-index: 10;
+        }
+
+        .phone-screen {
+          width: 100%; height: 100%;
+          position: relative;
+          background: #000;
+          overflow: hidden;
+        }
+
+        .phone-media {
+          position: absolute; inset: 0;
+          display: flex; align-items: center; justify-content: center;
+          background: var(--surface);
+        }
+
+        .phone-media img, .phone-media video {
+          width: 100%; height: 100%;
+          object-fit: cover;
+        }
+
+        .phone-media-empty {
+          display: flex; flex-direction: column;
+          align-items: center; gap: 10px;
+          color: var(--dim);
+        }
+
+        .phone-media-empty svg { opacity: 0.5; }
+        .phone-media-empty span { font-size: 11px; }
+
+        /* story overlay UI */
+        .phone-overlay {
+          position: absolute; inset: 0;
+          pointer-events: none;
+          padding: 28px 14px 16px;
+          display: flex; flex-direction: column;
+          justify-content: space-between;
+        }
+
+        .phone-top {
+          display: flex; align-items: center; gap: 8px;
+        }
+
+        .story-bar {
+          flex: 1; height: 2px;
+          background: rgba(255,255,255,0.25);
+          border-radius: 2px;
+          overflow: hidden;
+        }
+
+        .story-bar-fill {
+          height: 100%;
+          background: white;
+          width: 0%;
+          transition: width 3s linear;
+          border-radius: 2px;
+        }
+
+        .story-bar-fill.playing { width: 100%; }
+
+        .phone-user {
+          display: flex; align-items: center;
+          gap: 7px; margin-top: 10px;
+        }
+
+        .phone-avatar {
+          width: 28px; height: 28px;
+          border-radius: 50%;
+          background: var(--grad);
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Cabinet Grotesk', sans-serif;
+          font-size: 11px; font-weight: 800; color: white;
+          border: 1.5px solid rgba(255,255,255,0.4);
+          flex-shrink: 0;
+        }
+
+        .phone-username {
+          font-size: 11px; font-weight: 600;
+          color: white;
+          text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+        }
+
+        .phone-time {
+          font-size: 9px; color: rgba(255,255,255,0.6);
+          text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+        }
+
+        .phone-audience {
+          display: inline-flex; align-items: center; gap: 4px;
+          background: rgba(0,0,0,0.4);
+          backdrop-filter: blur(8px);
+          border: 1px solid rgba(255,255,255,0.15);
+          border-radius: 20px;
+          padding: 3px 8px;
+          font-size: 9px; font-weight: 600;
+          color: white;
+          margin-top: 6px;
+          align-self: flex-start;
+        }
+
+        .phone-bottom {
+          display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .phone-bottom-action {
+          display: flex; flex-direction: column;
+          align-items: center; gap: 3px;
+          color: rgba(255,255,255,0.8);
+        }
+
+        .phone-bottom-action span {
+          font-size: 9px;
+          text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+        }
+
+        /* multi-slide dots */
+        .phone-slide-dots {
+          display: flex; justify-content: center; gap: 4px;
+          margin-top: 6px;
+        }
+
+        .phone-slide-dot {
+          width: 5px; height: 5px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.3);
+          transition: all 0.2s; cursor: pointer;
+        }
+
+        .phone-slide-dot.active {
+          background: white;
+          width: 14px;
+          border-radius: 3px;
+        }
+
+        .phone-label {
+          text-align: center;
+          margin-top: 14px;
+          font-size: 11px;
+          color: var(--muted);
+          font-weight: 500;
+        }
+
+        /* FORM SIDE */
+        .form-side { flex: 1; max-width: 520px; }
+
+        .section-label {
+          font-family: 'Cabinet Grotesk', sans-serif;
+          font-size: 11px; font-weight: 700;
+          text-transform: uppercase; letter-spacing: 1px;
+          color: var(--muted);
+          margin-bottom: 12px;
+          display: flex; align-items: center; gap: 8px;
+        }
+
+        .section-label::after {
+          content: ''; flex: 1;
+          height: 1px; background: var(--border);
+        }
+
+        /* Upload zone */
+        .upload-zone {
+          border: 2px dashed var(--border2);
+          border-radius: var(--r);
+          padding: 36px 24px;
+          text-align: center;
+          cursor: pointer;
+          transition: all 0.2s;
+          position: relative;
+          background: var(--surface);
+          margin-bottom: 24px;
+        }
+
+        .upload-zone:hover, .upload-zone.drag-over {
+          border-color: var(--accent);
+          background: rgba(168,85,247,0.05);
+        }
+
+        .upload-zone input[type="file"] {
+          position: absolute; inset: 0;
+          opacity: 0; cursor: pointer;
+          width: 100%; height: 100%;
+        }
+
+        .upload-icon {
+          width: 52px; height: 52px;
+          border-radius: 16px;
+          background: linear-gradient(135deg, rgba(168,85,247,0.15), rgba(236,72,153,0.1));
+          border: 1px solid var(--border2);
+          display: flex; align-items: center; justify-content: center;
+          margin: 0 auto 14px;
+          color: var(--accent);
+        }
+
+        .upload-title {
+          font-family: 'Cabinet Grotesk', sans-serif;
+          font-size: 15px; font-weight: 700;
+          color: var(--text); margin-bottom: 5px;
+        }
+
+        .upload-sub {
+          font-size: 12px; color: var(--muted); line-height: 1.6;
+        }
+
+        .upload-sub strong { color: var(--accent); font-weight: 600; }
+
+        /* Thumbnails strip */
+        .thumb-strip {
+          display: flex; gap: 8px;
+          flex-wrap: wrap;
+          margin-bottom: 24px;
+        }
+
+        .thumb-item {
+          position: relative;
+          width: 72px; height: 96px;
+          border-radius: var(--r-sm);
+          overflow: hidden;
+          border: 1px solid var(--border2);
+          background: var(--surface);
+          flex-shrink: 0;
+        }
+
+        .thumb-item img, .thumb-item video {
+          width: 100%; height: 100%; object-fit: cover;
+        }
+
+        .thumb-item .remove-btn {
+          position: absolute; top: 4px; right: 4px;
+          width: 20px; height: 20px;
+          border-radius: 50%;
+          background: rgba(0,0,0,0.7);
+          border: none; color: white;
+          cursor: pointer;
+          display: flex; align-items: center; justify-content: center;
+          opacity: 0; transition: opacity 0.15s;
+        }
+
+        .thumb-item:hover .remove-btn { opacity: 1; }
+
+        .thumb-item .progress-overlay {
+          position: absolute; inset: 0;
+          background: rgba(0,0,0,0.6);
+          display: flex; flex-direction: column;
+          align-items: center; justify-content: center; gap: 4px;
+        }
+
+        .thumb-item .progress-overlay.done { display: none; }
+
+        .thumb-order {
+          position: absolute; bottom: 4px; left: 4px;
+          width: 16px; height: 16px;
+          background: var(--grad);
+          border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 9px; font-weight: 700; color: white;
+        }
+
+        .thumb-type {
+          position: absolute; top: 4px; left: 4px;
+          background: rgba(0,0,0,0.6);
+          color: white; font-size: 8px; font-weight: 700;
+          padding: 1px 5px; border-radius: 4px;
+          text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        /* Progress ring small */
+        .ring-sm {
+          width: 28px; height: 28px;
+        }
+        .ring-sm circle {
+          fill: none; stroke-width: 3;
+        }
+        .ring-sm .track { stroke: rgba(255,255,255,0.2); }
+        .ring-sm .fill {
+          stroke: var(--accent);
+          stroke-linecap: round;
+          stroke-dasharray: 75.4;
+          stroke-dashoffset: 75.4;
+          transition: stroke-dashoffset 0.3s;
+          transform: rotate(-90deg);
+          transform-origin: center;
+        }
+        .ring-pct { font-size: 9px; color: white; font-weight: 700; }
+
+        /* Settings cards */
+        .setting-card {
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: var(--r);
+          overflow: hidden;
+          margin-bottom: 14px;
+          transition: border-color 0.2s;
+        }
+
+        .setting-card:hover { border-color: var(--border2); }
+
+        /* Audience selector */
+        .audience-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 8px;
+          padding: 16px;
+        }
+
+        .audience-opt {
+          display: flex; flex-direction: column;
+          align-items: center; gap: 8px;
+          padding: 16px 8px;
+          border-radius: var(--r-sm);
+          border: 1.5px solid var(--border);
+          cursor: pointer;
+          transition: all 0.18s;
+          background: var(--surface2);
+        }
+
+        .audience-opt:hover { border-color: var(--border2); }
+
+        .audience-opt.selected {
+          border-color: var(--accent);
+          background: rgba(168,85,247,0.08);
+        }
+
+        .audience-icon {
+          width: 38px; height: 38px;
+          border-radius: 12px;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 18px;
+          background: var(--surface);
+          border: 1px solid var(--border);
+          transition: all 0.18s;
+        }
+
+        .audience-opt.selected .audience-icon {
+          background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(236,72,153,0.15));
+          border-color: var(--accent);
+        }
+
+        .audience-label {
+          font-family: 'Cabinet Grotesk', sans-serif;
+          font-size: 11px; font-weight: 700;
+          color: var(--muted); text-align: center;
+          transition: color 0.18s;
+          line-height: 1.3;
+        }
+
+        .audience-opt.selected .audience-label { color: var(--text); }
+
+        /* Toggle row */
+        .toggle-row {
+          display: flex; align-items: center;
+          justify-content: space-between;
+          padding: 16px 18px;
+        }
+
+        .toggle-info span {
+          display: block;
+          font-family: 'Cabinet Grotesk', sans-serif;
+          font-size: 14px; font-weight: 700;
+          color: var(--text); margin-bottom: 2px;
+        }
+
+        .toggle-info small { font-size: 11px; color: var(--muted); }
+
+        .toggle {
+          position: relative; width: 44px; height: 24px; flex-shrink: 0;
+        }
+
+        .toggle input { opacity: 0; width: 0; height: 0; }
+
+        .toggle-track {
+          position: absolute; inset: 0;
+          background: var(--border2);
+          border-radius: 20px; cursor: pointer;
+          transition: background 0.2s;
+        }
+
+        .toggle-track::after {
+          content: '';
+          position: absolute;
+          width: 18px; height: 18px;
+          background: white; border-radius: 50%;
+          top: 3px; left: 3px;
+          transition: transform 0.2s;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+        }
+
+        .toggle input:checked ~ .toggle-track { background: var(--accent); }
+        .toggle input:checked ~ .toggle-track::after { transform: translateX(20px); }
+
+        /* Duration info */
+        .expires-note {
+          display: flex; align-items: center; gap: 10px;
+          padding: 14px 18px;
+          background: rgba(168,85,247,0.06);
+          border: 1px solid rgba(168,85,247,0.15);
+          border-radius: var(--r-sm);
+          margin-bottom: 14px;
+          font-size: 12px; color: var(--muted);
+        }
+
+        .expires-note svg { color: var(--accent); flex-shrink: 0; }
+        .expires-note strong { color: var(--text); font-weight: 600; }
+
+        /* Flow status */
+        .flow-panel {
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: var(--r);
+          padding: 16px 18px;
+          margin-bottom: 14px;
+        }
+
+        .flow-row {
+          display: flex; align-items: center; gap: 10px;
+          padding: 6px 0;
+          border-bottom: 1px solid var(--border);
+        }
+
+        .flow-row:last-child { border-bottom: none; }
+
+        .flow-num {
+          width: 22px; height: 22px;
+          border-radius: 50%;
+          background: var(--border2);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 10px; font-weight: 700;
+          color: var(--muted); flex-shrink: 0;
+          transition: all 0.2s;
+        }
+
+        .flow-num.active { background: var(--accent); color: white; }
+        .flow-num.done { background: var(--success); color: white; }
+
+        .flow-text { font-size: 12px; color: var(--muted); }
+        .flow-text strong { display: block; font-size: 12px; font-weight: 600; color: var(--text); }
+
+        /* Status bar */
+        .status-bar {
+          position: fixed; bottom: 24px; left: 50%;
+          transform: translateX(-50%) translateY(80px);
+          background: var(--surface);
+          border: 1px solid var(--border2);
+          color: var(--text);
+          padding: 12px 20px;
+          border-radius: 40px;
+          font-size: 13px; font-weight: 500;
+          display: flex; align-items: center; gap: 10px;
+          box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+          z-index: 100;
+          transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+          white-space: nowrap;
+        }
+
+        .status-bar.visible { transform: translateX(-50%) translateY(0); }
+        .status-bar.success { border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.1); color: var(--success); }
+        .status-bar.error { border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); color: #f87171; }
+
+        .spinner {
+          width: 14px; height: 14px;
+          border: 2px solid rgba(168,85,247,0.3);
+          border-top-color: var(--accent);
+          border-radius: 50%;
+          animation: spin 0.6s linear infinite; flex-shrink: 0;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Success overlay */
+        .success-overlay {
+          position: fixed; inset: 0;
+          background: rgba(8,8,12,0.95);
+          backdrop-filter: blur(12px);
+          z-index: 300;
+          display: none; flex-direction: column;
+          align-items: center; justify-content: center; gap: 16px;
+        }
+        .success-overlay.show { display: flex; }
+
+        .success-ring {
+          width: 80px; height: 80px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(236,72,153,0.15));
+          border: 2px solid var(--accent);
+          display: flex; align-items: center; justify-content: center;
+          animation: pop 0.5s cubic-bezier(0.34,1.56,0.64,1);
+          box-shadow: 0 0 40px rgba(168,85,247,0.3);
+        }
+        @keyframes pop {
+          from { transform: scale(0); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+
+        .success-overlay h2 {
+          font-family: 'Cabinet Grotesk', sans-serif;
+          font-size: 28px; font-weight: 800;
+          background: var(--grad);
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .success-overlay p { font-size: 14px; color: var(--muted); }
+
+        /* Config modal */
+        .modal-overlay {
+          position: fixed; inset: 0;
+          background: rgba(8,8,12,0.7);
+          backdrop-filter: blur(8px);
+          z-index: 200;
+          display: flex; align-items: center; justify-content: center;
+        }
+
+        .modal {
+          background: var(--surface);
+          border: 1px solid var(--border2);
+          border-radius: 24px; padding: 36px;
+          width: 420px;
+          box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+        }
+
+        .modal h2 {
+          font-family: 'Cabinet Grotesk', sans-serif;
+          font-size: 22px; font-weight: 800;
+          background: var(--grad);
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+          background-clip: text; margin-bottom: 6px;
+        }
+
+        .modal > p { font-size: 13px; color: var(--muted); margin-bottom: 24px; line-height: 1.6; }
+
+        .field { margin-bottom: 14px; }
+
+        .field label {
+          display: block; font-size: 11px; font-weight: 700;
+          text-transform: uppercase; letter-spacing: 0.7px;
+          color: var(--muted); margin-bottom: 6px;
+        }
+
+        .field input {
+          width: 100%;
+          background: var(--surface2);
+          border: 1px solid var(--border2);
+          border-radius: var(--r-sm);
+          padding: 10px 14px;
+          color: var(--text);
+          font-family: 'Instrument Sans', sans-serif;
+          font-size: 14px; outline: none;
+          transition: border-color 0.18s;
+        }
+
+        .field input:focus { border-color: var(--accent); }
+        .field input::placeholder { color: var(--dim); }
+
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(14px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .anim { animation: fadeUp 0.4s ease both; }
+        .anim-2 { animation: fadeUp 0.4s ease 0.08s both; }
+        .anim-3 { animation: fadeUp 0.4s ease 0.16s both; }
+    </style>
+</head>
+<body>
+
+<!-- Config Modal -->
+<div class="modal-overlay" id="configModal">
+    <div class="modal">
+        <h2>Connect API</h2>
+        <p>If you arrived via <code style="font-size:12px;background:var(--surface2);padding:2px 6px;border-radius:6px;color:var(--accent);">GET /api/v1/content/story/new</code> the token is injected automatically.</p>
+        <div class="field">
+            <label>API Base URL</label>
+            <input type="text" id="cfgApi" value="http://localhost:8080" placeholder="http://localhost:8080">
+        </div>
+        <div class="field">
+            <label>JWT Token</label>
+            <input type="text" id="cfgJwt" placeholder="eyJhbGciOiJSUzI1NiJ9...">
+        </div>
+        <div class="field">
+            <label>Your Username</label>
+            <input type="text" id="cfgUsername" value="younes_dev" placeholder="younes_dev">
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:6px;" onclick="saveConfig()">
+            Start
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+    </div>
+</div>
+
+<!-- Success overlay -->
+<div class="success-overlay" id="successOverlay">
+    <div class="success-ring">
+        <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" color="#a855f7"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h2>Story is Live!</h2>
+    <p>Your story expires in 24 hours ✨</p>
+    <div style="display:flex;gap:12px;margin-top:8px;">
+        <button class="btn btn-ghost" onclick="resetPage()">New Story</button>
+        <button class="btn btn-primary" onclick="resetPage()">View Stories</button>
+    </div>
+</div>
+
+<!-- Nav -->
+<nav class="nav">
+    <div class="nav-brand">Momento</div>
+    <div class="nav-title">New Story</div>
+    <div class="nav-actions">
+        <button class="btn btn-ghost" onclick="document.getElementById('configModal').style.display='flex'">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Configure
+        </button>
+        <button class="btn btn-primary" id="publishBtn" onclick="publishStory()" disabled>
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Share Story
+        </button>
+    </div>
+</nav>
+
+<!-- Main -->
+<div class="main">
+
+    <!-- Phone preview -->
+    <div class="phone-wrap anim">
+        <div class="phone">
+            <div class="phone-screen">
+                <div class="phone-media" id="phoneMedia">
+                    <div class="phone-media-empty">
+                        <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <span>No media</span>
+                    </div>
+                </div>
+                <div class="phone-overlay">
+                    <div>
+                        <div class="phone-top">
+                            <div class="story-bar"><div class="story-bar-fill" id="storyBarFill"></div></div>
+                        </div>
+                        <div class="phone-user">
+                            <div class="phone-avatar" id="phoneAvatar">Y</div>
+                            <div>
+                                <div class="phone-username" id="phoneUsername">younes_dev</div>
+                                <div class="phone-time">now · 24h</div>
+                            </div>
+                        </div>
+                        <div class="phone-audience" id="phoneAudience">
+                            🌍 Everyone
+                        </div>
+                    </div>
+                    <div class="phone-bottom">
+                        <div class="phone-bottom-action">
+                            <svg width="20" height="20" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            <span>Reply</span>
+                        </div>
+                        <div class="phone-bottom-action">
+                            <svg width="20" height="20" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                            <span>Like</span>
+                        </div>
+                        <div class="phone-bottom-action">
+                            <svg width="20" height="20" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.5" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                            <span>Share</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="phone-slide-dots" id="phoneDots" style="display:none;"></div>
+        <div class="phone-label">Live Preview</div>
+    </div>
+
+    <!-- Form -->
+    <div class="form-side">
+
+        <!-- Upload -->
+        <div class="section-label anim">Media</div>
+
+        <div class="upload-zone anim" id="dropZone"
+             ondragover="handleDragOver(event)"
+             ondragleave="handleDragLeave(event)"
+             ondrop="handleDrop(event)">
+            <input type="file" id="fileInput" multiple
+                   accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime"
+                   onchange="handleFiles(this.files)">
+            <div class="upload-icon">
+                <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <div class="upload-title">Drop media here</div>
+            <div class="upload-sub">
+                <strong>Images:</strong> JPEG, PNG, WebP, GIF · 500KB max<br>
+                <strong>Videos:</strong> MP4, MOV · 30MB max · 15s max
+            </div>
+        </div>
+
+        <div class="thumb-strip" id="thumbStrip"></div>
+
+        <!-- Expires note -->
+        <div class="expires-note anim-2">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Stories are visible for <strong>&nbsp;24 hours&nbsp;</strong> then automatically deleted.
+        </div>
+
+        <!-- Audience -->
+        <div class="section-label anim-2">Audience</div>
+        <div class="setting-card anim-2">
+            <div class="audience-grid">
+                <div class="audience-opt selected" id="aud-EVERYONE" onclick="selectAudience('EVERYONE')">
+                    <div class="audience-icon">🌍</div>
+                    <div class="audience-label">Everyone</div>
+                </div>
+                <div class="audience-opt" id="aud-FOLLOWERS" onclick="selectAudience('FOLLOWERS')">
+                    <div class="audience-icon">👥</div>
+                    <div class="audience-label">Followers</div>
+                </div>
+                <div class="audience-opt" id="aud-CLOSE_FRIENDS" onclick="selectAudience('CLOSE_FRIENDS')">
+                    <div class="audience-icon">⭐</div>
+                    <div class="audience-label">Close Friends</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Story settings -->
+        <div class="section-label anim-3">Settings</div>
+        <div class="setting-card anim-3">
+            <div class="toggle-row">
+                <div class="toggle-info">
+                    <span>Hide View Count</span>
+                    <small>Only you can see how many people viewed</small>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="hideViewCount" onchange="updatePreview()">
+                    <div class="toggle-track"></div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Flow status -->
+        <div class="section-label anim-3">API Flow</div>
+        <div class="flow-panel anim-3">
+            <div class="flow-row">
+                <div class="flow-num" id="fs1">1</div>
+                <div class="flow-text"><strong>Request signed URLs</strong>POST /api/v1/upload</div>
+            </div>
+            <div class="flow-row">
+                <div class="flow-num" id="fs2">2</div>
+                <div class="flow-text"><strong>Upload to Supabase</strong>PUT signedUrl (direct)</div>
+            </div>
+            <div class="flow-row">
+                <div class="flow-num" id="fs3">3</div>
+                <div class="flow-text"><strong>Create story draft</strong>POST /api/v1/content/story</div>
+            </div>
+            <div class="flow-row">
+                <div class="flow-num" id="fs4">4</div>
+                <div class="flow-text"><strong>Publish story</strong>PATCH /api/v1/content/story/{id}/publish</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="status-bar" id="statusBar"></div>
+
+<script>
+    // ── Config ─────────────────────────────────────────────
+    let API = window.location.origin;
+    let JWT = '';
+    let USERNAME = 'you';
+
+    // Auto-inject JWT from ?token= param (set by Spring redirect)
+    (function autoInjectToken() {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('token');
+      if (token) {
+        JWT = token;
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+          USERNAME = payload.preferred_username || payload.sub || 'you';
+        } catch(e) {}
+        window.history.replaceState({}, document.title, window.location.pathname);
+        document.addEventListener('DOMContentLoaded', () => {
+          document.getElementById('configModal').style.display = 'none';
+          applyUsername();
+        });
+      }
+    })();
+
+    function applyUsername() {
+      USERNAME = USERNAME;
+      document.getElementById('phoneUsername').textContent = USERNAME;
+      document.getElementById('phoneAvatar').textContent = USERNAME[0].toUpperCase();
+      document.getElementById('cfgUsername').value = USERNAME;
+    }
+
+    function saveConfig() {
+      API = document.getElementById('cfgApi').value.trim().replace(/\/$/, '');
+      JWT = document.getElementById('cfgJwt').value.trim();
+      USERNAME = document.getElementById('cfgUsername').value.trim() || 'you';
+      applyUsername();
+      document.getElementById('configModal').style.display = 'none';
+    }
+
+    // ── State ──────────────────────────────────────────────
+    let mediaFiles = [];
+    // StorySettings fields
+    let audience = 'EVERYONE';   // StorySettings.StoryAudience enum
+    let currentStoryId = null;
+    let previewIndex = 0;
+
+    const audienceLabels = {
+      EVERYONE: '🌍 Everyone',
+      FOLLOWERS: '👥 Followers',
+      CLOSE_FRIENDS: '⭐ Close Friends'
+    };
+
+    // ── Audience ───────────────────────────────────────────
+    function selectAudience(val) {
+      audience = val;
+      ['EVERYONE','FOLLOWERS','CLOSE_FRIENDS'].forEach(a => {
+        document.getElementById('aud-' + a).classList.toggle('selected', a === val);
+      });
+      document.getElementById('phoneAudience').textContent = audienceLabels[val];
+    }
+
+    // ── Drag & Drop ────────────────────────────────────────
+    function handleDragOver(e) {
+      e.preventDefault();
+      document.getElementById('dropZone').classList.add('drag-over');
+    }
+    function handleDragLeave() {
+      document.getElementById('dropZone').classList.remove('drag-over');
+    }
+    function handleDrop(e) {
+      e.preventDefault();
+      document.getElementById('dropZone').classList.remove('drag-over');
+      handleFiles(e.dataTransfer.files);
+    }
+
+    function handleFiles(files) {
+      const remaining = 10 - mediaFiles.length;
+      Array.from(files).slice(0, remaining).forEach(file => {
+        mediaFiles.push({ file, previewUrl: URL.createObjectURL(file), requestId: null, uploaded: false });
+      });
+      renderThumbs();
+      updatePreview();
+      document.getElementById('publishBtn').disabled = mediaFiles.length === 0;
+    }
+
+    // ── Thumbnails ─────────────────────────────────────────
+    function renderThumbs() {
+      const strip = document.getElementById('thumbStrip');
+      if (!mediaFiles.length) { strip.innerHTML = ''; return; }
+      strip.innerHTML = mediaFiles.map((m, i) => {
+        const isVideo = m.file.type.startsWith('video/');
+        const circ = 2 * Math.PI * 11;
+        return `
+          <div class="thumb-item" id="thumb_${i}">
+            ${isVideo ? `<video src="${m.previewUrl}" muted playsinline></video>` : `<img src="${m.previewUrl}">`}
+            <div class="thumb-type">${isVideo ? 'VID' : 'IMG'}</div>
+            <div class="thumb-order">${i+1}</div>
+            <button class="remove-btn" onclick="removeMedia(${i})">
+              <svg width="8" height="8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <div class="progress-overlay ${m.uploaded ? 'done' : ''}" id="prog_${i}">
+              <svg class="ring-sm" viewBox="0 0 28 28">
+                <circle class="track" cx="14" cy="14" r="11"/>
+                <circle class="fill" id="ring_${i}" cx="14" cy="14" r="11"
+                  stroke-dasharray="${circ}" stroke-dashoffset="${circ}"/>
+              </svg>
+              <div class="ring-pct" id="pct_${i}">0%</div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function removeMedia(idx) {
+      URL.revokeObjectURL(mediaFiles[idx].previewUrl);
+      mediaFiles.splice(idx, 1);
+      if (previewIndex >= mediaFiles.length) previewIndex = Math.max(0, mediaFiles.length - 1);
+      renderThumbs();
+      updatePreview();
+      document.getElementById('publishBtn').disabled = mediaFiles.length === 0;
+    }
+
+    function setProgress(idx, pct) {
+      const circ = 2 * Math.PI * 11;
+      const ring = document.getElementById('ring_' + idx);
+      const pctEl = document.getElementById('pct_' + idx);
+      if (ring) ring.style.strokeDashoffset = circ - (pct / 100) * circ;
+      if (pctEl) pctEl.textContent = pct + '%';
+      if (pct >= 100) {
+        const prog = document.getElementById('prog_' + idx);
+        if (prog) setTimeout(() => prog.classList.add('done'), 300);
+      }
+    }
+
+    // ── Preview ────────────────────────────────────────────
+    function updatePreview() {
+      const mediaEl = document.getElementById('phoneMedia');
+      const dotsEl = document.getElementById('phoneDots');
+      const barFill = document.getElementById('storyBarFill');
+
+      if (mediaFiles.length) {
+        const m = mediaFiles[previewIndex] || mediaFiles[0];
+        const isVideo = m.file.type.startsWith('video/');
+        mediaEl.innerHTML = isVideo
+          ? `<video src="${m.previewUrl}" muted autoplay loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>`
+          : `<img src="${m.previewUrl}" style="width:100%;height:100%;object-fit:cover;">`;
+
+        // animate story bar
+        barFill.classList.remove('playing');
+        setTimeout(() => barFill.classList.add('playing'), 50);
+
+        if (mediaFiles.length > 1) {
+          dotsEl.style.display = 'flex';
+          dotsEl.innerHTML = mediaFiles.map((_,i) =>
+            `<div class="phone-slide-dot ${i===previewIndex?'active':''}" onclick="previewIndex=${i};updatePreview()"></div>`
+          ).join('');
+        } else {
+          dotsEl.style.display = 'none';
+        }
+      } else {
+        mediaEl.innerHTML = `<div class="phone-media-empty">
+          <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span>No media</span>
+        </div>`;
+        dotsEl.style.display = 'none';
+        barFill.classList.remove('playing');
+      }
+    }
+
+    // ── Flow status ────────────────────────────────────────
+    function setFlowStep(n, state) {
+      const el = document.getElementById('fs' + n);
+      el.className = 'flow-num' + (state === 'active' ? ' active' : state === 'done' ? ' done' : '');
+      el.textContent = state === 'done' ? '✓' : n;
+    }
+
+    // ── Status bar ─────────────────────────────────────────
+    let statusTimer;
+    function showStatus(msg, type = '', duration = 3500) {
+      const bar = document.getElementById('statusBar');
+      bar.className = 'status-bar visible ' + type;
+      bar.innerHTML = type === 'loading'
+        ? `<div class="spinner"></div>${msg}`
+        : `${type === 'success' ? '✓' : type === 'error' ? '⚠' : 'ℹ'} ${msg}`;
+      clearTimeout(statusTimer);
+      if (duration) statusTimer = setTimeout(() => bar.classList.remove('visible'), duration);
+    }
+
+    // ── API helpers ────────────────────────────────────────
+    async function apiFetch(path, opts = {}) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (JWT) headers['Authorization'] = 'Bearer ' + JWT;
+      const res = await fetch(API + path, { ...opts, headers: { ...headers, ...(opts.headers||{}) } });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        const err = new Error(`HTTP ${res.status}`);
+        err.status = res.status;
+        err.body = errBody;
+        throw err;
+      }
+      return res.json().catch(() => ({}));
+    }
+
+    // Retry only the files whose requestIds are in failedUploadIds
+    async function retryFailedUploads(failedUploadIds, uploadRequestsIds) {
+      showStatus(`Retrying ${failedUploadIds.length} failed file(s)…`, 'loading', 0);
+      for (const failedId of failedUploadIds) {
+        const i = mediaFiles.findIndex(m => m.requestId === failedId);
+        if (i === -1) continue;
+        const m = mediaFiles[i];
+
+        // Reset progress ring
+        m.uploaded = false;
+        const prog = document.getElementById('prog_' + i);
+        if (prog) prog.classList.remove('done');
+        setProgress(i, 0);
+
+        // Fresh signed URL
+        const { signedUrl, requestId } = await requestUploadUrl(m.file);
+        m.requestId = requestId;
+
+        // Re-upload
+        showStatus(`Re-uploading file ${i + 1}…`, 'loading', 0);
+        await uploadToSignedUrl(signedUrl, m.file, pct => setProgress(i, pct));
+        m.uploaded = true;
+        setProgress(i, 100);
+
+        // Replace old id with new one
+        const idx = uploadRequestsIds.indexOf(failedId);
+        if (idx !== -1) uploadRequestsIds[idx] = requestId;
+      }
+    }
+
+    // POST /api/v1/upload → { signedUrl, requestId }
+    async function requestUploadUrl(file) {
+      return apiFetch('/api/v1/upload', {
+        method: 'POST',
+        body: JSON.stringify({
+          uploadType: 'STORY',           // UploadType.STORY
+          fileMimeType: file.type,       // String
+          fileSize: file.size,           // Long
+          duration: file.type.startsWith('video/') ? 15 : 1  // @Min(1) @Max(15)
+        })
+      });
+    }
+
+    // PUT signedUrl — direct browser → Supabase with progress
+    async function uploadToSignedUrl(signedUrl, file, onProgress) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.onprogress = e => {
+          if (e.lengthComputable) onProgress(Math.round(e.loaded / e.total * 100));
+        };
+        xhr.onload = () => xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error('Upload failed'));
+        xhr.onerror = () => reject(new Error('Network error'));
+        xhr.open('PUT', signedUrl);
+        xhr.setRequestHeader('Content-Type', file.type);
+        xhr.send(file);
+      });
+    }
+
+    // ── Main publish flow ──────────────────────────────────
+    async function publishStory() {
+      if (!mediaFiles.length) {
+        showStatus('Add at least one photo or video', 'error');
+        return;
+      }
+
+      document.getElementById('publishBtn').disabled = true;
+      const uploadRequestsIds = [];
+
+      try {
+        // Steps 1 & 2: get signed URLs + upload each file
+        setFlowStep(1, 'active');
+        showStatus('Requesting upload URLs…', 'loading', 0);
+
+        for (let i = 0; i < mediaFiles.length; i++) {
+          const m = mediaFiles[i];
+
+          // POST /api/v1/upload
+          const { signedUrl, requestId } = await requestUploadUrl(m.file);
+          m.requestId = requestId;
+          setFlowStep(1, 'done');
+
+          // PUT signedUrl
+          setFlowStep(2, 'active');
+          showStatus(`Uploading ${i + 1} of ${mediaFiles.length}…`, 'loading', 0);
+          await uploadToSignedUrl(signedUrl, m.file, pct => setProgress(i, pct));
+          m.uploaded = true;
+          setProgress(i, 100);
+          uploadRequestsIds.push(requestId);
+        }
+
+        setFlowStep(2, 'done');
+
+        // Step 3: POST /api/v1/content/story
+        // Body matches StoryCreationRequest exactly:
+        // { uploadRequestsIds: List<String>, storySettings: { hideViewCount, audience } }
+        setFlowStep(3, 'active');
+        showStatus('Creating story draft…', 'loading', 0);
+
+        const storyBody = {
+          uploadRequestsIds,                                        // List<String> @Size(min=1,max=10)
+          storySettings: {
+            hideViewCount: document.getElementById('hideViewCount').checked,  // Boolean
+            audience                                                           // StoryAudience enum
+          }
+        };
+
+        // Try creating the story. On 422 with failedUploadIds, silently retry those files. Max 2 attempts.
+        let story;
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            story = await apiFetch('/api/v1/content/story', {
+              method: 'POST',
+              body: JSON.stringify(storyBody)
+            });
+            break;
+          } catch(e) {
+            const isUploadFailure = e.status === 422 && e.body && e.body.failedUploadIds && e.body.failedUploadIds.length;
+            if (isUploadFailure && attempt === 0) {
+              setFlowStep(3, ''); setFlowStep(1, 'active'); setFlowStep(2, 'active');
+              await retryFailedUploads(e.body.failedUploadIds, storyBody.uploadRequestsIds);
+              setFlowStep(1, 'done'); setFlowStep(2, 'done'); setFlowStep(3, 'active');
+              showStatus('Retrying story creation…', 'loading', 0);
+            } else {
+              throw e;
+            }
+          }
+        }
+
+        currentStoryId = story.id;
+        setFlowStep(3, 'done');
+
+        // Step 4: PATCH /api/v1/content/story/{storyId}/publish
+        setFlowStep(4, 'active');
+        showStatus('Publishing story…', 'loading', 0);
+
+        await apiFetch(`/api/v1/content/story/${currentStoryId}/publish`, { method: 'PATCH' });
+
+        setFlowStep(4, 'done');
+        showStatus('Story is live!', 'success');
+        setTimeout(() => document.getElementById('successOverlay').classList.add('show'), 500);
+
+      } catch(err) {
+        console.error(err);
+        showStatus('Error: ' + (err.message || 'Something went wrong'), 'error', 5000);
+        document.getElementById('publishBtn').disabled = false;
+      }
+    }
+
+    function resetPage() {
+      mediaFiles.forEach(m => URL.revokeObjectURL(m.previewUrl));
+      mediaFiles = [];
+      currentStoryId = null;
+      previewIndex = 0;
+      audience = 'EVERYONE';
+      document.getElementById('hideViewCount').checked = false;
+      selectAudience('EVERYONE');
+      renderThumbs();
+      updatePreview();
+      [1,2,3,4].forEach(n => setFlowStep(n, ''));
+      document.getElementById('publishBtn').disabled = true;
+      document.getElementById('successOverlay').classList.remove('show');
+    }
+</script>
+</body>
+</html>

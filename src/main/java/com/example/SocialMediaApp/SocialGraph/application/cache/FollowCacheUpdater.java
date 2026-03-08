@@ -2,8 +2,8 @@ package com.example.SocialMediaApp.SocialGraph.application.cache;
 
 import com.example.SocialMediaApp.SocialGraph.application.FollowQueryHelper;
 import com.example.SocialMediaApp.SocialGraph.domain.Follow;
-import com.example.SocialMediaApp.SocialGraph.domain.events.followAdded;
-import com.example.SocialMediaApp.SocialGraph.domain.events.followRemoved;
+import com.example.SocialMediaApp.SocialGraph.domain.events.FollowAdded;
+import com.example.SocialMediaApp.SocialGraph.domain.events.FollowRemoved;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -18,7 +18,7 @@ public class FollowCacheUpdater {
     public enum UpdateType{INCREMENT,DECREMENT}
 
     @EventListener
-    public void addfollow(followAdded followAdded) {
+    public void addfollow(FollowAdded followAdded) {
         Follow follow=followAdded.getFollow();
         String followerId=follow.getFollower_id();
         String followingId =follow.getFollowing_id();
@@ -45,7 +45,7 @@ public class FollowCacheUpdater {
     }
 
     @EventListener
-    public void removefollow(followRemoved followRemoved) {
+    public void removefollow(FollowRemoved followRemoved) {
         Follow follow=followRemoved.getFollow();
         String followerId=follow.getFollower_id();
         String followingId =follow.getFollowing_id();

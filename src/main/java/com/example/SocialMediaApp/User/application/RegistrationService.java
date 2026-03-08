@@ -1,7 +1,7 @@
 package com.example.SocialMediaApp.User.application;
 
 import com.example.SocialMediaApp.User.Exceptions.UserRegistrationException;
-import com.example.SocialMediaApp.User.api.dto.userregistration;
+import com.example.SocialMediaApp.User.api.dto.UserRegistration;
 import com.example.SocialMediaApp.User.domain.User;
 import com.example.SocialMediaApp.User.persistence.UserRepo;
 import com.example.SocialMediaApp.Notification.domain.NotificationsSettings;
@@ -28,7 +28,7 @@ public class RegistrationService {
 
 
     @Transactional
-    public String registerUser(userregistration userregistration){
+    public String registerUser(UserRegistration userregistration){
         String userId=identityService.UserProvision(userregistration);
         log.info("user id "+userId);
         User user=usermapper.toUserentity(userregistration);

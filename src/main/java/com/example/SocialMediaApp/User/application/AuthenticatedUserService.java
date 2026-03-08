@@ -1,6 +1,5 @@
 package com.example.SocialMediaApp.User.application;
 
-import com.example.SocialMediaApp.User.domain.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +31,7 @@ public class AuthenticatedUserService {
     @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
     private String issUri;
 
-    public String getcurrentuser(){
+    public String getCurrentUser(){
         Authentication authentication= SecurityContextHolder.getContext().getAuthentication();
         if(authentication==null||!(authentication.getPrincipal() instanceof Jwt)){
             throw new AuthenticationCredentialsNotFoundException("User not authenticated");

@@ -13,5 +13,5 @@ public interface ProfileRepo extends JpaRepository<Profile, UUID> {
     boolean existsByUserId(String userId);
    List<Profile> findByUserIdIn(List<String> usersIds);
 
-    boolean existsByUserIdAndIsprivateFalse(String userId);
+    boolean existsByUserIdAndProfileSettingsIsPrivateFalse(String userId);
 }

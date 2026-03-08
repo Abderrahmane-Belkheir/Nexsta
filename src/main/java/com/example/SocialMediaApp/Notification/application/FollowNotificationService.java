@@ -1,9 +1,8 @@
 package com.example.SocialMediaApp.Notification.application;
-import com.example.SocialMediaApp.Notification.api.dto.notification;
+import com.example.SocialMediaApp.Notification.api.dto.NotificationResponse;
 import com.example.SocialMediaApp.Notification.domain.events.FollowNotification;
 import com.example.SocialMediaApp.Profile.domain.cache.ProfileInfo;
 import com.example.SocialMediaApp.User.application.UserActivityTracker;
-import com.example.SocialMediaApp.User.domain.User;
 import com.example.SocialMediaApp.Notification.domain.NotificationsSettings;
 import com.example.SocialMediaApp.Notification.persistence.NotificationSettingsRepo;
 import com.example.SocialMediaApp.Profile.application.ProfileQueryService;
@@ -43,8 +42,8 @@ public class FollowNotificationService {
             case FOLLOWING_ACCEPTED -> message.append(" Accepted Your follow");
             case FOLLOWING_REJECTED -> message.append(" Rejected Your follow");
         }
-        log.info("publishing "+message.toString() +" to "+recipientId);
-        notification notification=new notification(message.toString(),profileInfo.getAvatarurl(),profileInfo.getUserId());
+        log.info("publishing "+message +" to "+recipientId);
+        NotificationResponse notification=new NotificationResponse(message.toString(),profileInfo.getAvatarurl(),profileInfo.getUserId());
         MessagingTemplate.convertAndSendToUser(recipientId,"/queue/notifications",notification);
     }
 

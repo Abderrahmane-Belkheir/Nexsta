@@ -1,7 +1,7 @@
 package com.example.SocialMediaApp.UnitTests.SocialGraph;
 
 import com.example.SocialMediaApp.Notification.domain.events.FollowNotification;
-import com.example.SocialMediaApp.Profile.api.dto.profileDetails;
+import com.example.SocialMediaApp.Profile.api.dto.ProfileDetails;
 import com.example.SocialMediaApp.Profile.persistence.ProfileRepo;
 import com.example.SocialMediaApp.Shared.Exceptions.BadFollowRequestException;
 import com.example.SocialMediaApp.Shared.Exceptions.NoRelationShipException;
@@ -11,8 +11,8 @@ import com.example.SocialMediaApp.SocialGraph.application.FollowService;
 import com.example.SocialMediaApp.SocialGraph.application.cache.FollowCacheUpdater;
 import com.example.SocialMediaApp.SocialGraph.domain.Follow;
 import com.example.SocialMediaApp.SocialGraph.domain.RelationshipStatus;
-import com.example.SocialMediaApp.SocialGraph.domain.events.followAdded;
-import com.example.SocialMediaApp.SocialGraph.domain.events.followRemoved;
+import com.example.SocialMediaApp.SocialGraph.domain.events.FollowAdded;
+import com.example.SocialMediaApp.SocialGraph.domain.events.FollowRemoved;
 import com.example.SocialMediaApp.SocialGraph.persistence.BlocksRepo;
 import com.example.SocialMediaApp.SocialGraph.persistence.FollowRepo;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
@@ -65,7 +65,7 @@ public class FollowServiceTest {
 
     @BeforeEach
     public  void setCurrentUser() {
-       when(authenticatedUserService.getcurrentuser()).thenReturn(currentUserId);
+       when(authenticatedUserService.getCurrentUser()).thenReturn(currentUserId);
     }
 
     // FOLLOW CREATION TESTS
@@ -114,7 +114,7 @@ public class FollowServiceTest {
         @ValueSource(booleans = {true,false})
         public void follow_public_privateProfiles(boolean Public){
             when(profileRepo.existsByUserIdAndIsprivateFalse(targetUserId)).thenReturn(Public);
-            profileDetails profileDetails=followService.Follow(targetUserId);
+            ProfileDetails profileDetails=followService.Follow(targetUserId);
             assertEquals(targetUserId,profileDetails.getUserId());
             ArgumentCaptor<Follow> captor1=ArgumentCaptor.forClass(Follow.class);
             verify(followRepo).save(captor1.capture());
@@ -130,7 +130,7 @@ public class FollowServiceTest {
                 assertEquals(Follow.Status.ACCEPTED, follow.getStatus());
                assertEquals(FollowNotification.notificationType.FOLLOW,followNotification.getType());
                assertEquals(RelationshipStatus.FOLLOWING, profileDetails.getRelationship());
-               verify(eventPublisher).publishEvent(any(followAdded.class));
+               verify(eventPublisher).publishEvent(any(FollowAdded.class));
                ArgumentCaptor<FollowQueryHelper.Position> captor3=ArgumentCaptor.forClass(FollowQueryHelper.Position.class);
                 ArgumentCaptor<FollowCacheUpdater.UpdateType> captor4=ArgumentCaptor.forClass(FollowCacheUpdater.UpdateType.class);
                 ArgumentCaptor<String> captor5=ArgumentCaptor.forClass(String.class);
@@ -165,7 +165,7 @@ public class FollowServiceTest {
             followService.UnFollow(targetUserId);
             verify(followRepo).delete(follow);
             if(status== Follow.Status.ACCEPTED){
-                verify(eventPublisher).publishEvent(any(followRemoved.class));
+                verify(eventPublisher).publishEvent(any(FollowRemoved.class));
             }
         }
 
@@ -185,9 +185,9 @@ public class FollowServiceTest {
             followService.removefollower(targetUserId);
             verify(followRepo).delete(follow);
             if(status== Follow.Status.ACCEPTED){
-                ArgumentCaptor<followRemoved> captor=ArgumentCaptor.forClass(followRemoved.class);
+                ArgumentCaptor<FollowRemoved> captor=ArgumentCaptor.forClass(FollowRemoved.class);
                 verify(eventPublisher).publishEvent(captor.capture());
-                followRemoved followRemoved=captor.getValue();
+                FollowRemoved followRemoved=captor.getValue();
                 assertThat(follow).usingRecursiveComparison().isEqualTo(followRemoved.getFollow());
 
             }else{
@@ -241,7 +241,7 @@ public class FollowServiceTest {
                   assertEquals(FollowNotification.notificationType.FOLLOWING_ACCEPTED,followNotification.getType());
                   assertEquals(targetUserId,followNotification.getRecipientId());
                   assertEquals(currentUserId,followNotification.getTriggerId());
-              } else if (o instanceof followAdded followAdded){
+              } else if (o instanceof FollowAdded followAdded){
                   assertThat(follow).usingRecursiveComparison().isEqualTo(followAdded.getFollow());
               }
           });

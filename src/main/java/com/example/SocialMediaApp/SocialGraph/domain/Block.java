@@ -20,8 +20,8 @@ import java.util.UUID;
 public class Block {
 
     @Id
-    @GeneratedValue
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @CreatedDate
     private Instant blockedat;

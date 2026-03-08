@@ -1,6 +1,6 @@
 package com.example.SocialMediaApp.User.api.Controllers;
 
-import com.example.SocialMediaApp.User.api.dto.userregistration;
+import com.example.SocialMediaApp.User.api.dto.UserRegistration;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
 import com.example.SocialMediaApp.User.application.RegistrationService;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -21,7 +21,7 @@ public class AuthenticationController {
     private final AuthenticatedUserService authenticatedUserService;
 
     @PostMapping("/register")
-    public void register(@RequestBody @Valid userregistration user) {
+    public void register(@RequestBody @Valid UserRegistration user) {
         registrationService.registerUser(user);
     }
 

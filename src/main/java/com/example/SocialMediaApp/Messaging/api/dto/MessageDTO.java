@@ -10,7 +10,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class messageDTO {
+public class MessageDTO {
     private String messageId;
     private String content;
     private Instant sentAt;

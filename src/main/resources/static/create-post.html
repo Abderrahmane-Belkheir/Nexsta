@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Post</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;1,400&family=Mulish:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+          --bg: #fafaf8;
+          --white: #ffffff;
+          --border: #e8e6e0;
+          --border2: #f0ede6;
+          --text: #1c1b18;
+          --muted: #8c8880;
+          --dim: #c8c4bc;
+          --accent: #2563eb;
+          --accent-bg: #eff4ff;
+          --accent-border: #bfcffe;
+          --success: #16a34a;
+          --error: #dc2626;
+          --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+          --shadow: 0 4px 16px rgba(0,0,0,0.07);
+          --shadow-lg: 0 16px 48px rgba(0,0,0,0.1);
+          --r: 16px;
+          --r-sm: 10px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+          font-family: 'Mulish', sans-serif;
+          background: var(--bg);
+          color: var(--text);
+          min-height: 100vh;
+        }
+
+        .nav {
+          position: sticky; top: 0; z-index: 50;
+          background: rgba(250,250,248,0.92);
+          backdrop-filter: blur(12px);
+          border-bottom: 1px solid var(--border);
+          height: 58px;
+          display: flex; align-items: center;
+          justify-content: space-between;
+          padding: 0 28px;
+        }
+
+        .nav-left { display: flex; align-items: center; gap: 14px; }
+
+        .back-btn {
+          width: 34px; height: 34px;
+          border-radius: 10px;
+          border: 1px solid var(--border);
+          background: var(--white);
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer; color: var(--muted);
+          transition: all 0.15s;
+          box-shadow: var(--shadow-sm);
+        }
+        .back-btn:hover { color: var(--text); border-color: var(--dim); }
+
+        .nav-title {
+          font-family: 'Fraunces', serif;
+          font-size: 17px; font-weight: 600;
+          color: var(--text);
+        }
+
+        .nav-right { display: flex; align-items: center; gap: 8px; }
+
+        .btn {
+          display: inline-flex; align-items: center; gap: 6px;
+          padding: 8px 16px;
+          border-radius: var(--r-sm);
+          font-family: 'Mulish', sans-serif;
+          font-size: 13px; font-weight: 600;
+          cursor: pointer; border: none;
+          transition: all 0.15s;
+        }
+
+        .btn-ghost {
+          background: transparent; color: var(--muted);
+          border: 1px solid var(--border);
+        }
+        .btn-ghost:hover { background: var(--border2); color: var(--text); }
+
+        .btn-primary {
+          background: var(--accent); color: white;
+          box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+        }
+        .btn-primary:hover {
+          background: #1d4ed8;
+          box-shadow: 0 4px 14px rgba(37,99,235,0.35);
+          transform: translateY(-1px);
+        }
+        .btn-primary:active { transform: none; }
+        .btn-primary:disabled {
+          background: var(--dim); box-shadow: none;
+          cursor: not-allowed; transform: none;
+        }
+
+        .page {
+          max-width: 860px; margin: 0 auto;
+          padding: 32px 24px 80px;
+          display: grid;
+          grid-template-columns: 1fr 300px;
+          gap: 20px; align-items: start;
+        }
+
+        .left { display: flex; flex-direction: column; gap: 14px; }
+
+        .card {
+          background: var(--white);
+          border: 1px solid var(--border);
+          border-radius: var(--r);
+          box-shadow: var(--shadow-sm);
+          overflow: hidden;
+          animation: up 0.35s ease both;
+        }
+        .card:nth-child(2) { animation-delay: 0.05s; }
+        .card:nth-child(3) { animation-delay: 0.1s; }
+        .card:nth-child(4) { animation-delay: 0.15s; }
+
+        @keyframes up {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-head {
+          padding: 14px 18px;
+          border-bottom: 1px solid var(--border2);
+          display: flex; align-items: center; gap: 9px;
+        }
+
+        .card-icon {
+          width: 28px; height: 28px; border-radius: 8px;
+          background: var(--accent-bg);
+          display: flex; align-items: center; justify-content: center;
+          color: var(--accent); flex-shrink: 0;
+        }
+
+        .card-head h3 {
+          font-family: 'Fraunces', serif;
+          font-size: 14px; font-weight: 600; color: var(--text);
+        }
+
+        .card-body { padding: 18px; }
+
+        .drop-zone {
+          border: 2px dashed var(--border);
+          border-radius: var(--r-sm);
+          padding: 32px 20px; text-align: center;
+          cursor: pointer; position: relative;
+          transition: all 0.18s; background: var(--bg);
+        }
+        .drop-zone:hover, .drop-zone.over {
+          border-color: var(--accent); background: var(--accent-bg);
+        }
+        .drop-zone input {
+          position: absolute; inset: 0;
+          opacity: 0; cursor: pointer; width: 100%; height: 100%;
+        }
+
+        .drop-icon {
+          width: 44px; height: 44px; border-radius: 12px;
+          background: var(--white); border: 1px solid var(--border);
+          display: flex; align-items: center; justify-content: center;
+          margin: 0 auto 12px; color: var(--muted);
+          box-shadow: var(--shadow-sm);
+        }
+
+        .drop-title { font-weight: 600; font-size: 14px; color: var(--text); margin-bottom: 4px; }
+        .drop-sub { font-size: 12px; color: var(--muted); line-height: 1.5; }
+        .drop-sub b { color: var(--accent); font-weight: 600; }
+
+        .media-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+          gap: 8px; margin-top: 14px;
+        }
+
+        .media-tile {
+          position: relative; aspect-ratio: 1;
+          border-radius: var(--r-sm); overflow: hidden;
+          border: 1px solid var(--border); background: var(--bg);
+        }
+        .media-tile img, .media-tile video {
+          width: 100%; height: 100%; object-fit: cover; display: block;
+        }
+        .media-tile .del {
+          position: absolute; top: 5px; right: 5px;
+          width: 22px; height: 22px; border-radius: 50%;
+          background: rgba(0,0,0,0.55); border: none; color: white;
+          cursor: pointer; display: flex; align-items: center; justify-content: center;
+          opacity: 0; transition: opacity 0.15s; backdrop-filter: blur(4px);
+        }
+        .media-tile:hover .del { opacity: 1; }
+        .media-tile .num {
+          position: absolute; top: 5px; left: 5px;
+          width: 18px; height: 18px; background: var(--accent);
+          color: white; font-size: 9px; font-weight: 700;
+          border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        }
+        .media-tile .tbadge {
+          position: absolute; bottom: 5px; left: 5px;
+          background: rgba(0,0,0,0.5); color: white;
+          font-size: 8px; font-weight: 700;
+          padding: 1px 5px; border-radius: 4px;
+          text-transform: uppercase; letter-spacing: 0.4px;
+        }
+        .media-tile .pw {
+          position: absolute; inset: 0;
+          background: rgba(0,0,0,0.5);
+          display: flex; flex-direction: column;
+          align-items: center; justify-content: center; gap: 4px;
+          transition: opacity 0.3s;
+        }
+        .media-tile .pw.done { opacity: 0; pointer-events: none; }
+        .pr { width: 32px; height: 32px; }
+        .pr circle { fill: none; stroke-width: 3; }
+        .pr .t { stroke: rgba(255,255,255,0.2); }
+        .pr .f {
+          stroke: white; stroke-linecap: round;
+          stroke-dasharray: 82; stroke-dashoffset: 82;
+          transition: stroke-dashoffset 0.3s;
+          transform: rotate(-90deg); transform-origin: center;
+        }
+        .pp { font-size: 10px; color: white; font-weight: 700; }
+
+        .media-count {
+          margin-top: 10px; font-size: 12px; color: var(--muted);
+          display: flex; justify-content: space-between;
+        }
+
+        .field { margin-bottom: 16px; }
+        .field:last-child { margin-bottom: 0; }
+        .field label {
+          display: block; font-size: 11px; font-weight: 700;
+          text-transform: uppercase; letter-spacing: 0.6px;
+          color: var(--muted); margin-bottom: 6px;
+        }
+        .field textarea, .field input[type="text"] {
+          width: 100%; background: var(--bg);
+          border: 1.5px solid var(--border);
+          border-radius: var(--r-sm); padding: 10px 13px;
+          font-family: 'Mulish', sans-serif;
+          font-size: 14px; color: var(--text); outline: none; resize: none;
+          transition: border-color 0.15s, background 0.15s;
+        }
+        .field textarea::placeholder, .field input::placeholder { color: var(--dim); }
+        .field textarea:focus, .field input:focus {
+          border-color: var(--accent); background: var(--white);
+          box-shadow: 0 0 0 3px var(--accent-bg);
+        }
+
+        .cc { text-align: right; font-size: 11px; color: var(--dim); margin-top: 4px; }
+        .cc.warn { color: var(--error); }
+
+        .tags-box {
+          display: flex; flex-wrap: wrap; gap: 6px;
+          padding: 8px 10px; background: var(--bg);
+          border: 1.5px solid var(--border);
+          border-radius: var(--r-sm); min-height: 42px; cursor: text;
+          transition: border-color 0.15s, background 0.15s;
+        }
+        .tags-box:focus-within {
+          border-color: var(--accent); background: var(--white);
+          box-shadow: 0 0 0 3px var(--accent-bg);
+        }
+        .tag {
+          display: flex; align-items: center; gap: 4px;
+          background: var(--accent-bg); border: 1px solid var(--accent-border);
+          color: var(--accent); padding: 2px 8px; border-radius: 20px;
+          font-size: 12px; font-weight: 600;
+        }
+        .tag button {
+          background: none; border: none; color: var(--accent);
+          cursor: pointer; opacity: 0.5; padding: 0; display: flex;
+          transition: opacity 0.15s;
+        }
+        .tag button:hover { opacity: 1; }
+        .tag-inp {
+          border: none; outline: none; background: transparent;
+          font-family: 'Mulish', sans-serif; font-size: 13px; color: var(--text);
+          min-width: 80px; flex: 1;
+        }
+        .tag-inp::placeholder { color: var(--dim); }
+
+        .loc-wrap { position: relative; }
+        .loc-wrap svg {
+          position: absolute; left: 11px; top: 50%;
+          transform: translateY(-50%); color: var(--muted); pointer-events: none;
+        }
+        .loc-wrap input { padding-left: 32px; }
+
+        .tog-item {
+          display: flex; align-items: center;
+          justify-content: space-between;
+          padding: 12px 0; border-bottom: 1px solid var(--border2);
+        }
+        .tog-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .tog-item:first-child { padding-top: 0; }
+        .tog-text span { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 1px; }
+        .tog-text small { font-size: 11px; color: var(--muted); }
+        .tog { position: relative; width: 38px; height: 21px; flex-shrink: 0; }
+        .tog input { opacity: 0; width: 0; height: 0; }
+        .tog-track {
+          position: absolute; inset: 0; background: var(--border);
+          border-radius: 20px; cursor: pointer; transition: background 0.2s;
+        }
+        .tog-track::after {
+          content: ''; position: absolute;
+          width: 15px; height: 15px; background: white; border-radius: 50%;
+          top: 3px; left: 3px; transition: transform 0.2s;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        }
+        .tog input:checked ~ .tog-track { background: var(--accent); }
+        .tog input:checked ~ .tog-track::after { transform: translateX(17px); }
+
+        .right {
+          position: sticky; top: 74px;
+          display: flex; flex-direction: column; gap: 14px;
+          animation: up 0.35s ease 0.1s both;
+        }
+
+        .preview-card {
+          background: var(--white); border: 1px solid var(--border);
+          border-radius: var(--r); overflow: hidden; box-shadow: var(--shadow-sm);
+        }
+
+        .p-top {
+          padding: 12px 14px; display: flex; align-items: center; gap: 9px;
+          border-bottom: 1px solid var(--border2);
+        }
+        .p-av {
+          width: 32px; height: 32px; border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Fraunces', serif; font-size: 12px; font-weight: 600;
+          color: white; flex-shrink: 0;
+        }
+        .p-nm { font-size: 13px; font-weight: 600; color: var(--text); }
+        .p-tm { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+        .p-media {
+          width: 100%; aspect-ratio: 1; background: var(--bg);
+          display: flex; align-items: center; justify-content: center;
+          overflow: hidden;
+        }
+        .p-media img, .p-media video {
+          width: 100%; height: 100%; object-fit: cover;
+        }
+        .p-empty {
+          display: flex; flex-direction: column;
+          align-items: center; gap: 8px; color: var(--dim);
+        }
+        .p-empty span { font-size: 11px; }
+
+        .p-dots {
+          display: flex; justify-content: center; gap: 4px; padding: 8px 0 2px;
+        }
+        .p-dot {
+          width: 5px; height: 5px; border-radius: 50%;
+          background: var(--border); transition: all 0.2s; cursor: pointer;
+        }
+        .p-dot.on { background: var(--accent); width: 14px; border-radius: 3px; }
+
+        .p-body { padding: 12px 14px 14px; }
+        .p-actions { display: flex; gap: 12px; margin-bottom: 10px; color: var(--muted); }
+        .p-caption { font-size: 13px; color: var(--text); line-height: 1.5; margin-bottom: 6px; word-break: break-word; }
+        .p-caption b { font-weight: 700; margin-right: 5px; }
+        .p-placeholder { color: var(--dim); font-style: italic; }
+        .p-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+        .p-tag { font-size: 12px; color: var(--accent); font-weight: 600; }
+        .p-loc { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+        .flow-card {
+          background: var(--white); border: 1px solid var(--border);
+          border-radius: var(--r); padding: 14px 16px; box-shadow: var(--shadow-sm);
+        }
+        .flow-title {
+          font-size: 11px; font-weight: 700;
+          text-transform: uppercase; letter-spacing: 0.6px;
+          color: var(--muted); margin-bottom: 12px;
+        }
+        .flow-row {
+          display: flex; align-items: center; gap: 10px;
+          padding: 6px 0; border-bottom: 1px solid var(--border2);
+        }
+        .flow-row:last-child { border-bottom: none; }
+        .fn {
+          width: 20px; height: 20px; border-radius: 50%;
+          background: var(--bg); border: 1.5px solid var(--border);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 9px; font-weight: 700; color: var(--muted);
+          flex-shrink: 0; transition: all 0.2s;
+        }
+        .fn.active { background: var(--accent); border-color: var(--accent); color: white; }
+        .fn.done { background: var(--success); border-color: var(--success); color: white; }
+        .ft { font-size: 12px; color: var(--muted); }
+        .ft b { display: block; font-size: 12px; font-weight: 600; color: var(--text); }
+
+        .sb {
+          position: fixed; bottom: 22px; left: 50%;
+          transform: translateX(-50%) translateY(70px);
+          background: var(--text); color: white;
+          padding: 10px 18px; border-radius: 30px;
+          font-size: 13px; font-weight: 500;
+          display: flex; align-items: center; gap: 8px;
+          box-shadow: var(--shadow-lg); z-index: 100; white-space: nowrap;
+          transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .sb.show { transform: translateX(-50%) translateY(0); }
+        .sb.ok { background: var(--success); }
+        .sb.err { background: var(--error); }
+
+        .spin {
+          width: 14px; height: 14px;
+          border: 2px solid rgba(255,255,255,0.3);
+          border-top-color: white; border-radius: 50%;
+          animation: spin 0.6s linear infinite; flex-shrink: 0;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .success-screen {
+          position: fixed; inset: 0;
+          background: rgba(250,250,248,0.97); backdrop-filter: blur(8px);
+          z-index: 300; display: none; flex-direction: column;
+          align-items: center; justify-content: center; gap: 14px;
+        }
+        .success-screen.show { display: flex; }
+        .success-check {
+          width: 68px; height: 68px; border-radius: 50%;
+          background: var(--success);
+          display: flex; align-items: center; justify-content: center;
+          animation: pop 0.45s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        @keyframes pop {
+          from { transform: scale(0); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+        .success-screen h2 {
+          font-family: 'Fraunces', serif; font-size: 26px; font-weight: 600; color: var(--text);
+        }
+        .success-screen p { font-size: 14px; color: var(--muted); }
+        .success-screen .btns { display: flex; gap: 10px; margin-top: 6px; }
+
+        .overlay {
+          position: fixed; inset: 0;
+          background: rgba(28,27,24,0.4); backdrop-filter: blur(6px);
+          z-index: 200; display: flex; align-items: center; justify-content: center;
+        }
+        .modal {
+          background: var(--white); border: 1px solid var(--border);
+          border-radius: 20px; padding: 32px; width: 400px; box-shadow: var(--shadow-lg);
+        }
+        .modal h2 {
+          font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600;
+          color: var(--text); margin-bottom: 5px;
+        }
+        .modal > p { font-size: 13px; color: var(--muted); margin-bottom: 22px; line-height: 1.6; }
+        .mf { margin-bottom: 13px; }
+        .mf label {
+          display: block; font-size: 11px; font-weight: 700;
+          text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin-bottom: 5px;
+        }
+        .mf input {
+          width: 100%; background: var(--bg); border: 1.5px solid var(--border);
+          border-radius: var(--r-sm); padding: 9px 12px; color: var(--text);
+          font-family: 'Mulish', sans-serif; font-size: 14px; outline: none;
+          transition: border-color 0.15s;
+        }
+        .mf input:focus { border-color: var(--accent); }
+        .mf input::placeholder { color: var(--dim); }
+    </style>
+</head>
+<body>
+
+<div class="overlay" id="cfgOverlay">
+    <div class="modal">
+        <h2>Connect to API</h2>
+        <p>Arriving via <code style="font-size:12px;background:var(--bg);padding:1px 6px;border-radius:5px;">GET /api/v1/content/post/new</code> injects the token automatically.</p>
+        <div class="mf"><label>API Base URL</label><input type="text" id="cfgApi" value="http://localhost:8080"></div>
+        <div class="mf"><label>JWT Token</label><input type="text" id="cfgJwt" placeholder="eyJhbGciOiJSUzI1NiJ9..."></div>
+        <div class="mf"><label>Username</label><input type="text" id="cfgUser" value="younes_dev"></div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px;" onclick="saveConfig()">
+            Continue
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+    </div>
+</div>
+
+<div class="success-screen" id="successScreen">
+    <div class="success-check">
+        <svg width="30" height="30" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h2>Post Published</h2>
+    <p>Your post is now live.</p>
+    <p id="successTime" style="font-size:12px;color:var(--muted);"></p>
+    <div class="btns">
+        <button class="btn btn-ghost" onclick="resetPage()">New Post</button>
+        <button class="btn btn-primary" onclick="resetPage()">Done</button>
+    </div>
+</div>
+
+<nav class="nav">
+    <div class="nav-left">
+        <div class="back-btn">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        </div>
+        <div class="nav-title">New Post</div>
+    </div>
+    <div class="nav-right">
+        <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px;" onclick="document.getElementById('cfgOverlay').style.display='flex'">Settings</button>
+        <button class="btn btn-primary" id="publishBtn" onclick="publishPost()" disabled>
+            Publish
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+    </div>
+</nav>
+
+<div class="page">
+    <div class="left">
+
+        <div class="card">
+            <div class="card-head">
+                <div class="card-icon">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                </div>
+                <h3>Media</h3>
+            </div>
+            <div class="card-body">
+                <div class="drop-zone" id="dropZone"
+                     ondragover="onDragOver(event)" ondragleave="onDragLeave()" ondrop="onDrop(event)">
+                    <input type="file" id="fileIn" multiple
+                           accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/mpeg"
+                           onchange="handleFiles(this.files)">
+                    <div class="drop-icon">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    </div>
+                    <div class="drop-title">Drop files or click to browse</div>
+                    <div class="drop-sub"><b>Images:</b> JPEG, PNG, WebP · 1MB &nbsp;·&nbsp; <b>Videos:</b> MP4, MOV · 30MB</div>
+                </div>
+                <div class="media-grid" id="mediaGrid"></div>
+                <div class="media-count" id="mediaCount" style="display:none;">
+                    <span id="countVal">0 / 10 files</span>
+                    <span id="uploadStatus" style="color:var(--muted);">Ready</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-head">
+                <div class="card-icon">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+                </div>
+                <h3>Caption & Details</h3>
+            </div>
+            <div class="card-body">
+                <div class="field">
+                    <label>Caption</label>
+                    <textarea id="caption" rows="3" placeholder="Write something…" maxlength="2200"
+                              oninput="syncPreview();updateCC(this,2200,'cc')"></textarea>
+                    <div class="cc" id="cc">0 / 2200</div>
+                </div>
+                <div class="field">
+                    <label>Tags</label>
+                    <div class="tags-box" id="tagsBox" onclick="document.getElementById('tagIn').focus()">
+                        <input class="tag-inp" id="tagIn" placeholder="Add a tag, press Enter…" onkeydown="onTagKey(event)">
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Location</label>
+                    <div class="loc-wrap">
+                        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <input type="text" id="locName" placeholder="Add location…" oninput="syncPreview()">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-head">
+                <div class="card-icon">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <h3>Post Settings</h3>
+            </div>
+            <div class="card-body">
+                <div class="tog-item">
+                    <div class="tog-text"><span>Disable Comments</span><small>Nobody can comment on this post</small></div>
+                    <label class="tog"><input type="checkbox" id="noComments" onchange="syncPreview()"><div class="tog-track"></div></label>
+                </div>
+                <div class="tog-item">
+                    <div class="tog-text"><span>Hide Like Count</span><small>Only you see the like count</small></div>
+                    <label class="tog"><input type="checkbox" id="hideLikes" onchange="syncPreview()"><div class="tog-track"></div></label>
+                </div>
+                <div class="tog-item">
+                    <div class="tog-text"><span>Hide Comment Count</span><small>Hidden from others</small></div>
+                    <label class="tog"><input type="checkbox" id="hideComments" onchange="syncPreview()"><div class="tog-track"></div></label>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="right">
+
+        <div class="preview-card">
+            <div style="padding:10px 14px 8px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);">Preview</span>
+            </div>
+            <div class="p-top">
+                <div class="p-av" id="pAv" style="background:#2563eb;">Y</div>
+                <div>
+                    <div class="p-nm" id="pNm">younes_dev</div>
+                    <div class="p-tm">Just now · Draft</div>
+                </div>
+            </div>
+            <div class="p-media" id="pMedia">
+                <div class="p-empty">
+                    <svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24" color="#c8c4bc"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    <span>No media yet</span>
+                </div>
+            </div>
+            <div class="p-dots" id="pDots" style="display:none;"></div>
+            <div class="p-body">
+                <div class="p-actions">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                </div>
+                <div class="p-caption" id="pCaption">
+                    <b id="pNmInline">younes_dev</b>
+                    <span id="pCapText" class="p-placeholder">Your caption…</span>
+                </div>
+                <div class="p-tags" id="pTags"></div>
+                <div class="p-loc" id="pLoc" style="display:none;">
+                    <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <span id="pLocText"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-card">
+            <div class="flow-title">API Flow</div>
+            <div class="flow-row"><div class="fn" id="fs1">1</div><div class="ft"><b>Request signed URLs</b>POST /api/v1/upload</div></div>
+            <div class="flow-row"><div class="fn" id="fs2">2</div><div class="ft"><b>Upload to Supabase</b>PUT signedUrl</div></div>
+            <div class="flow-row"><div class="fn" id="fs3">3</div><div class="ft"><b>Create draft</b>POST /api/v1/content/post</div></div>
+            <div class="flow-row"><div class="fn" id="fs4">4</div><div class="ft"><b>Publish</b>PATCH /api/v1/content/post/{id}/publish</div></div>
+        </div>
+
+    </div>
+</div>
+
+<div class="sb" id="sb"></div>
+
+<script>
+    let API = window.location.origin;
+    let JWT = '';
+    let USERNAME = 'younes_dev';
+
+    (function() {
+      const p = new URLSearchParams(window.location.search);
+      const t = p.get('token');
+      if (!t) return;
+      JWT = t;
+      try {
+        const pl = JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+        USERNAME = pl.preferred_username || pl.sub || 'you';
+      } catch(e) {}
+      window.history.replaceState({}, '', window.location.pathname);
+      document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('cfgOverlay').style.display = 'none';
+        applyUser();
+      });
+    })();
+
+    function applyUser() {
+      const COLORS = ['#2563eb','#7c3aed','#db2777','#ea580c','#16a34a','#0891b2'];
+      let h = 0; for (const c of USERNAME) h = (h*31+c.charCodeAt(0))&0xffffffff;
+      const col = COLORS[Math.abs(h) % COLORS.length];
+      document.getElementById('pAv').textContent = USERNAME[0].toUpperCase();
+      document.getElementById('pAv').style.background = col;
+      document.getElementById('pNm').textContent = USERNAME;
+      document.getElementById('pNmInline').textContent = USERNAME;
+      document.getElementById('cfgUser').value = USERNAME;
+    }
+
+    function saveConfig() {
+      API = document.getElementById('cfgApi').value.trim().replace(/\/$/,'');
+      JWT = document.getElementById('cfgJwt').value.trim();
+      USERNAME = document.getElementById('cfgUser').value.trim() || 'you';
+      applyUser();
+      document.getElementById('cfgOverlay').style.display = 'none';
+    }
+
+    let files = [], tags = [], postId = null, pidx = 0;
+
+    function onDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('over'); }
+    function onDragLeave() { document.getElementById('dropZone').classList.remove('over'); }
+    function onDrop(e) { e.preventDefault(); document.getElementById('dropZone').classList.remove('over'); handleFiles(e.dataTransfer.files); }
+
+    function handleFiles(list) {
+      Array.from(list).slice(0, 10 - files.length).forEach(f => {
+        files.push({ file: f, url: URL.createObjectURL(f), requestId: null, uploaded: false });
+      });
+      renderGrid(); syncPreview();
+      document.getElementById('publishBtn').disabled = !files.length;
+    }
+
+    function renderGrid() {
+      const g = document.getElementById('mediaGrid');
+      const mc = document.getElementById('mediaCount');
+      if (!files.length) { g.innerHTML = ''; mc.style.display = 'none'; return; }
+      mc.style.display = 'flex';
+      document.getElementById('countVal').textContent = `${files.length} / 10 files`;
+      const C = 2 * Math.PI * 13;
+      g.innerHTML = files.map((m, i) => {
+        const v = m.file.type.startsWith('video/');
+        return `<div class="media-tile" id="tile_${i}">
+          ${v?`<video src="${m.url}" muted playsinline></video>`:`<img src="${m.url}">`}
+          <div class="num">${i+1}</div>
+          <div class="tbadge">${v?'VID':'IMG'}</div>
+          <button class="del" onclick="rmFile(${i})">
+            <svg width="8" height="8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <div class="pw ${m.uploaded?'done':''}" id="pw_${i}">
+            <svg class="pr" viewBox="0 0 32 32">
+              <circle class="t" cx="16" cy="16" r="13"/>
+              <circle class="f" id="ring_${i}" cx="16" cy="16" r="13" stroke-dasharray="${C}" stroke-dashoffset="${C}"/>
+            </svg>
+            <div class="pp" id="pct_${i}">0%</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function rmFile(i) {
+      URL.revokeObjectURL(files[i].url); files.splice(i,1);
+      if (pidx >= files.length) pidx = Math.max(0, files.length-1);
+      renderGrid(); syncPreview();
+      document.getElementById('publishBtn').disabled = !files.length;
+    }
+
+    function setRing(i, pct) {
+      const C = 2 * Math.PI * 13;
+      const r = document.getElementById('ring_'+i), p = document.getElementById('pct_'+i);
+      if (r) r.style.strokeDashoffset = C-(pct/100)*C;
+      if (p) p.textContent = pct+'%';
+      if (pct >= 100) setTimeout(() => { const w = document.getElementById('pw_'+i); if(w) w.classList.add('done'); }, 300);
+    }
+
+    function onTagKey(e) {
+      if ((e.key==='Enter'||e.key===',') && e.target.value.trim()) {
+        e.preventDefault();
+        const v = e.target.value.replace(/[^a-zA-Z0-9_]/g,'').trim();
+        if (v && !tags.includes(v) && tags.length < 30) { tags.push(v); renderTags(); syncPreview(); }
+        e.target.value = '';
+      } else if (e.key==='Backspace' && !e.target.value && tags.length) {
+        tags.pop(); renderTags(); syncPreview();
+      }
+    }
+
+    function renderTags() {
+      const box = document.getElementById('tagsBox'), inp = document.getElementById('tagIn');
+      box.innerHTML = '';
+      tags.forEach((t, i) => {
+        const c = document.createElement('div'); c.className = 'tag';
+        c.innerHTML = `#${t}<button onclick="rmTag(${i})"><svg width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+        box.appendChild(c);
+      });
+      box.appendChild(inp);
+    }
+
+    function rmTag(i) { tags.splice(i,1); renderTags(); syncPreview(); }
+
+    function syncPreview() {
+      const cap = document.getElementById('caption').value.trim();
+      const ct = document.getElementById('pCapText');
+      ct.textContent = cap || 'Your caption…';
+      ct.className = cap ? '' : 'p-placeholder';
+      document.getElementById('pTags').innerHTML = tags.map(t=>`<span class="p-tag">#${t}</span>`).join('');
+      const loc = document.getElementById('locName').value.trim();
+      document.getElementById('pLoc').style.display = loc ? 'flex' : 'none';
+      document.getElementById('pLocText').textContent = loc;
+      const pm = document.getElementById('pMedia'), pd = document.getElementById('pDots');
+      if (files.length) {
+        const m = files[pidx]||files[0];
+        const v = m.file.type.startsWith('video/');
+        pm.innerHTML = v
+          ? `<video src="${m.url}" muted autoplay loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>`
+          : `<img src="${m.url}" style="width:100%;height:100%;object-fit:cover;">`;
+        if (files.length > 1) {
+          pd.style.display='flex';
+          pd.innerHTML = files.map((_,i)=>`<div class="p-dot ${i===pidx?'on':''}" onclick="pidx=${i};syncPreview()"></div>`).join('');
+        } else pd.style.display='none';
+      } else {
+        pm.innerHTML=`<div class="p-empty"><svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24" color="#c8c4bc"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>No media yet</span></div>`;
+        pd.style.display='none';
+      }
+    }
+
+    function updateCC(el, max, id) {
+      const l = el.value.length, c = document.getElementById(id);
+      c.textContent = `${l} / ${max}`; c.classList.toggle('warn', l > max*.9);
+    }
+
+    function setFS(n, s) {
+      const el = document.getElementById('fs'+n);
+      el.className = 'fn'+(s==='active'?' active':s==='done'?' done':'');
+      el.textContent = s==='done'?'✓':n;
+    }
+
+    let sbT;
+    function toast(msg, type='', dur=3500) {
+      const el = document.getElementById('sb');
+      el.className = 'sb show'+(type?' '+type:'');
+      el.innerHTML = type==='loading'?`<div class="spin"></div>${msg}`:msg;
+      clearTimeout(sbT);
+      if (dur) sbT = setTimeout(()=>el.classList.remove('show'), dur);
+    }
+
+    async function apiFetch(path, opts={}) {
+      const h = {'Content-Type':'application/json'};
+      if (JWT) h['Authorization'] = 'Bearer '+JWT;
+      const r = await fetch(API+path, {...opts, headers:{...h,...(opts.headers||{})}});
+      if (!r.ok) {
+        // Parse body so callers can inspect structured error responses
+        const errBody = await r.json().catch(()=>({}));
+        const err = new Error(`HTTP ${r.status}`);
+        err.status = r.status;
+        err.body = errBody;
+        throw err;
+      }
+      return r.json().catch(()=>({}));
+    }
+
+    // Retry only the files whose requestIds are in failedUploadIds,
+    // get fresh signed URLs and re-upload, then update ids[] in place.
+    async function retryFailedUploads(failedUploadIds, ids) {
+      toast(`Retrying ${failedUploadIds.length} failed file(s)…`, 'loading', 0);
+
+      for (const failedId of failedUploadIds) {
+        // Find the file that matches this requestId
+        const i = files.findIndex(m => m.requestId === failedId);
+        if (i === -1) continue;
+        const m = files[i];
+
+        // Mark it as not uploaded so the progress ring reappears
+        m.uploaded = false;
+        const pw = document.getElementById('pw_' + i);
+        if (pw) pw.classList.remove('done');
+        setRing(i, 0);
+
+        // Step 1 again: get a fresh signed URL
+        const { signedUrl, requestId } = await getSignedUrl(m.file);
+        m.requestId = requestId;
+
+        // Step 2 again: re-upload this file
+        toast(`Re-uploading file ${i+1}…`, 'loading', 0);
+        await uploadDirect(signedUrl, m.file, p => setRing(i, p));
+        m.uploaded = true;
+        setRing(i, 100);
+
+        // Replace the old failed id with the new requestId in the ids array
+        const idIdx = ids.indexOf(failedId);
+        if (idIdx !== -1) ids[idIdx] = requestId;
+      }
+    }
+
+    async function getSignedUrl(file) {
+      return apiFetch('/api/v1/upload', {
+        method: 'POST',
+        body: JSON.stringify({ uploadType:'POST', fileMimeType:file.type, fileSize:file.size, duration:file.type.startsWith('video/')?15:1 })
+      });
+    }
+
+    async function uploadDirect(signedUrl, file, onProg) {
+      return new Promise((res,rej) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.onprogress = e => { if(e.lengthComputable) onProg(Math.round(e.loaded/e.total*100)); };
+        xhr.onload = () => xhr.status<300?res():rej(new Error('Upload failed'));
+        xhr.onerror = ()=>rej(new Error('Network error'));
+        xhr.open('PUT', signedUrl);
+        xhr.setRequestHeader('Content-Type', file.type);
+        xhr.send(file);
+      });
+    }
+
+    async function publishPost() {
+      if (!files.length) { toast('Add at least one file','err'); return; }
+      document.getElementById('publishBtn').disabled = true;
+      const ids = [];
+      try {
+        setFS(1,'active'); toast('Requesting upload URLs…','loading',0);
+        for (let i=0; i<files.length; i++) {
+          const m = files[i];
+          const { signedUrl, requestId } = await getSignedUrl(m.file);
+          m.requestId = requestId; setFS(1,'done'); setFS(2,'active');
+          toast(`Uploading ${i+1} of ${files.length}…`,'loading',0);
+          await uploadDirect(signedUrl, m.file, p=>setRing(i,p));
+          m.uploaded=true; setRing(i,100); ids.push(requestId);
+        }
+        setFS(2,'done'); setFS(3,'active'); toast('Creating post…','loading',0);
+        document.getElementById('uploadStatus').textContent='All uploaded ✓';
+        const body = {
+          caption: document.getElementById('caption').value.trim()||null,
+          uploadRequestsIds: ids,
+          tags: tags.length?tags:null,
+          postSettings: {
+            commentsDisabled: document.getElementById('noComments').checked,
+            hideLikes: document.getElementById('hideLikes').checked,
+            hideComments: document.getElementById('hideComments').checked
+          },
+          location: document.getElementById('locName').value.trim()
+            ? {locationName:document.getElementById('locName').value.trim(),latitude:null,longitude:null}
+            : null
+        };
+        // Try creating the post. If some upload sessions expired (422 + failedUploadIds),
+        // silently retry just those files then re-submit. Max 2 attempts total.
+        let post;
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            post = await apiFetch('/api/v1/content/post', {method:'POST', body:JSON.stringify(body)});
+            break; // success
+          } catch(e) {
+            const isUploadFailure = e.status === 422 && e.body && e.body.failedUploadIds && e.body.failedUploadIds.length;
+            if (isUploadFailure && attempt === 0) {
+              // Silent retry: re-upload only the failed files and update their ids in body
+              setFS(3, ''); setFS(1, 'active'); setFS(2, 'active');
+              await retryFailedUploads(e.body.failedUploadIds, body.uploadRequestsIds);
+              setFS(1, 'done'); setFS(2, 'done'); setFS(3, 'active');
+              toast('Retrying post creation…', 'loading', 0);
+              // loop will retry apiFetch with updated body.uploadRequestsIds
+            } else {
+              throw e; // not retryable or second attempt also failed
+            }
+          }
+        }
+        postId = post.id; setFS(3,'done');
+
+        // Update preview with real data from PostRepresentation
+        applyPostRepresentation(post);
+
+        setFS(4,'active'); toast('Publishing…','loading',0);
+        await apiFetch(`/api/v1/content/post/${postId}/publish`,{method:'PATCH'});
+        setFS(4,'done'); toast('Published!','ok');
+
+        // Update success screen with real publishedAt
+        const publishedAt = post.publishedAt ? new Date(post.publishedAt) : new Date();
+        document.getElementById('successTime').textContent =
+          publishedAt.toLocaleString(undefined, {dateStyle:'medium', timeStyle:'short'});
+
+        setTimeout(()=>document.getElementById('successScreen').classList.add('show'),500);
+      } catch(e) {
+        toast('Error: '+(e.message||'Something went wrong'),'err',5000);
+        document.getElementById('publishBtn').disabled=false;
+      }
+    }
+
+
+    function applyPostRepresentation(post) {
+      const profile = post.AuthorProfile;
+      if (profile) {
+        const av = document.getElementById('pAv');
+        if (profile.avatarurl) {
+          av.style.background = 'none';
+          av.style.backgroundImage = 'url(' + profile.avatarurl + ')';
+          av.style.backgroundSize = 'cover';
+          av.textContent = '';
+        }
+        if (profile.username) {
+          document.getElementById('pNm').textContent = profile.username;
+          document.getElementById('pNmInline').textContent = profile.username;
+        }
+      }
+      if (post.mediaList && post.mediaList.length) {
+        const realFiles = post.mediaList;
+        const pm = document.getElementById('pMedia');
+        const pd = document.getElementById('pDots');
+        function showMedia(idx) {
+          const m = realFiles[idx];
+          const v = m.mediaType === 'VIDEO';
+          pm.innerHTML = v
+            ? '<video src="' + m.filepath + '" muted autoplay loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>'
+            : '<img src="' + m.filepath + '" style="width:100%;height:100%;object-fit:cover;">';
+          if (realFiles.length > 1) {
+            pd.style.display = 'flex';
+            pd.innerHTML = realFiles.map((_,i) =>
+              '<div class="p-dot ' + (i===idx?'on':'') + '" onclick="showMediaReal(' + i + ')"></div>'
+            ).join('');
+          }
+        }
+        window.showMediaReal = function(idx) { showMedia(idx); };
+        showMedia(0);
+      }
+      document.querySelector('.p-tm').textContent = 'Just now · Draft';
+    }
+
+    function resetPage() {
+      files.forEach(m=>URL.revokeObjectURL(m.url));
+      files=[]; tags=[]; postId=null; pidx=0;
+      document.getElementById('caption').value='';
+      document.getElementById('locName').value='';
+      document.getElementById('noComments').checked=false;
+      document.getElementById('hideLikes').checked=false;
+      document.getElementById('hideComments').checked=false;
+      document.getElementById('cc').textContent='0 / 2200';
+      document.getElementById('uploadStatus').textContent='Ready';
+      renderTags(); renderGrid(); syncPreview();
+      [1,2,3,4].forEach(n=>setFS(n,''));
+      document.getElementById('publishBtn').disabled=true;
+      document.getElementById('successScreen').classList.remove('show');
+    }
+</script>
+</body>
+</html>

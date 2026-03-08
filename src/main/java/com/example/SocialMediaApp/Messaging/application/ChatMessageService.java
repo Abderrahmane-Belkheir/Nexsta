@@ -1,8 +1,8 @@
 package com.example.SocialMediaApp.Messaging.application;
 
 import com.example.SocialMediaApp.Messaging.Exceptions.ChatMessagingException;
-import com.example.SocialMediaApp.Messaging.api.dto.sendMessageToChatDTO;
-import com.example.SocialMediaApp.Messaging.api.dto.sendMessageToUserDTO;
+import com.example.SocialMediaApp.Messaging.api.dto.SendMessageToChatDTO;
+import com.example.SocialMediaApp.Messaging.api.dto.SendMessageToUserDTO;
 import com.example.SocialMediaApp.Messaging.domain.Chat;
 import com.example.SocialMediaApp.Messaging.domain.ChatMember;
 import com.example.SocialMediaApp.Messaging.domain.Message;
@@ -46,8 +46,8 @@ public class ChatMessageService {
 
     // this is meant for first time chatting it first check whether a chat exists between users or not
     @CheckUserExistence
-    public void sendMessageToUser(sendMessageToUserDTO sendMessageToUserDTO){
-        String currentUserId=authenticatedUserService.getcurrentuser();
+    public void sendMessageToUser(SendMessageToUserDTO sendMessageToUserDTO){
+        String currentUserId=authenticatedUserService.getCurrentUser();
         String targetUserId=sendMessageToUserDTO.getUserId();
         if(blocksRepo.existsByBlockerIdAndBlockedId(currentUserId,targetUserId)||blocksRepo.existsByBlockerIdAndBlockedId(targetUserId,currentUserId)){
             throw new ChatMessagingException("cannot send message to user");
@@ -82,7 +82,7 @@ public class ChatMessageService {
 
 
     @CheckUserExistence
-    public void sendMessageToChat(Principal principal, sendMessageToChatDTO sendMessageToChatDTO){
+    public void sendMessageToChat(Principal principal, SendMessageToChatDTO sendMessageToChatDTO){
         User currentUser=new User(principal.getName());
         ChatMember chatMember=chatMemberRepo.findByChatIdAndUserId(sendMessageToChatDTO.getChatId(),currentUser.getId()).
                 orElseThrow(()-> new ChatMessagingException("Chat not found"));

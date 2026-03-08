@@ -80,7 +80,7 @@ public class FollowServiceIntegrationTest extends TestContainerConfig {
         @ParameterizedTest
         @EnumSource(ProfileType.class)
         public void follow_profileTypes(ProfileType profileType){
-            String currentUserId=authenticatedUserService.getcurrentuser();
+            String currentUserId=authenticatedUserService.getCurrentUser();
             String targetUserId =followTestHelper.createUserProfile(profileType);
             followService.Follow(targetUserId);
             if(profileType== ProfileType.PUBLIC){
@@ -96,7 +96,7 @@ public class FollowServiceIntegrationTest extends TestContainerConfig {
         @ParameterizedTest
       @EnumSource(Follow.Status.class)
         public void unfollow(Follow.Status followStatus){
-            String currentUserId = authenticatedUserService.getcurrentuser();
+            String currentUserId = authenticatedUserService.getCurrentUser();
             String targetUserId =followTestHelper.createFollowRecord(followStatus, FollowQueryHelper.Position.FOLLOWINGS);
             followService.UnFollow(targetUserId);
             assertFalse(followRepo.existsByFollowerIdAndFollowingId(currentUserId,targetUserId));
@@ -107,7 +107,7 @@ public class FollowServiceIntegrationTest extends TestContainerConfig {
         @ParameterizedTest
         @EnumSource(Follow.Status.class)
         public void removeFollower(Follow.Status followStatus){
-            String currentUserId = authenticatedUserService.getcurrentuser();
+            String currentUserId = authenticatedUserService.getCurrentUser();
             String targetUserId=followTestHelper.createFollowRecord(followStatus, FollowQueryHelper.Position.FOLLOWERS);
             followService.removefollower(targetUserId);
             assertFalse(followRepo.existsByFollowerIdAndFollowingId(targetUserId,currentUserId));
@@ -121,7 +121,7 @@ public class FollowServiceIntegrationTest extends TestContainerConfig {
         @ParameterizedTest
         @EnumSource(Follow.Status.class)
         public void acceptFollower(Follow.Status followStatus){
-            String currentUserId = authenticatedUserService.getcurrentuser();
+            String currentUserId = authenticatedUserService.getCurrentUser();
             String targetUserId= followTestHelper.createFollowRecord(followStatus, FollowQueryHelper.Position.FOLLOWERS);
             if(followStatus== Follow.Status.ACCEPTED){
                 assertthrows(BadFollowRequestException.class, () ->followRequestService.acceptFollow(targetUserId),
@@ -137,7 +137,7 @@ public class FollowServiceIntegrationTest extends TestContainerConfig {
         @ParameterizedTest
         @EnumSource(Follow.Status.class)
         public void rejectFollower(Follow.Status followStatus){
-           String currentUserId = authenticatedUserService.getcurrentuser();
+           String currentUserId = authenticatedUserService.getCurrentUser();
             String targetUserId= followTestHelper.createFollowRecord(followStatus, FollowQueryHelper.Position.FOLLOWERS);
             if(followStatus== Follow.Status.ACCEPTED){
                 assertthrows(BadFollowRequestException.class, () ->followRequestService.rejectFollow(targetUserId),
@@ -151,7 +151,7 @@ public class FollowServiceIntegrationTest extends TestContainerConfig {
         @ParameterizedTest
         @EnumSource(Follow.Status.class)
         public void unsendFollow(Follow.Status followStatus){
-            String currentUserId=authenticatedUserService.getcurrentuser();
+            String currentUserId=authenticatedUserService.getCurrentUser();
             String targetUserId= followTestHelper.createFollowRecord(followStatus, FollowQueryHelper.Position.FOLLOWINGS);
 
             if(followStatus== Follow.Status.ACCEPTED){
@@ -168,6 +168,6 @@ public class FollowServiceIntegrationTest extends TestContainerConfig {
      */
     @Test
     public void test_user_existence(){
-        assertthrows(UserNotFoundException.class,()-> followService.Follow("test"),"User not found");
+        assertthrows(com.example.SocialMediaApp.User.Exceptions.UserNotFoundException.class,()-> followService.Follow("test"),"User not found");
     }
 }

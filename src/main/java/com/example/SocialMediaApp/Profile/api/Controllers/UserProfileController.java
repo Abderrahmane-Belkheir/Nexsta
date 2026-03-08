@@ -1,8 +1,8 @@
 package com.example.SocialMediaApp.Profile.api.Controllers;
 
-import com.example.SocialMediaApp.Profile.api.dto.profile;
-import com.example.SocialMediaApp.Profile.api.dto.profileDetails;
-import com.example.SocialMediaApp.Profile.api.dto.profilesettings;
+import com.example.SocialMediaApp.Profile.api.dto.Profile;
+import com.example.SocialMediaApp.Profile.api.dto.ProfileDetails;
+import com.example.SocialMediaApp.Profile.api.dto.ProfileSettings;
 import com.example.SocialMediaApp.Profile.application.ProfileQueryService;
 import com.example.SocialMediaApp.Profile.application.ProfileUpdatingService;
 import jakarta.validation.Valid;
@@ -23,18 +23,18 @@ public class UserProfileController {
     private final ProfileUpdatingService profileUpdatingService;
 
     @GetMapping("/me")
-    public profileDetails getMyProfile(@AuthenticationPrincipal Jwt jwt) {
+    public ProfileDetails getMyProfile(@AuthenticationPrincipal Jwt jwt) {
         return profileQueryService.getUserProfile(jwt.getSubject());
     }
 
     @PutMapping("/me")
-    public void updateProfile(@RequestBody @Valid profile profile) {
+    public void updateProfile(@RequestBody @Valid Profile profile) {
         profileUpdatingService.UpdateProfile(profile);
     }
 
 
     @GetMapping("/{userid}")
-    public profileDetails getProfile(@PathVariable String userid) {
+    public ProfileDetails getProfile(@PathVariable String userid) {
         return profileQueryService.getUserProfile(userid);
     }
 
@@ -45,12 +45,12 @@ public class UserProfileController {
     }
 
     @GetMapping("/me/settings")
-    public profilesettings getProfileSettings() {
+    public ProfileSettings getProfileSettings() {
         return profileQueryService.getMyProfileSettings();
     }
 
     @PutMapping("/me/settings")
-    public void updateProfileSettings(@RequestBody profilesettings settings) {
+    public void updateProfileSettings(@RequestBody ProfileSettings settings) {
         profileUpdatingService.UpdateProfileSettings(settings);
     }
 }

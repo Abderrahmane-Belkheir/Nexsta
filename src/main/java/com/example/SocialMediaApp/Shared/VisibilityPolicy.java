@@ -31,12 +31,12 @@ public class VisibilityPolicy {
             if(isblocked){
              return false;
             }
-            boolean hasblocked= blocksRepo.existsByBlockerIdAndBlockedId(currentUserId,requestedUserId);
+            boolean hasblocked= blocksRepo.existsByBlockerIdAndBlockedId(requestedUserId,currentUserId);
             if (hasblocked) {
               return false;
             }
 
-            if(!profileRepo.existsByUserIdAndIsprivateFalse(requestedUserId)){
+            if(!profileRepo.existsByUserIdAndProfileSettingsIsPrivateFalse(requestedUserId)){
                 if(!followRepo.existsByFollowerIdAndFollowingIdAndStatus(currentUserId,requestedUserId, Follow.Status.ACCEPTED)){
                   return false;
                 }

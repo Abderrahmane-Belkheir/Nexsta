@@ -1,6 +1,6 @@
 package com.example.SocialMediaApp.SocialGraph.application;
 
-import com.example.SocialMediaApp.Profile.api.dto.profileSummary;
+import com.example.SocialMediaApp.Profile.api.dto.ProfileSummary;
 import com.example.SocialMediaApp.SocialGraph.domain.Follow;
 import com.example.SocialMediaApp.SocialGraph.domain.RelationshipStatus;
 import com.example.SocialMediaApp.SocialGraph.persistence.FollowRepo;
@@ -17,9 +17,9 @@ public class FollowRelationShipResolver {
 
     private final FollowRepo followRepo;
 
-    public void resolveCurrentUserFollowRelationShip(List<profileSummary> profileSummaries, String viewerId, FollowQueryHelper.Position position, Follow.Status followStatus){
-        Map<String, profileSummary> summaryMap = profileSummaries.stream()
-                .collect(Collectors.toMap(profileSummary::getUserId, Function.identity()));
+    public void resolveCurrentUserFollowRelationShip(List<ProfileSummary> profileSummaries, String viewerId, FollowQueryHelper.Position position, Follow.Status followStatus){
+        Map<String, ProfileSummary> summaryMap = profileSummaries.stream()
+                .collect(Collectors.toMap(ProfileSummary::getUserId, Function.identity()));
 
         List<String> targetUserIds = summaryMap.keySet().stream().toList();
         if(position== FollowQueryHelper.Position.FOLLOWERS){
@@ -34,7 +34,7 @@ public class FollowRelationShipResolver {
             }
             List<Follow> followers =followRepo.findByFollowerIdAndFollowingIdIn(viewerId,targetUserIds);
             for(Follow follow: followers){
-                profileSummary profileSummary= summaryMap.get(follow.getFollowing_id());
+                ProfileSummary profileSummary= summaryMap.get(follow.getFollowing_id());
                 if(profileSummary!=null){
                     if(follow.getStatus()== Follow.Status.ACCEPTED){
                         profileSummary.setStatus(RelationshipStatus.FOLLOWING);
@@ -55,7 +55,7 @@ public class FollowRelationShipResolver {
         }
         List<Follow> followings=followRepo.findByFollowingIdAndFollowerIdIn(viewerId,targetUserIds);
         for(Follow follow: followings){
-            profileSummary profileSummary= summaryMap.get(follow.getFollower_id());
+            ProfileSummary profileSummary= summaryMap.get(follow.getFollower_id());
             if(profileSummary!=null){
                 if(follow.getStatus()== Follow.Status.ACCEPTED){
                     profileSummary.setStatus(RelationshipStatus.FOLLOWED);
@@ -68,9 +68,9 @@ public class FollowRelationShipResolver {
 
 
 
-    public void resolveViewerFollowRelationShip(List<profileSummary> profileSummaries, String viewerId) {
-        Map<String, profileSummary> summaryMap = profileSummaries.stream()
-                .collect(Collectors.toMap(profileSummary::getUserId, Function.identity()));
+    public void resolveViewerFollowRelationShip(List<ProfileSummary> profileSummaries, String viewerId) {
+        Map<String, ProfileSummary> summaryMap = profileSummaries.stream()
+                .collect(Collectors.toMap(ProfileSummary::getUserId, Function.identity()));
 
         List<String> targetUserIds = summaryMap.keySet().stream().toList();
         // here there is no relation know in advanced so starting from not following
@@ -78,7 +78,7 @@ public class FollowRelationShipResolver {
         profileSummaries.forEach(profileSummary -> profileSummary.setStatus(RelationshipStatus.NOT_FOLLOWING));
         List<Follow> outgoing = followRepo.findByFollowerIdAndFollowingIdIn(viewerId, targetUserIds);
         for (Follow follow : outgoing) {
-            profileSummary summary = summaryMap.get(follow.getFollowing_id());
+            ProfileSummary summary = summaryMap.get(follow.getFollowing_id());
             if (summary != null) {
                 RelationshipStatus status = follow.getStatus() == Follow.Status.PENDING
                         ? RelationshipStatus.FOLLOW_REQUESTED
@@ -90,7 +90,7 @@ public class FollowRelationShipResolver {
 
         List<Follow> incoming = followRepo.findByFollowingIdAndFollowerIdIn(viewerId,targetUserIds);
         for (Follow follow : incoming) {
-            profileSummary profileSummary = summaryMap.get(follow.getFollower_id());
+            ProfileSummary profileSummary = summaryMap.get(follow.getFollower_id());
             if (profileSummary != null && profileSummary.getStatus() == RelationshipStatus.NOT_FOLLOWING) {
                 RelationshipStatus status = follow.getStatus() == Follow.Status.PENDING
                         ? RelationshipStatus.FOLLOW_REQUEST_RECEIVED
@@ -99,7 +99,7 @@ public class FollowRelationShipResolver {
             }
         }
         //checking if list fetched has the viewer user
-        profileSummary profileSummary=summaryMap.get(viewerId);
+        ProfileSummary profileSummary=summaryMap.get(viewerId);
         if(profileSummary!=null){
            profileSummary.setStatus(null);
     }

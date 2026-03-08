@@ -3,7 +3,7 @@ package com.example.SocialMediaApp.SocialGraph.application;
 import com.example.SocialMediaApp.Shared.VisibilityPolicy;
 import com.example.SocialMediaApp.SocialGraph.Exceptions.FollowListNotVisibleException;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
-import com.example.SocialMediaApp.Profile.api.dto.profileSummary;
+import com.example.SocialMediaApp.Profile.api.dto.ProfileSummary;
 import com.example.SocialMediaApp.Shared.CheckUserExistence;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,32 +18,32 @@ public class FollowQueryService {
     private final AuthenticatedUserService authenticatedUserService;
     private final VisibilityPolicy visibilityPolicy;
 
-    public List<profileSummary> listCurrentUserFollowers(int page) {
-        String currentUserId =authenticatedUserService.getcurrentuser();
+    public List<ProfileSummary> listCurrentUserFollowers(int page) {
+        String currentUserId =authenticatedUserService.getCurrentUser();
         return  followQueryHelper.listCurrentUserFollows(currentUserId, FollowQueryHelper.Position.FOLLOWERS,page);
     }
 
-    public List<profileSummary> listCurrentUserFollowings(int page) {
-       String currentUserId = authenticatedUserService.getcurrentuser();
+    public List<ProfileSummary> listCurrentUserFollowings(int page) {
+       String currentUserId = authenticatedUserService.getCurrentUser();
         return  followQueryHelper.listCurrentUserFollows(currentUserId, FollowQueryHelper.Position.FOLLOWINGS,page);
     }
 
-    public List<profileSummary> listCurrentUserFollowRequests(int page) {
-        String currentUserId= authenticatedUserService.getcurrentuser();
+    public List<ProfileSummary> listCurrentUserFollowRequests(int page) {
+        String currentUserId= authenticatedUserService.getCurrentUser();
         return followQueryHelper.
                 listCurrentUserPendingFollows(currentUserId,FollowQueryHelper.Position.FOLLOWERS,page);
     }
 
-    public List<profileSummary> listCurrentUserFollowingRequests(int page) {
-        String currentUserId= authenticatedUserService.getcurrentuser();
+    public List<ProfileSummary> listCurrentUserFollowingRequests(int page) {
+        String currentUserId= authenticatedUserService.getCurrentUser();
         return followQueryHelper.
                 listCurrentUserPendingFollows(currentUserId, FollowQueryHelper.Position.FOLLOWINGS,page);
 
     }
 
     @CheckUserExistence
-    public List<profileSummary> listUserFollowers(String targetUserId, int page){
-        String currentUserId= authenticatedUserService.getcurrentuser();
+    public List<ProfileSummary> listUserFollowers(String targetUserId, int page){
+        String currentUserId= authenticatedUserService.getCurrentUser();
        boolean isAllowed= visibilityPolicy.isAllowed(currentUserId, targetUserId);
        if(!isAllowed){
            throw new FollowListNotVisibleException("followers list for user is not visible.");
@@ -52,8 +52,8 @@ public class FollowQueryService {
     }
 
     @CheckUserExistence
-    public List<profileSummary> listUserFollowing(String targetUserId, int page){
-        String currentUserId= authenticatedUserService.getcurrentuser();
+    public List<ProfileSummary> listUserFollowing(String targetUserId, int page){
+        String currentUserId= authenticatedUserService.getCurrentUser();
         boolean isAllowed= visibilityPolicy.isAllowed(currentUserId,targetUserId);
         if(!isAllowed){
             throw new FollowListNotVisibleException("followings list for user is not visible.");

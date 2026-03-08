@@ -30,7 +30,7 @@ public class StoryLifecycleService {
 
 
     public StoryRepresentation createStory(StoryCreationRequest storyCreationRequest){
-        String currentUserId=authenticatedUserService.getcurrentuser();
+        String currentUserId=authenticatedUserService.getCurrentUser();
         List<String> uploadRequestsIds=storyCreationRequest.getUploadRequestsIds();
         List<MediaUpload> mediaUploads= mediaLifecycleService.extractMediaUploads(currentUserId,uploadRequestsIds, UploadType.STORY);
         Story story= storyRepo.save(Story.builder().user(new User(currentUserId))
@@ -44,7 +44,7 @@ public class StoryLifecycleService {
     }
 
     public void publishStory(String storyId){
-        String currentUserId=authenticatedUserService.getcurrentuser();
+        String currentUserId=authenticatedUserService.getCurrentUser();
         Story draftStory=storyRepo.findByUserIdAndStoryIdAndStoryStatus(currentUserId, storyId, Story.StoryStatus.DRAFT).
                 orElseThrow(()-> new ActionNotAllowedException("Action could not be completed"));
         draftStory.setPublishedAt(Instant.now());
@@ -54,7 +54,7 @@ public class StoryLifecycleService {
     }
 
     public void deleteStory(String storyId){
-        String currentUserId=authenticatedUserService.getcurrentuser();
+        String currentUserId=authenticatedUserService.getCurrentUser();
     }
 
 

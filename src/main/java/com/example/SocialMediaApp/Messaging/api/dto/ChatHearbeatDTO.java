@@ -3,6 +3,6 @@ package com.example.SocialMediaApp.Messaging.api.dto;
 import lombok.Data;
 
 @Data
-public class chatHearbeatDTO {
+public class ChatHearbeatDTO {
     private String chatId;
 }

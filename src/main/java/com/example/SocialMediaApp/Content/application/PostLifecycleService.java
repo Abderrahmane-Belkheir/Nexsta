@@ -28,7 +28,7 @@ public class PostLifecycleService {
     private final Contentmapper contentmapper;
 
     public PostRepresentation createPost(PostCreationRequest postCreation){
-        String currentUserId=authenticatedUserService.getcurrentuser();
+        String currentUserId=authenticatedUserService.getCurrentUser();
         List<String> uploadRequestsIds=postCreation.getUploadRequestsIds();
         List<MediaUpload> mediaUploads=mediaLifecycleService.extractMediaUploads(currentUserId,uploadRequestsIds,UploadType.POST);
         Post post= postRepo.save(Post.builder().user(new User(currentUserId))
@@ -44,7 +44,7 @@ public class PostLifecycleService {
 
     // publishing post for first time draft -> published
     public void publishPost(String postId){
-        String currentUserId=authenticatedUserService.getcurrentuser();
+        String currentUserId=authenticatedUserService.getCurrentUser();
         Post draftPost=postRepo.findByUserIdAndPostIdAndPostStatus(currentUserId,postId, Post.PostStatus.DRAFT).
                 orElseThrow(()-> new ActionNotAllowedException("Action could not be completed"));
         draftPost.setPublishedAt(Instant.now());
@@ -58,7 +58,7 @@ public class PostLifecycleService {
         if(!allowedStatus.contains(status)){
             throw new ActionNotAllowedException("Action could not be completed");
         }
-        String currentUserId=authenticatedUserService.getcurrentuser();
+        String currentUserId=authenticatedUserService.getCurrentUser();
         int updated= postRepo.updatePostStatus(postId,status,currentUserId,allowedStatus);
         if(updated==0){
             // can be thrown if post not found or user don't have access or post status is originally in draft or deleted
@@ -68,7 +68,7 @@ public class PostLifecycleService {
 
 
     public void deletePost(String postId){
-        String currentUserId=authenticatedUserService.getcurrentuser();
+        String currentUserId=authenticatedUserService.getCurrentUser();
         int updated=postRepo.updatePostStatus(postId, Post.PostStatus.DELETED,currentUserId,List.of(Post.PostStatus.values()));
         if(updated==0){
             throw new ActionNotAllowedException("Action could not be completed");

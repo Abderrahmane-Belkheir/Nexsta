@@ -1,6 +1,6 @@
 package com.example.SocialMediaApp.Messaging.application;
 
-import com.example.SocialMediaApp.Messaging.api.dto.chatSummary;
+import com.example.SocialMediaApp.Messaging.api.dto.ChatSummary;
 import com.example.SocialMediaApp.Messaging.domain.Chat;
 import com.example.SocialMediaApp.Messaging.domain.ChatMember;
 import com.example.SocialMediaApp.Messaging.domain.Message;
@@ -25,10 +25,10 @@ public class ChatStatusResolver {
     private final ChatMemberRepo chatMemberRepo;
 
 
-    public void computeStatus(List<Chat> chats, List<chatSummary> chatDTOS, String currentId){
+    public void computeStatus(List<Chat> chats, List<ChatSummary> chatDTOS, String currentId){
 
-        Map<String, chatSummary> dtomap= chatDTOS.stream()
-                .collect(Collectors.toMap(chatSummary::getChatId, Function.identity()));
+        Map<String, ChatSummary> dtomap= chatDTOS.stream()
+                .collect(Collectors.toMap(ChatSummary::getChatId, Function.identity()));
 
         List<String> lastmessageIds=chats.stream().map(Chat::getLastMessageId).collect(Collectors.toList());
 
@@ -41,7 +41,7 @@ public class ChatStatusResolver {
 // - Otherwise, add the chat to `unProcessedChats` for further processing.
 
         for(Message message:lastmessages){
-            chatSummary chatDTO=dtomap.get(message.getChatId());
+            ChatSummary chatDTO=dtomap.get(message.getChatId());
 
             if(chatDTO==null) continue;
             if(message.getSenderId().equals(currentId)){
@@ -68,7 +68,7 @@ public class ChatStatusResolver {
 
         for(ChatMember chatMember:chatMembers){
             String chatId=chatMember.getChatId();
-            chatSummary chatDTO= dtomap.get(chatId);
+            ChatSummary chatDTO= dtomap.get(chatId);
 
             if(chatDTO==null) continue;
 

@@ -2,8 +2,7 @@ package com.example.SocialMediaApp.Notification.application;
 
 import com.example.SocialMediaApp.Shared.Mappers.Profilemapper;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
-import com.example.SocialMediaApp.User.domain.User;
-import com.example.SocialMediaApp.Notification.api.dto.notificationsettings;
+import com.example.SocialMediaApp.Notification.api.dto.NotificationSettings;
 import com.example.SocialMediaApp.Notification.domain.NotificationsSettings;
 import com.example.SocialMediaApp.Notification.persistence.NotificationSettingsRepo;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +17,8 @@ public class NotificationSettingsService {
     private final NotificationSettingsRepo notificationSettingsRepo;
     private final AuthenticatedUserService authenticatedUserService;
     private final Profilemapper profilemapper;
-    public void updateNotificationSettings(notificationsettings notification){
-        String currentUserId=authenticatedUserService.getcurrentuser();
+    public void updateNotificationSettings(NotificationSettings notification){
+        String currentUserId=authenticatedUserService.getCurrentUser();
         NotificationsSettings notificationsSettings=notificationSettingsRepo.findByUserId(currentUserId);
         notificationsSettings.setOnfollow(notification.getOnfollow());
         notificationsSettings.setOnfollowingrequestRejected(notification.getOnfollowingrequestRejected());
@@ -27,8 +26,8 @@ public class NotificationSettingsService {
         notificationSettingsRepo.save(notificationsSettings);
     }
 
-    public notificationsettings getnotificationsettings(){
-        String currentUserId=authenticatedUserService.getcurrentuser();
+    public NotificationSettings getnotificationsettings(){
+        String currentUserId=authenticatedUserService.getCurrentUser();
         NotificationsSettings notificationsSettings= notificationSettingsRepo.findByUserId(currentUserId);
         return profilemapper.tonotificationsettings(notificationsSettings);
     }

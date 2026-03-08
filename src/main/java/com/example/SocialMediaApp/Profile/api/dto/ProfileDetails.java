@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @NoArgsConstructor
 @AllArgsConstructor
-public class profileDetails {
+public class ProfileDetails {
     private String userId;
     private String username;
     private String avatarurl;
@@ -19,7 +19,7 @@ public class profileDetails {
     private String followers;
     private String followings;
     private String posts;
-    public profileDetails(String userId,RelationshipStatus relationship){
+    public ProfileDetails(String userId, RelationshipStatus relationship){
         this.userId=userId;
         this.relationship=relationship;
     }

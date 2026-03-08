@@ -7,7 +7,7 @@ import com.example.SocialMediaApp.SocialGraph.application.cache.FollowCacheUpdat
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
 import com.example.SocialMediaApp.Shared.CheckUserExistence;
 import com.example.SocialMediaApp.SocialGraph.domain.Follow;
-import com.example.SocialMediaApp.SocialGraph.domain.events.followAdded;
+import com.example.SocialMediaApp.SocialGraph.domain.events.FollowAdded;
 import com.example.SocialMediaApp.SocialGraph.persistence.FollowRepo;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -29,20 +29,23 @@ public class FollowRequestService {
 
     @CheckUserExistence
     public void acceptFollow(String targetUserId) {
-        String  currentUserId =authenticatedUserService.getcurrentuser();
+        String  currentUserId =authenticatedUserService.getCurrentUser();
+
         Follow followRequest = followRepo.
                 findByFollowerIdAndFollowingId(targetUserId,currentUserId).
                 orElseThrow(()->new NoRelationShipException("No relation with user found"));
+
         if(followRequest.getStatus()== Follow.Status.ACCEPTED){
-            throw new BadFollowRequestException("couldn't perform accept follow action on this user");
+            return;
         }
+
         followRequest.setStatus(Follow.Status.ACCEPTED);
         followRequest.setFollowDate(Instant.now());
         followRepo.save(followRequest);
         logger.info("publishing following accepted event to "+targetUserId);
         eventPublisher.publishEvent(new FollowNotification(currentUserId,targetUserId,
                 FollowNotification.notificationType.FOLLOWING_ACCEPTED));
-        eventPublisher.publishEvent(new followAdded(followRequest));
+        eventPublisher.publishEvent(new FollowAdded(followRequest));
         followCacheUpdater.UpdateCount(FollowQueryHelper.Position.FOLLOWERS,currentUserId, FollowCacheUpdater.UpdateType.INCREMENT);
         followCacheUpdater.UpdateCount(FollowQueryHelper.Position.FOLLOWINGS,targetUserId, FollowCacheUpdater.UpdateType.INCREMENT);
     }
@@ -50,7 +53,7 @@ public class FollowRequestService {
     @CheckUserExistence
     public void rejectFollow(String targetUserId) {
 
-        String currentUserId = authenticatedUserService.getcurrentuser();
+        String currentUserId = authenticatedUserService.getCurrentUser();
         Follow follow = followRepo.findByFollowerIdAndFollowingId(targetUserId, currentUserId).
                 orElseThrow(()->new NoRelationShipException("No relation with user found"));
         if(follow.getStatus()== Follow.Status.ACCEPTED){
@@ -64,7 +67,7 @@ public class FollowRequestService {
 
     @CheckUserExistence
     public void unsendFollowingRequest(String targetUserId){
-        String currentUserId=authenticatedUserService.getcurrentuser();
+        String currentUserId=authenticatedUserService.getCurrentUser();
         Follow followingRequest = followRepo.findByFollowerIdAndFollowingId(currentUserId,targetUserId).
             orElseThrow(()->new NoRelationShipException("No relation with user found"));
         if (followingRequest.getStatus() == Follow.Status.ACCEPTED) {

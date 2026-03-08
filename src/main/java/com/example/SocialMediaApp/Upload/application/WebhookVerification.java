@@ -52,5 +52,6 @@ public class WebhookVerification {
         } else {
            // throw new UnsupportedMediaTypeException("Unsupported file format: " + mimeType);
         }
+        return null;
     }
 }

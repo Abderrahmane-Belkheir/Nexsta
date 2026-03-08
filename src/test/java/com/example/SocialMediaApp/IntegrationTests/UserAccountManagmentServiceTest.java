@@ -3,7 +3,7 @@ package com.example.SocialMediaApp.IntegrationTests;
 import com.example.SocialMediaApp.Notification.domain.NotificationsSettings;
 import com.example.SocialMediaApp.Notification.persistence.NotificationSettingsRepo;
 import com.example.SocialMediaApp.Profile.persistence.ProfileRepo;
-import com.example.SocialMediaApp.User.api.dto.userregistration;
+import com.example.SocialMediaApp.User.api.dto.UserRegistration;
 import com.example.SocialMediaApp.User.application.RegistrationService;
 import com.example.SocialMediaApp.User.domain.User;
 import com.example.SocialMediaApp.User.persistence.UserRepo;
@@ -45,8 +45,8 @@ public class UserAccountManagmentServiceTest extends TestContainerConfig{
 
     private String createuser(){
         String username= UUID.randomUUID().toString().substring(0,7);
-        userregistration userregistration=
-                new userregistration("test","test",username,username+"@gmail.com","test", LocalDate.now());
+        UserRegistration userregistration=
+                new UserRegistration("test","test",username,username+"@gmail.com","test", LocalDate.now());
         return  registrationService.registerUser(userregistration);
     }
 
@@ -54,8 +54,8 @@ public class UserAccountManagmentServiceTest extends TestContainerConfig{
     public void duplicateUser_throwsRuntimeException(){
         String userId=createuser();
         User user=userRepo.findById(userId).get();
-        userregistration userregistration=
-                new userregistration("test","test",user.getUsername()
+        UserRegistration userregistration=
+                new UserRegistration("test","test",user.getUsername()
                         ,"test@gmail.com","test", LocalDate.now());
         assertThrows(RuntimeException.class, ()->registrationService.registerUser(userregistration));
     }

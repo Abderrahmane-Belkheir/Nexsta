@@ -4,13 +4,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
+@AllArgsConstructor
 @NoArgsConstructor
 @Data
-@AllArgsConstructor
-public class chatDetails {
+public class ChatSummary {
     private String chatId;
-    private chatUser chatUser;
-    private List<messageDTO> messages;
+    private String chatPreview;
+    private String userId;
+    private String username;
+    private String avatarurl;
 }

@@ -6,6 +6,6 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class followAdded {
+public class FollowRemoved {
     private Follow follow;
 }

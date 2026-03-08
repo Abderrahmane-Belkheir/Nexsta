@@ -1,19 +1,19 @@
 package com.example.SocialMediaApp.SocialGraph.api.Controllers;
 
-import com.example.SocialMediaApp.Profile.api.dto.profileDetails;
+import com.example.SocialMediaApp.Profile.api.dto.ProfileDetails;
 import com.example.SocialMediaApp.SocialGraph.application.FollowService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/users/socialgraph")
+@RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 public class FollowController {
 
     private final FollowService followService;
 
     @PostMapping("/{userId}/follow")
-    public profileDetails Follow(@PathVariable String userId) {
+    public ProfileDetails Follow(@PathVariable String userId) {
         return followService.Follow(userId);
     }
 
