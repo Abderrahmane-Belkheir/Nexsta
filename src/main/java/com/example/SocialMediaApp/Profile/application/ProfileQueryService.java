@@ -1,9 +1,9 @@
 package com.example.SocialMediaApp.Profile.application;
 
+import com.example.SocialMediaApp.Profile.api.dto.ProfileSettingsDto;
 import com.example.SocialMediaApp.SocialGraph.application.cache.FollowCacheWriter;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
 import com.example.SocialMediaApp.Profile.api.dto.ProfileDetails;
-import com.example.SocialMediaApp.Profile.api.dto.ProfileSettings;
 import com.example.SocialMediaApp.Profile.application.cache.ProfileCacheManager;
 import com.example.SocialMediaApp.Profile.domain.Profile;
 
@@ -37,7 +37,7 @@ public class ProfileQueryService {
     public ProfileDetails getUserProfile(String targetUserId){
        String currentUserId=authenticatedUserService.getCurrentUser();
        ProfileInfo profileInfo= getUserProfileInfo(targetUserId);
-        ProfileDetails profileDetails=profilemapper.toprofileDetails(profileInfo);
+        ProfileDetails profileDetails=profilemapper.toProfileDetails(profileInfo);
 
         profileDetails.setFollowers(followCacheWriter.UserFollowerCount(targetUserId));
         profileDetails.setFollowings(followCacheWriter.UserFollowingCount(targetUserId));
@@ -75,10 +75,10 @@ public class ProfileQueryService {
         return status;
     }
 
-    public ProfileSettings getMyProfileSettings(){
+    public ProfileSettingsDto getMyProfileSettings(){
         String currentUserId=authenticatedUserService.getCurrentUser();
-        Profile profile=getUserProfile(currentUserId,true);
-        return profilemapper.toprofilesettings(profile);
+        Profile profile=getUserProfile(currentUserId,false);
+        return profilemapper.toProfileSettingsDto(profile.getProfileSettings());
     }
 
     public Profile getUserProfile(String userId, Boolean cacheProfile){
@@ -96,7 +96,7 @@ public class ProfileQueryService {
         return profileCacheManager.getProfileInfo(userId).orElseGet(()->{
            Profile profile=getUserProfile(userId,false);
            profileCacheManager.cacheProfileInfo(profile);
-           return profilemapper.toprofileInfo(profile);
+           return profilemapper.toProfileInfo(profile);
         });
 
     }

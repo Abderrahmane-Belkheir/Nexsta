@@ -29,7 +29,7 @@ public class NotificationSettingsService {
     public NotificationSettings getnotificationsettings(){
         String currentUserId=authenticatedUserService.getCurrentUser();
         NotificationsSettings notificationsSettings= notificationSettingsRepo.findByUserId(currentUserId);
-        return profilemapper.tonotificationsettings(notificationsSettings);
+        return profilemapper.toNotificationSettings(notificationsSettings);
     }
 
 }

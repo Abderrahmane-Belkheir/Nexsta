@@ -15,7 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Data
 @Table(indexes = {
-        @Index(name="block",columnList = "blocked_id,blocker_id")
+        @Index(name="idx_block",columnList = "blocked_id,blocker_id")
 })
 public class Block {
 

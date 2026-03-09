@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 public class ChatUser {
     private String userId;
     private String username;
-    private String avatarurl;
+    private String avatarPath;
     private Boolean online;
     private String lastActivity;
 }

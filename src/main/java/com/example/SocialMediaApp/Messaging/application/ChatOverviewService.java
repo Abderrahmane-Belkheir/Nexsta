@@ -55,7 +55,7 @@ public class ChatOverviewService {
                 .collect(Collectors.toMap(chatMemberDTO::getUser_Id, Function.identity()));
         List<ChatSummary> chatSummaries= profileSummaries.stream().map(profileSummary -> {
             chatMemberDTO chatMemberDTO=map.get(profileSummary.getUserId());
-            ChatSummary chatDTO=chatmapper.tochatDTO(profileSummary);
+            ChatSummary chatDTO=chatmapper.toChatDTO(profileSummary);
             chatDTO.setChatId(chatMemberDTO.getChat_Id());
             return chatDTO;
         }).toList();
@@ -100,7 +100,7 @@ public class ChatOverviewService {
         Profile profile=profileCacheManager.getProfile(otherchatMemberId).get();
         Boolean online=null;
         String lastActivity=null;
-        if(profile.isShowifonline()){
+        if(profile.getProfileSettings().isShowActivity()){
             if(userActivityService.getUserStatus(otherchatMemberId)){
                 online=true;
             }else{

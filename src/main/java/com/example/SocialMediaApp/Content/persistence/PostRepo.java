@@ -21,7 +21,7 @@ public interface PostRepo extends JpaRepository<Post,String> {
     int updatePostStatus(@Param("postId") String postId, @Param("status") Post.PostStatus status,
                          @Param("userId") String userId, @Param("allowedStatuses") List<Post.PostStatus> allowedStatuses);
 
-    Optional<Post> findByUserIdAndPostIdAndPostStatus(String userId,String postId,Post.PostStatus postStatus);
+    Optional<Post> findByIdAndUserIdAndPostStatus(String userId, String postId, Post.PostStatus postStatus);
     @Modifying
     @Transactional
     @Query(value = "UPDATE Post SET likes = likes + :delta WHERE id = :postId RETURNING likeCount",nativeQuery = true)

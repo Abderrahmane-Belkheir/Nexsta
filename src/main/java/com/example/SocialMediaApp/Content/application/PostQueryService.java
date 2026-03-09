@@ -3,6 +3,7 @@ package com.example.SocialMediaApp.Content.application;
 import com.example.SocialMediaApp.Content.Exceptions.ContentNotAvailableException;
 import com.example.SocialMediaApp.Content.api.dto.MediaRepresentation;
 import com.example.SocialMediaApp.Content.api.dto.PostRepresentation;
+import com.example.SocialMediaApp.Content.domain.Media;
 import com.example.SocialMediaApp.Content.domain.Post;
 import com.example.SocialMediaApp.Content.domain.PostSettings;
 import com.example.SocialMediaApp.Content.persistence.MediaRepo;
@@ -12,6 +13,7 @@ import com.example.SocialMediaApp.Profile.application.ProfileQueryService;
 import com.example.SocialMediaApp.Profile.domain.cache.ProfileInfo;
 import com.example.SocialMediaApp.Shared.CheckUserExistence;
 import com.example.SocialMediaApp.Shared.Mappers.Contentmapper;
+import com.example.SocialMediaApp.Shared.MediaUrlResolver;
 import com.example.SocialMediaApp.Shared.ViewerType;
 import com.example.SocialMediaApp.Shared.VisibilityPolicy;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
@@ -39,14 +41,14 @@ public class PostQueryService {
     private final ProfileQueryService profileQueryService;
     private final Contentmapper contentmapper;
     private final PostLikeRepo postLikeRepo;
-    private final UserRepo userRepo;
     private final MediaRepo mediaRepo;
+    private final static int pageSize=6;
 
 
     public Page<PostRepresentation> getMyPosts(Post.PostStatus postStatus, int page){
         String currentUserId=authenticatedUserService.getCurrentUser();
-        Pageable pageable=getPageable(page,postStatus);
-        return getPostsRepresentation(currentUserId,postStatus,pageable,ViewerType.OWNER,null);
+        Pageable pageable=getPageable(page,pageSize,postStatus);
+        return getPostsRepresentation(currentUserId,postStatus,pageable,ViewerType.OWNER,null,null);
     }
 
     @CheckUserExistence
@@ -58,7 +60,7 @@ public class PostQueryService {
 
         ProfileInfo profileInfo =profileQueryService.getUserProfileInfo(targetId);
         Post.PostStatus postStatus= Post.PostStatus.PUBLISHED;
-        Pageable pageable=getPageable(page,postStatus);
+        Pageable pageable=getPageable(page,pageSize,postStatus);
 
         Page<Post> postPage = postRepo.findByUserIdAndPostStatus(targetId, postStatus, pageable);
 
@@ -69,26 +71,26 @@ public class PostQueryService {
         Set<String> likedPostIds = postLikeRepo.getLikesPostIds(currentUserId, postIds);
 
 
-        return getPostsRepresentation(targetId, Post.PostStatus.PUBLISHED,pageable,ViewerType.VIEWER,likedPostIds::contains);
+        return getPostsRepresentation(targetId, Post.PostStatus.PUBLISHED,pageable,ViewerType.VIEWER,likedPostIds::contains,profileInfo);
     }
 
-    private Page<PostRepresentation> getPostsRepresentation(String userId, Post.PostStatus postStatus, Pageable pageable, ViewerType viewerType, Function<String,Boolean> likesFunction){
+    private Page<PostRepresentation> getPostsRepresentation(String userId, Post.PostStatus postStatus, Pageable pageable, ViewerType viewerType, Function<String,Boolean> likesFunction,ProfileInfo profileInfo){
 
         Page<Post> postList=postRepo.findByUserIdAndPostStatus(userId,postStatus,pageable);
         List<String> postIds=postList.stream().map(Post::getId).toList();
-        Map<String,List<MediaRepresentation>> mediaRepresentationList= mediaRepo.findByPostIdIn(postIds).stream().collect(Collectors.groupingBy(
-                media -> media.getPost().getId(),
-                Collectors.mapping(contentmapper::toMediaRepresentation, Collectors.toList())
+        Map<String,List<MediaRepresentation>> mediaRepresentationMap= mediaRepo.findByPostIdIn(postIds).stream().collect(Collectors.groupingBy(
+                Media::getPostId,
+                Collectors.mapping(contentmapper::toMediaRepresentation,Collectors.toList())
         ));
 
         return  postList.map(post->{
             String postId=post.getId();
-            List<MediaRepresentation> mediaRepresentations=mediaRepresentationList.get(postId);
+            List<MediaRepresentation> mediaRepresentations=mediaRepresentationMap.get(postId);
             PostRepresentation postRepresentation=contentmapper.toPostRepresentation(post);
             postRepresentation.setPostStatus(postStatus);
             postRepresentation.setLikes(post.getLikeCount());
             postRepresentation.setComments(post.getCommentCount());
-
+            postRepresentation.setProfileInfo(profileInfo);
             postRepresentation.getMediaList().addAll(mediaRepresentations);
 
             if(viewerType==ViewerType.VIEWER){
@@ -113,14 +115,14 @@ public class PostQueryService {
         });
     }
 
-    private Pageable getPageable(int page, Post.PostStatus postStatus) {
+    private Pageable getPageable(int page,int size, Post.PostStatus postStatus) {
         String sortBy = switch (postStatus) {
             case PUBLISHED -> "publishedAt";
             case DELETED -> "deletedAt";
             case DRAFT -> "createdAt";
             case UNPUBLISHED -> "unPublishedAt";
         };
-        return PageRequest.of(page, 10, Sort.by(Sort.Direction.DESC, sortBy));
+        return PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, sortBy));
     }
 
 }

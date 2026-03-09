@@ -14,6 +14,6 @@ public class ProfileInfo {
     private String userId;
 
     private String bio;
-    private String avatarurl;
+    private String avatarPath;
     private String username;
 }

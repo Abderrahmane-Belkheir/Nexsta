@@ -22,20 +22,20 @@ public class ProfileCacheManager {
 
 
     public ProfileInfo cacheProfileInfo(Profile profile){
-        ProfileInfo profileInfoCache=profilemapper.toprofileInfo(profile);
+        ProfileInfo profileInfoCache=profilemapper.toProfileInfo(profile);
         profileInfoCache.setUserId(profile.getUserId());
         return profileInfoCacheRepo.save(profileInfoCache);
     }
 
     public void cacheUserProfile(Profile profile){
-        com.example.SocialMediaApp.Profile.domain.cache.Profile profileCache=profilemapper.toprofileCache(profile);
+        com.example.SocialMediaApp.Profile.domain.cache.Profile profileCache=profilemapper.toProfileCache(profile);
         profileCache.setUserId(profile.getUserId());
         profileCacheRepo.save(profileCache);
     }
 
     public Optional<Profile> getProfile(String userId){
         return profileCacheRepo.findByUserId(userId).map(profileCache -> {
-            Profile profile=profilemapper.toprofile(profileCache);
+            Profile profile=profilemapper.toProfile(profileCache);
             profile.setUser(new User(profileCache.getUserId()));
             return profile;
         });

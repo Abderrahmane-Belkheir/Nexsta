@@ -20,7 +20,7 @@ public class Securityconfig {
         http
         .csrf(AbstractHttpConfigurer::disable).
                 oauth2ResourceServer(httpSecurityOAuth2ResourceServerConfigurer -> httpSecurityOAuth2ResourceServerConfigurer.jwt(Customizer.withDefaults())).
-                authorizeHttpRequests(authorization -> authorization.requestMatchers("api/v1/users/auth/**",
+                authorizeHttpRequests(authorization -> authorization.requestMatchers("api/v1/auth/**",
                         "/swagger.html",
                         "/swagger-ui/**",
                         "/ws/**",

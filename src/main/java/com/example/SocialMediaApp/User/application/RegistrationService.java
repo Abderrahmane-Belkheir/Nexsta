@@ -31,7 +31,7 @@ public class RegistrationService {
     public String registerUser(UserRegistration userregistration){
         String userId=identityService.UserProvision(userregistration);
         log.info("user id "+userId);
-        User user=usermapper.toUserentity(userregistration);
+        User user=usermapper.toUser(userregistration);
         user.setId(userId);
 
         Profile profile=new Profile(userregistration.getUsername());

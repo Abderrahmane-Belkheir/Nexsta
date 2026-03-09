@@ -5,6 +5,7 @@ import com.example.SocialMediaApp.Profile.application.cache.ProfileCacheManager;
 import com.example.SocialMediaApp.Profile.domain.Profile;
 import com.example.SocialMediaApp.Profile.domain.cache.ProfileInfo;
 import com.example.SocialMediaApp.Profile.persistence.ProfileRepo;
+import com.example.SocialMediaApp.Shared.MediaUrlResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 public class ProfileSummaryBuilder {
     private final ProfileCacheManager profileCacheManager;
     private final ProfileRepo profileRepo;
+    private final MediaUrlResolver mediaUrlResolver;
 
     public List<ProfileSummary> buildProfileSummaries(List<String> usersIds){
         List<ProfileSummary> profileSummaries=usersIds.stream().map(ProfileSummary::new).toList();
@@ -32,7 +34,7 @@ public class ProfileSummaryBuilder {
             if(profileInfo.isPresent()){
                 ProfileSummary profileSummary=summaryMap.get(userId);
                 ProfileInfo profileInfo1 = profileInfo.get();
-                profileSummary.setAvatarurl(profileInfo1.getAvatarurl());
+                profileSummary.setAvatarurl(mediaUrlResolver.resolveUrl(profileInfo1.getAvatarPath()));
                 profileSummary.setUsername(profileInfo1.getUsername());
             }
         });

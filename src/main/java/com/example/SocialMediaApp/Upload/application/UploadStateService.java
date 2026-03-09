@@ -12,16 +12,16 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
  class UploadStateService {
 
-    private final RedisTemplate<String,Object> redisTemplate;
+    private final RedisTemplate<String,Object> objectRedisTemplate;
 
     public UploadSession validateUploadSession(String userId, String key,UploadPhase uploadPhase) {
 
         UploadSession uploadSession;
 
         if(uploadPhase==UploadPhase.CONFIRMED){
-            uploadSession=(UploadSession) redisTemplate.opsForValue().get(key);
+            uploadSession=(UploadSession) objectRedisTemplate.opsForValue().get(key);
         }else{
-            uploadSession =(UploadSession) redisTemplate.opsForValue().getAndDelete(key);
+            uploadSession =(UploadSession) objectRedisTemplate.opsForValue().getAndDelete(key);
         }
 
         if(uploadSession==null) throw new UploadSessionExpiredException("Upload Session expired or invalid");

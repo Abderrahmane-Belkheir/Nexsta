@@ -3,11 +3,12 @@ package com.example.SocialMediaApp.Content.application;
 import com.example.SocialMediaApp.Content.Exceptions.ContentNotAvailableException;
 import com.example.SocialMediaApp.Content.api.dto.StoryRepresentation;
 import com.example.SocialMediaApp.Content.domain.Story;
-import com.example.SocialMediaApp.Content.persistence.MediaRepo;
-import com.example.SocialMediaApp.Content.persistence.StoryRepo;
-import com.example.SocialMediaApp.Content.persistence.StoryViewRepo;
+import com.example.SocialMediaApp.Content.persistence.*;
 
+import com.example.SocialMediaApp.Profile.application.ProfileQueryService;
 import com.example.SocialMediaApp.Shared.CheckUserExistence;
+import com.example.SocialMediaApp.Shared.Mappers.Contentmapper;
+import com.example.SocialMediaApp.Shared.MediaUrlResolver;
 import com.example.SocialMediaApp.Shared.VisibilityPolicy;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
 import com.example.SocialMediaApp.User.persistence.UserRepo;
@@ -22,11 +23,12 @@ import java.util.List;
 public class StoryQueryService {
 
     private final StoryRepo storyRepo;
-    private final MediaRepo mediaRepo;
-    private final VisibilityPolicy visibilityPolicy;
-    private final StoryViewRepo storyViewRepo;
-    private final UserRepo userRepo;
     private final AuthenticatedUserService authenticatedUserService;
+    private final VisibilityPolicy visibilityPolicy;
+    private final ProfileQueryService profileQueryService;
+    private final Contentmapper contentmapper;
+    private final LikeRepo likeRepo;
+    private final MediaRepo mediaRepo;
 
     public Page<StoryRepresentation> getMyStories(){
         String currentUserId=authenticatedUserService.getCurrentUser();

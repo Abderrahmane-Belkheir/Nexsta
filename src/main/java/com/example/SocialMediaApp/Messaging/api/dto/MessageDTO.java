@@ -11,7 +11,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MessageDTO {
-    private String messageId;
+    private String id;
     private String content;
     private Instant sentAt;
     private Boolean lastView;

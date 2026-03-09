@@ -61,9 +61,15 @@ public class StorageService {
     public String generateSignedUrl(String filepath) {
         String bucket=storageEnv.getMedia();
         SignRequest signRequest=new SignRequest(5);
-        return storageEnv.getUrl()+webClient.post().uri("/storage/v1/object/upload/sign/{bucket}/{filename}",bucket,filepath)
+        String uri = "/storage/v1/object/upload/sign/" + bucket + "/" + filepath;
+        log.info("Generating Supabase signed Url : "+uri);
+        String signedUri=storageEnv.getUrl()+webClient.post().uri(uri)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(signRequest).retrieve().bodyToMono(signResponse.class).map(signResponse::getUrl).block();
+        return signedUri.replace(
+                storageEnv.getUrl() + "/object",
+                storageEnv.getUrl() + "/storage/v1/object"
+        );
     }
 
 

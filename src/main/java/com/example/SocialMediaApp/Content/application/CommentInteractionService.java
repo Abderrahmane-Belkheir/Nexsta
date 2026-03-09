@@ -39,12 +39,12 @@ public class CommentInteractionService {
             throw new ActionNotAllowedException("Action could not be completed");
         }
 
-        boolean liked=likeRepo.existsByUserIdAndTargetIdAndLikeType(currentUserId,commentId, LikeType.COMMENT);
+        boolean liked=likeRepo.existsByUserIdAndTargetIdAndType(currentUserId,commentId, LikeType.COMMENT);
 
         long likeCount;
 
         if(liked){
-            likeRepo.deleteByUserIdAndTargetIdAndLikeType(currentUserId,commentId,LikeType.COMMENT);
+            likeRepo.deleteByUserIdAndTargetIdAndType(currentUserId,commentId,LikeType.COMMENT);
             likeCount=commentRepo.updateCommentLikes(commentId,-1);
         }else{
             likeRepo.save(new Like(currentUserId,commentId, LikeType.COMMENT));

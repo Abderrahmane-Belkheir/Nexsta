@@ -30,9 +30,15 @@ public class Media {
     @JoinColumn(name = "post_id")
     private Post post;
 
+    @Column(name = "post_id",insertable = false,updatable = false)
+    private String postId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "story_id")
     private Story story;
+
+    @Column(name = "story_id",insertable = false,updatable = false)
+    private String storyId;
 
 
 

@@ -1,5 +1,7 @@
 package com.example.SocialMediaApp.Profile.application;
 
+import com.example.SocialMediaApp.Profile.api.dto.ProfileSettingsDto;
+import com.example.SocialMediaApp.Shared.Mappers.Profilemapper;
 import com.example.SocialMediaApp.SocialGraph.domain.Follow;
 import com.example.SocialMediaApp.SocialGraph.persistence.FollowRepo;
 import com.example.SocialMediaApp.Storage.StorageService;
@@ -9,7 +11,6 @@ import com.example.SocialMediaApp.User.application.IdentityService;
 import com.example.SocialMediaApp.User.domain.User;
 import com.example.SocialMediaApp.User.persistence.UserRepo;
 import com.example.SocialMediaApp.Profile.api.dto.Profile;
-import com.example.SocialMediaApp.Profile.api.dto.ProfileSettings;
 import com.example.SocialMediaApp.Profile.application.cache.ProfileCacheManager;
 import com.example.SocialMediaApp.Profile.persistence.ProfileRepo;
 import jakarta.transaction.Transactional;
@@ -34,17 +35,19 @@ public class ProfileUpdatingService {
     private final StorageService storageService;
     private final FollowRepo followRepo;
     private final IdentityService identityService;
+    private final Profilemapper profilemapper;
 
-    public void UpdateProfileSettings(ProfileSettings profilesettings){
+    public void UpdateProfileSettings(ProfileSettingsDto profileSettingsDto){
         String currentUserId= authenticatedUserService.getCurrentUser();
         com.example.SocialMediaApp.Profile.domain.Profile currentprofile= profileQueryService.getUserProfile(currentUserId,false);
-        ProfileSettings profileSettings=currentprofile.getProfileSettings();
+        com.example.SocialMediaApp.Profile.domain.ProfileSettings profileSettings=currentprofile.getProfileSettings();
         boolean preStatus=profileSettings.isPrivate();
-        currentprofile.setProfileSettings(profileSettings);
+
+        currentprofile.setProfileSettings(profilemapper.toProfileSettings(profileSettingsDto));
         profileRepo.save(currentprofile);
         profileCacheManager.cacheUserProfile(currentprofile);
         // if profile was set from private to public all follow request to this user must be deleted
-        if(preStatus&&!profilesettings.isPrivate()){
+        if(preStatus&&!profileSettingsDto.isPrivate()){
             followRepo.deleteByFollowingIdAndStatus(currentUserId, Follow.Status.PENDING);
         }
     }

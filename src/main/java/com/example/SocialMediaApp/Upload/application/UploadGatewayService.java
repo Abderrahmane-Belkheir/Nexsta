@@ -7,6 +7,7 @@ import com.example.SocialMediaApp.Upload.Exceptions.*;
 import com.example.SocialMediaApp.Upload.api.dto.*;
 import com.example.SocialMediaApp.Upload.domain.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,6 +17,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UploadGatewayService {
@@ -50,6 +52,7 @@ public class UploadGatewayService {
          String filepath=uploadInitiation.getFilepath();
          String uploadRequestId=uploadInitiation.getUploadRequestId();
          String signedUrl=storageService.generateSignedUrl(filepath);
+         log.info("the final signed Url : "+signedUrl);
 
          // creating an upload session containing the user id for authorization later + the request id and the upload type
         UploadSession uploadSession=UploadSession.builder()
@@ -73,14 +76,18 @@ public class UploadGatewayService {
 
             webhookVerification.verifyFileUploaded(uploadSession,webhookPayload.getRecord());
 
+            String uploadRequestId=uploadSession.getUploadRequestId();
+
+            if(uploadRequestId==null) throw new UploadSessionExpiredException("");
+
             objectRedisTemplate.opsForValue().set(uploadSession.getUploadRequestId(),uploadSession,UPLOAD_CONFIRM_DURATION_MINUTES, TimeUnit.MINUTES);
 
         }catch (UploadSessionExpiredException | UnsupportedMediaTypeException | FileTooLargeException e){
 
             storageService.deleteFile(filePath);
 
-            if(e instanceof  UnsupportedMediaTypeException||e instanceof FileTooLargeException){
-                // might block user later
+            if(e instanceof  UnsupportedMediaTypeException || e instanceof FileTooLargeException ){
+                // might block user later for bypassing the request phase filter
             }
 
         }
@@ -112,6 +119,8 @@ public class UploadGatewayService {
                 // upload session expired which mean the key is not found in redis is the only recoverable case
             }catch (UploadSessionExpiredException e){
                 failedUploadIds.add(uploadRequestId);
+            }catch (UnauthorizedResourceAccessException e){
+                // logging and blocking user later
             }
 
         }
@@ -120,7 +129,7 @@ public class UploadGatewayService {
 
         storageService.moveFilesToPermanent(filesPaths);
 
-        redisTemplate.delete(uploadRequestsIds);
+        objectRedisTemplate.delete(uploadRequestsIds);
 
         return mediaList;
 

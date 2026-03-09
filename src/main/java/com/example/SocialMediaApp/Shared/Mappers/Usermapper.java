@@ -7,5 +7,5 @@ import org.mapstruct.Mapper;
 @Mapper(componentModel = "spring")
 public interface Usermapper {
 
-    User toUserentity(UserRegistration userregistration);
+    User toUser(UserRegistration userregistration);
 }

@@ -2,7 +2,7 @@ package com.example.SocialMediaApp.Profile.api.Controllers;
 
 import com.example.SocialMediaApp.Profile.api.dto.Profile;
 import com.example.SocialMediaApp.Profile.api.dto.ProfileDetails;
-import com.example.SocialMediaApp.Profile.api.dto.ProfileSettings;
+import com.example.SocialMediaApp.Profile.api.dto.ProfileSettingsDto;
 import com.example.SocialMediaApp.Profile.application.ProfileQueryService;
 import com.example.SocialMediaApp.Profile.application.ProfileUpdatingService;
 import jakarta.validation.Valid;
@@ -45,12 +45,12 @@ public class UserProfileController {
     }
 
     @GetMapping("/me/settings")
-    public ProfileSettings getProfileSettings() {
+    public ProfileSettingsDto getProfileSettings() {
         return profileQueryService.getMyProfileSettings();
     }
 
     @PutMapping("/me/settings")
-    public void updateProfileSettings(@RequestBody ProfileSettings settings) {
+    public void updateProfileSettings(@RequestBody ProfileSettingsDto settings) {
         profileUpdatingService.UpdateProfileSettings(settings);
     }
 }

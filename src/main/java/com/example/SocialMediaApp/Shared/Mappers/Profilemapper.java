@@ -3,26 +3,28 @@ package com.example.SocialMediaApp.Shared.Mappers;
 import com.example.SocialMediaApp.Notification.api.dto.NotificationSettings;
 import com.example.SocialMediaApp.Notification.domain.NotificationsSettings;
 import com.example.SocialMediaApp.Profile.api.dto.ProfileDetails;
-import com.example.SocialMediaApp.Profile.api.dto.ProfileSettings;
+import com.example.SocialMediaApp.Profile.api.dto.ProfileSettingsDto;
 import com.example.SocialMediaApp.Profile.domain.Profile;
+import com.example.SocialMediaApp.Profile.domain.ProfileSettings;
 import com.example.SocialMediaApp.Profile.domain.cache.ProfileInfo;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface Profilemapper {
-   ProfileDetails toprofileDetails(ProfileInfo profileInfo);
+   ProfileDetails toProfileDetails(ProfileInfo profileInfo);
 
    // profileSummary toprofileSummary(ProfileInfo profileInfo);
 
 
-    Profile toprofile(com.example.SocialMediaApp.Profile.domain.cache.Profile profile);
+    Profile toProfile(com.example.SocialMediaApp.Profile.domain.cache.Profile profile);
 
-    com.example.SocialMediaApp.Profile.domain.cache.Profile toprofileCache(Profile profile);
+    com.example.SocialMediaApp.Profile.domain.cache.Profile toProfileCache(Profile profile);
 
-    ProfileSettings toprofilesettings(Profile profile);
+    ProfileSettingsDto toProfileSettingsDto(ProfileSettings profileSettings);
+    ProfileSettings toProfileSettings(ProfileSettingsDto profileSettingsDto);
 
-    @Mapping(target = "avatarurl", source = "publicavatarurl")
-    ProfileInfo toprofileInfo(Profile profile);
-    NotificationSettings tonotificationsettings(NotificationsSettings notificationsSettings);
+
+    ProfileInfo toProfileInfo(Profile profile);
+
+    NotificationSettings toNotificationSettings(NotificationsSettings notificationsSettings);
 }

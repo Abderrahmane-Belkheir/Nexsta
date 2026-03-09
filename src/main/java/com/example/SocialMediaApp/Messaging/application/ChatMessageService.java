@@ -106,7 +106,7 @@ public class ChatMessageService {
 
     private void canSendtoUser(String currentUserId,String targetUserId){
         Profile profile=profileCacheManager.getProfile(targetUserId).get();
-        if(profile.isIsprivate()){
+        if(profile.getProfileSettings().isPrivate()){
             boolean followed=followRepo.existsByFollowerIdAndFollowingIdAndStatus(currentUserId,targetUserId,Follow.Status.ACCEPTED);
             if(!followed){
                 throw new ChatMessagingException("cannot send message to user");

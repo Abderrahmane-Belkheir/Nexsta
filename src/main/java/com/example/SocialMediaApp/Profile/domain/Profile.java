@@ -1,7 +1,7 @@
 package com.example.SocialMediaApp.Profile.domain;
 
 
-import com.example.SocialMediaApp.Profile.api.dto.ProfileSettings;
+
 import com.example.SocialMediaApp.User.domain.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -33,9 +33,8 @@ public class Profile {
 
     private String avatarPath;
 
-   @JdbcTypeCode(SqlTypes.JSON)
-   @Column(name = "jsonb")
-   private ProfileSettings profileSettings;
+    @Embedded
+    private ProfileSettings profileSettings;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="user_id")
@@ -44,15 +43,13 @@ public class Profile {
     @Column(name ="user_id",insertable = false,updatable = false)
     private String userId;
 
-public Profile(String bio , String username){
+    public Profile(String bio , String username){
     this.bio=bio;
     this.username=username;
 }
-public Profile(String username){
+
+    public Profile(String username){
     this(null,username);
 }
-//public Profile(boolean isprivate){
-  //  this.isprivate=isprivate;
-//}
 
 }

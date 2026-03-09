@@ -45,7 +45,7 @@ public class AuthenticatedUserService {
 
     public String callBack(String state,String authCode){
          String redirectUri= ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/api/v1/users/auth/callback")
+                .path("/api/v1/auth/callback")
                 .toUriString();
 
         if(redisTemplate.hasKey(state)){
@@ -69,7 +69,7 @@ public class AuthenticatedUserService {
 
     public String redirect(){
        String redirectUri= ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/api/v1/users/auth/callback")
+                .path("/api/v1/auth/callback")
                 .toUriString();
 
         String state= UUID.randomUUID().toString();

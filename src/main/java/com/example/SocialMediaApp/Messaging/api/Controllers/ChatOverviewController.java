@@ -12,7 +12,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/users/chats/overview")
+@RequestMapping("/api/v1/chats/overview")
 @Validated
 public class ChatOverviewController {
 

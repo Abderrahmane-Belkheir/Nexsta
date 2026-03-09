@@ -1,5 +1,6 @@
-package com.example.SocialMediaApp.Profile.api.dto;
+package com.example.SocialMediaApp.Profile.domain;
 
+import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,7 +8,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Embeddable
 public class ProfileSettings {
     private boolean isPrivate;
-    private boolean showAcitivity;
+    private boolean showActivity;
 }

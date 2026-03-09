@@ -8,6 +8,6 @@ import java.util.UUID;
 
 public interface LikeRepo extends JpaRepository<Like, UUID> {
 
-    void deleteByUserIdAndTargetIdAndLikeType(String userId,String targetId,LikeType likeType);
-    boolean existsByUserIdAndTargetIdAndLikeType(String userId, String targetId, LikeType likeType);
+    void deleteByUserIdAndTargetIdAndType(String userId, String targetId, LikeType likeType);
+    boolean existsByUserIdAndTargetIdAndType(String userId, String targetId, LikeType likeType);
 }

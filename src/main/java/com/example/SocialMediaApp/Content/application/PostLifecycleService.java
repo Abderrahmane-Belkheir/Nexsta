@@ -45,7 +45,7 @@ public class PostLifecycleService {
     // publishing post for first time draft -> published
     public void publishPost(String postId){
         String currentUserId=authenticatedUserService.getCurrentUser();
-        Post draftPost=postRepo.findByUserIdAndPostIdAndPostStatus(currentUserId,postId, Post.PostStatus.DRAFT).
+        Post draftPost=postRepo.findByIdAndUserIdAndPostStatus(postId,currentUserId, Post.PostStatus.DRAFT).
                 orElseThrow(()-> new ActionNotAllowedException("Action could not be completed"));
         draftPost.setPublishedAt(Instant.now());
         draftPost.setPostStatus(Post.PostStatus.PUBLISHED);

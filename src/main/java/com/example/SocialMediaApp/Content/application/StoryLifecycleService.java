@@ -45,7 +45,7 @@ public class StoryLifecycleService {
 
     public void publishStory(String storyId){
         String currentUserId=authenticatedUserService.getCurrentUser();
-        Story draftStory=storyRepo.findByUserIdAndStoryIdAndStoryStatus(currentUserId, storyId, Story.StoryStatus.DRAFT).
+        Story draftStory=storyRepo.findByIdAndUserIdAndStoryStatus(storyId, currentUserId, Story.StoryStatus.DRAFT).
                 orElseThrow(()-> new ActionNotAllowedException("Action could not be completed"));
         draftStory.setPublishedAt(Instant.now());
         draftStory.setExpiresAt(Instant.now().plus(24,ChronoUnit.HOURS));
