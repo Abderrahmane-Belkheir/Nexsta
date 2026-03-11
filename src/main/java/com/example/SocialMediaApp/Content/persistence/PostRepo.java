@@ -25,7 +25,7 @@ public interface PostRepo extends JpaRepository<Post,String> {
     @Modifying
     @Transactional
     @Query(value = "UPDATE Post SET likes = likes + :delta WHERE id = :postId RETURNING likeCount",nativeQuery = true)
-    long updatePostLikes(@Param("postId") String postId,@Param("delta") long delta);
+    int updatePostLikes(@Param("postId") String postId,@Param("delta") long delta);
 
     @Modifying
     @Transactional

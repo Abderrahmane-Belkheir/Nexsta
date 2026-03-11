@@ -18,6 +18,8 @@
           --accent-bg: #eff4ff;
           --accent-border: #bfcffe;
           --success: #16a34a;
+          --success-bg: #f0fdf4;
+          --success-border: #bbf7d0;
           --error: #dc2626;
           --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
           --shadow: 0 4px 16px rgba(0,0,0,0.07);
@@ -45,148 +47,125 @@
           justify-content: space-between;
           padding: 0 28px;
         }
-
         .nav-left { display: flex; align-items: center; gap: 14px; }
-
         .back-btn {
-          width: 34px; height: 34px;
-          border-radius: 10px;
-          border: 1px solid var(--border);
-          background: var(--white);
+          width: 34px; height: 34px; border-radius: 10px;
+          border: 1px solid var(--border); background: var(--white);
           display: flex; align-items: center; justify-content: center;
-          cursor: pointer; color: var(--muted);
-          transition: all 0.15s;
+          cursor: pointer; color: var(--muted); transition: all 0.15s;
           box-shadow: var(--shadow-sm);
         }
         .back-btn:hover { color: var(--text); border-color: var(--dim); }
-
-        .nav-title {
-          font-family: 'Fraunces', serif;
-          font-size: 17px; font-weight: 600;
-          color: var(--text);
-        }
-
+        .nav-title { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 600; color: var(--text); }
         .nav-right { display: flex; align-items: center; gap: 8px; }
 
         .btn {
           display: inline-flex; align-items: center; gap: 6px;
-          padding: 8px 16px;
-          border-radius: var(--r-sm);
-          font-family: 'Mulish', sans-serif;
-          font-size: 13px; font-weight: 600;
-          cursor: pointer; border: none;
-          transition: all 0.15s;
+          padding: 8px 16px; border-radius: var(--r-sm);
+          font-family: 'Mulish', sans-serif; font-size: 13px; font-weight: 600;
+          cursor: pointer; border: none; transition: all 0.15s;
         }
-
-        .btn-ghost {
-          background: transparent; color: var(--muted);
-          border: 1px solid var(--border);
-        }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
         .btn-ghost:hover { background: var(--border2); color: var(--text); }
-
-        .btn-primary {
-          background: var(--accent); color: white;
-          box-shadow: 0 2px 8px rgba(37,99,235,0.25);
-        }
-        .btn-primary:hover {
-          background: #1d4ed8;
-          box-shadow: 0 4px 14px rgba(37,99,235,0.35);
-          transform: translateY(-1px);
-        }
+        .btn-primary { background: var(--accent); color: white; box-shadow: 0 2px 8px rgba(37,99,235,0.25); }
+        .btn-primary:hover { background: #1d4ed8; box-shadow: 0 4px 14px rgba(37,99,235,0.35); transform: translateY(-1px); }
         .btn-primary:active { transform: none; }
-        .btn-primary:disabled {
-          background: var(--dim); box-shadow: none;
-          cursor: not-allowed; transform: none;
-        }
+        .btn-primary:disabled { background: var(--dim); box-shadow: none; cursor: not-allowed; transform: none; }
 
         .page {
           max-width: 860px; margin: 0 auto;
           padding: 32px 24px 80px;
-          display: grid;
-          grid-template-columns: 1fr 300px;
+          display: grid; grid-template-columns: 1fr 300px;
           gap: 20px; align-items: start;
         }
-
         .left { display: flex; flex-direction: column; gap: 14px; }
 
         .card {
-          background: var(--white);
-          border: 1px solid var(--border);
-          border-radius: var(--r);
-          box-shadow: var(--shadow-sm);
-          overflow: hidden;
+          background: var(--white); border: 1px solid var(--border);
+          border-radius: var(--r); box-shadow: var(--shadow-sm); overflow: hidden;
           animation: up 0.35s ease both;
         }
         .card:nth-child(2) { animation-delay: 0.05s; }
         .card:nth-child(3) { animation-delay: 0.1s; }
         .card:nth-child(4) { animation-delay: 0.15s; }
-
-        @keyframes up {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .card-head {
-          padding: 14px 18px;
-          border-bottom: 1px solid var(--border2);
+          padding: 14px 18px; border-bottom: 1px solid var(--border2);
           display: flex; align-items: center; gap: 9px;
         }
-
         .card-icon {
           width: 28px; height: 28px; border-radius: 8px;
           background: var(--accent-bg);
           display: flex; align-items: center; justify-content: center;
           color: var(--accent); flex-shrink: 0;
         }
-
-        .card-head h3 {
-          font-family: 'Fraunces', serif;
-          font-size: 14px; font-weight: 600; color: var(--text);
-        }
-
+        .card-head h3 { font-family: 'Fraunces', serif; font-size: 14px; font-weight: 600; color: var(--text); }
         .card-body { padding: 18px; }
 
+        /* DROP ZONE */
         .drop-zone {
-          border: 2px dashed var(--border);
-          border-radius: var(--r-sm);
+          border: 2px dashed var(--border); border-radius: var(--r-sm);
           padding: 32px 20px; text-align: center;
           cursor: pointer; position: relative;
           transition: all 0.18s; background: var(--bg);
         }
-        .drop-zone:hover, .drop-zone.over {
-          border-color: var(--accent); background: var(--accent-bg);
-        }
-        .drop-zone input {
-          position: absolute; inset: 0;
-          opacity: 0; cursor: pointer; width: 100%; height: 100%;
-        }
-
+        .drop-zone:hover, .drop-zone.over { border-color: var(--accent); background: var(--accent-bg); }
+        .drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
         .drop-icon {
           width: 44px; height: 44px; border-radius: 12px;
           background: var(--white); border: 1px solid var(--border);
           display: flex; align-items: center; justify-content: center;
-          margin: 0 auto 12px; color: var(--muted);
-          box-shadow: var(--shadow-sm);
+          margin: 0 auto 12px; color: var(--muted); box-shadow: var(--shadow-sm);
         }
-
         .drop-title { font-weight: 600; font-size: 14px; color: var(--text); margin-bottom: 4px; }
         .drop-sub { font-size: 12px; color: var(--muted); line-height: 1.5; }
         .drop-sub b { color: var(--accent); font-weight: 600; }
 
+        /* MEDIA GRID */
         .media-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
           gap: 8px; margin-top: 14px;
         }
 
+        /* TILE */
         .media-tile {
           position: relative; aspect-ratio: 1;
           border-radius: var(--r-sm); overflow: hidden;
-          border: 1px solid var(--border); background: var(--bg);
+          border: 2px solid var(--border); background: var(--bg);
+          transition: border-color 0.2s, transform 0.15s;
+          cursor: grab;
         }
+        .media-tile:active { cursor: grabbing; }
+        .media-tile.drag-over-tile { border-color: var(--accent); transform: scale(1.03); }
+        .media-tile.dragging { opacity: 0.4; }
+
         .media-tile img, .media-tile video {
           width: 100%; height: 100%; object-fit: cover; display: block;
+          pointer-events: none;
         }
+
+        /* order number badge */
+        .media-tile .num {
+          position: absolute; top: 5px; left: 5px;
+          width: 18px; height: 18px; background: var(--accent);
+          color: white; font-size: 9px; font-weight: 700;
+          border-radius: 50%; display: flex; align-items: center; justify-content: center;
+          pointer-events: none;
+        }
+
+        /* type badge */
+        .media-tile .tbadge {
+          position: absolute; bottom: 5px; left: 5px;
+          background: rgba(0,0,0,0.5); color: white;
+          font-size: 8px; font-weight: 700;
+          padding: 1px 5px; border-radius: 4px;
+          text-transform: uppercase; letter-spacing: 0.4px;
+          pointer-events: none;
+        }
+
+        /* delete button */
         .media-tile .del {
           position: absolute; top: 5px; right: 5px;
           width: 22px; height: 22px; border-radius: 50%;
@@ -195,27 +174,45 @@
           opacity: 0; transition: opacity 0.15s; backdrop-filter: blur(4px);
         }
         .media-tile:hover .del { opacity: 1; }
-        .media-tile .num {
-          position: absolute; top: 5px; left: 5px;
-          width: 18px; height: 18px; background: var(--accent);
-          color: white; font-size: 9px; font-weight: 700;
-          border-radius: 50%; display: flex; align-items: center; justify-content: center;
+
+        /* CONFIRM BUTTON — the key UX element */
+        .media-tile .confirm-btn {
+          position: absolute; bottom: 5px; right: 5px;
+          height: 22px; padding: 0 8px;
+          border-radius: 20px; border: none; cursor: pointer;
+          font-family: 'Mulish', sans-serif; font-size: 9px; font-weight: 700;
+          text-transform: uppercase; letter-spacing: 0.5px;
+          display: flex; align-items: center; gap: 4px;
+          transition: all 0.2s; white-space: nowrap;
         }
-        .media-tile .tbadge {
-          position: absolute; bottom: 5px; left: 5px;
-          background: rgba(0,0,0,0.5); color: white;
-          font-size: 8px; font-weight: 700;
-          padding: 1px 5px; border-radius: 4px;
-          text-transform: uppercase; letter-spacing: 0.4px;
+        .confirm-btn.idle {
+          background: var(--accent); color: white;
+          box-shadow: 0 2px 6px rgba(37,99,235,0.4);
         }
+        .confirm-btn.idle:hover { background: #1d4ed8; transform: scale(1.05); }
+        .confirm-btn.loading {
+          background: rgba(0,0,0,0.6); color: white;
+          backdrop-filter: blur(4px); cursor: not-allowed;
+        }
+        .confirm-btn.done {
+          background: var(--success); color: white;
+          cursor: default;
+        }
+        .confirm-btn.failed {
+          background: var(--error); color: white;
+        }
+        .confirm-btn.failed:hover { opacity: 0.85; }
+
+        /* progress overlay while uploading */
         .media-tile .pw {
           position: absolute; inset: 0;
-          background: rgba(0,0,0,0.5);
+          background: rgba(0,0,0,0.45);
           display: flex; flex-direction: column;
           align-items: center; justify-content: center; gap: 4px;
+          pointer-events: none;
           transition: opacity 0.3s;
         }
-        .media-tile .pw.done { opacity: 0; pointer-events: none; }
+        .media-tile .pw.done { opacity: 0; }
         .pr { width: 32px; height: 32px; }
         .pr circle { fill: none; stroke-width: 3; }
         .pr .t { stroke: rgba(255,255,255,0.2); }
@@ -232,6 +229,7 @@
           display: flex; justify-content: space-between;
         }
 
+        /* FIELDS */
         .field { margin-bottom: 16px; }
         .field:last-child { margin-bottom: 0; }
         .field label {
@@ -241,9 +239,8 @@
         }
         .field textarea, .field input[type="text"] {
           width: 100%; background: var(--bg);
-          border: 1.5px solid var(--border);
-          border-radius: var(--r-sm); padding: 10px 13px;
-          font-family: 'Mulish', sans-serif;
+          border: 1.5px solid var(--border); border-radius: var(--r-sm);
+          padding: 10px 13px; font-family: 'Mulish', sans-serif;
           font-size: 14px; color: var(--text); outline: none; resize: none;
           transition: border-color 0.15s, background 0.15s;
         }
@@ -252,15 +249,15 @@
           border-color: var(--accent); background: var(--white);
           box-shadow: 0 0 0 3px var(--accent-bg);
         }
-
         .cc { text-align: right; font-size: 11px; color: var(--dim); margin-top: 4px; }
         .cc.warn { color: var(--error); }
 
+        /* TAGS */
         .tags-box {
           display: flex; flex-wrap: wrap; gap: 6px;
           padding: 8px 10px; background: var(--bg);
-          border: 1.5px solid var(--border);
-          border-radius: var(--r-sm); min-height: 42px; cursor: text;
+          border: 1.5px solid var(--border); border-radius: var(--r-sm);
+          min-height: 42px; cursor: text;
           transition: border-color 0.15s, background 0.15s;
         }
         .tags-box:focus-within {
@@ -273,11 +270,7 @@
           color: var(--accent); padding: 2px 8px; border-radius: 20px;
           font-size: 12px; font-weight: 600;
         }
-        .tag button {
-          background: none; border: none; color: var(--accent);
-          cursor: pointer; opacity: 0.5; padding: 0; display: flex;
-          transition: opacity 0.15s;
-        }
+        .tag button { background: none; border: none; color: var(--accent); cursor: pointer; opacity: 0.5; padding: 0; display: flex; transition: opacity 0.15s; }
         .tag button:hover { opacity: 1; }
         .tag-inp {
           border: none; outline: none; background: transparent;
@@ -286,16 +279,14 @@
         }
         .tag-inp::placeholder { color: var(--dim); }
 
+        /* LOCATION */
         .loc-wrap { position: relative; }
-        .loc-wrap svg {
-          position: absolute; left: 11px; top: 50%;
-          transform: translateY(-50%); color: var(--muted); pointer-events: none;
-        }
+        .loc-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
         .loc-wrap input { padding-left: 32px; }
 
+        /* TOGGLES */
         .tog-item {
-          display: flex; align-items: center;
-          justify-content: space-between;
+          display: flex; align-items: center; justify-content: space-between;
           padding: 12px 0; border-bottom: 1px solid var(--border2);
         }
         .tog-item:last-child { border-bottom: none; padding-bottom: 0; }
@@ -309,14 +300,14 @@
           border-radius: 20px; cursor: pointer; transition: background 0.2s;
         }
         .tog-track::after {
-          content: ''; position: absolute;
-          width: 15px; height: 15px; background: white; border-radius: 50%;
-          top: 3px; left: 3px; transition: transform 0.2s;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+          content: ''; position: absolute; width: 15px; height: 15px;
+          background: white; border-radius: 50%; top: 3px; left: 3px;
+          transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
         }
         .tog input:checked ~ .tog-track { background: var(--accent); }
         .tog input:checked ~ .tog-track::after { transform: translateX(17px); }
 
+        /* RIGHT PANEL */
         .right {
           position: sticky; top: 74px;
           display: flex; flex-direction: column; gap: 14px;
@@ -327,7 +318,6 @@
           background: var(--white); border: 1px solid var(--border);
           border-radius: var(--r); overflow: hidden; box-shadow: var(--shadow-sm);
         }
-
         .p-top {
           padding: 12px 14px; display: flex; align-items: center; gap: 9px;
           border-bottom: 1px solid var(--border2);
@@ -340,30 +330,16 @@
         }
         .p-nm { font-size: 13px; font-weight: 600; color: var(--text); }
         .p-tm { font-size: 11px; color: var(--muted); margin-top: 1px; }
-
         .p-media {
           width: 100%; aspect-ratio: 1; background: var(--bg);
-          display: flex; align-items: center; justify-content: center;
-          overflow: hidden;
+          display: flex; align-items: center; justify-content: center; overflow: hidden;
         }
-        .p-media img, .p-media video {
-          width: 100%; height: 100%; object-fit: cover;
-        }
-        .p-empty {
-          display: flex; flex-direction: column;
-          align-items: center; gap: 8px; color: var(--dim);
-        }
+        .p-media img, .p-media video { width: 100%; height: 100%; object-fit: cover; }
+        .p-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--dim); }
         .p-empty span { font-size: 11px; }
-
-        .p-dots {
-          display: flex; justify-content: center; gap: 4px; padding: 8px 0 2px;
-        }
-        .p-dot {
-          width: 5px; height: 5px; border-radius: 50%;
-          background: var(--border); transition: all 0.2s; cursor: pointer;
-        }
+        .p-dots { display: flex; justify-content: center; gap: 4px; padding: 8px 0 2px; }
+        .p-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border); transition: all 0.2s; cursor: pointer; }
         .p-dot.on { background: var(--accent); width: 14px; border-radius: 3px; }
-
         .p-body { padding: 12px 14px 14px; }
         .p-actions { display: flex; gap: 12px; margin-bottom: 10px; color: var(--muted); }
         .p-caption { font-size: 13px; color: var(--text); line-height: 1.5; margin-bottom: 6px; word-break: break-word; }
@@ -373,19 +349,13 @@
         .p-tag { font-size: 12px; color: var(--accent); font-weight: 600; }
         .p-loc { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); margin-top: 6px; }
 
+        /* FLOW CARD */
         .flow-card {
           background: var(--white); border: 1px solid var(--border);
           border-radius: var(--r); padding: 14px 16px; box-shadow: var(--shadow-sm);
         }
-        .flow-title {
-          font-size: 11px; font-weight: 700;
-          text-transform: uppercase; letter-spacing: 0.6px;
-          color: var(--muted); margin-bottom: 12px;
-        }
-        .flow-row {
-          display: flex; align-items: center; gap: 10px;
-          padding: 6px 0; border-bottom: 1px solid var(--border2);
-        }
+        .flow-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin-bottom: 12px; }
+        .flow-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border2); }
         .flow-row:last-child { border-bottom: none; }
         .fn {
           width: 20px; height: 20px; border-radius: 50%;
@@ -399,6 +369,7 @@
         .ft { font-size: 12px; color: var(--muted); }
         .ft b { display: block; font-size: 12px; font-weight: 600; color: var(--text); }
 
+        /* SNACKBAR */
         .sb {
           position: fixed; bottom: 22px; left: 50%;
           transform: translateX(-50%) translateY(70px);
@@ -421,6 +392,7 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* SUCCESS SCREEN */
         .success-screen {
           position: fixed; inset: 0;
           background: rgba(250,250,248,0.97); backdrop-filter: blur(8px);
@@ -434,16 +406,12 @@
           display: flex; align-items: center; justify-content: center;
           animation: pop 0.45s cubic-bezier(0.34,1.56,0.64,1);
         }
-        @keyframes pop {
-          from { transform: scale(0); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
-        .success-screen h2 {
-          font-family: 'Fraunces', serif; font-size: 26px; font-weight: 600; color: var(--text);
-        }
+        @keyframes pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .success-screen h2 { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 600; color: var(--text); }
         .success-screen p { font-size: 14px; color: var(--muted); }
         .success-screen .btns { display: flex; gap: 10px; margin-top: 6px; }
 
+        /* CONFIG OVERLAY */
         .overlay {
           position: fixed; inset: 0;
           background: rgba(28,27,24,0.4); backdrop-filter: blur(6px);
@@ -453,28 +421,30 @@
           background: var(--white); border: 1px solid var(--border);
           border-radius: 20px; padding: 32px; width: 400px; box-shadow: var(--shadow-lg);
         }
-        .modal h2 {
-          font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600;
-          color: var(--text); margin-bottom: 5px;
-        }
+        .modal h2 { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
         .modal > p { font-size: 13px; color: var(--muted); margin-bottom: 22px; line-height: 1.6; }
         .mf { margin-bottom: 13px; }
-        .mf label {
-          display: block; font-size: 11px; font-weight: 700;
-          text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin-bottom: 5px;
-        }
+        .mf label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin-bottom: 5px; }
         .mf input {
           width: 100%; background: var(--bg); border: 1.5px solid var(--border);
           border-radius: var(--r-sm); padding: 9px 12px; color: var(--text);
-          font-family: 'Mulish', sans-serif; font-size: 14px; outline: none;
-          transition: border-color 0.15s;
+          font-family: 'Mulish', sans-serif; font-size: 14px; outline: none; transition: border-color 0.15s;
         }
         .mf input:focus { border-color: var(--accent); }
         .mf input::placeholder { color: var(--dim); }
+
+        /* Reorder hint */
+        .reorder-hint {
+          font-size: 11px; color: var(--muted);
+          display: flex; align-items: center; gap: 5px;
+          margin-top: 8px;
+        }
+        .reorder-hint svg { color: var(--dim); flex-shrink: 0; }
     </style>
 </head>
 <body>
 
+<!-- CONFIG OVERLAY -->
 <div class="overlay" id="cfgOverlay">
     <div class="modal">
         <h2>Connect to API</h2>
@@ -489,6 +459,7 @@
     </div>
 </div>
 
+<!-- SUCCESS SCREEN -->
 <div class="success-screen" id="successScreen">
     <div class="success-check">
         <svg width="30" height="30" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
@@ -502,6 +473,7 @@
     </div>
 </div>
 
+<!-- NAV -->
 <nav class="nav">
     <div class="nav-left">
         <div class="back-btn">
@@ -521,6 +493,7 @@
 <div class="page">
     <div class="left">
 
+        <!-- MEDIA CARD -->
         <div class="card">
             <div class="card-head">
                 <div class="card-icon">
@@ -538,16 +511,21 @@
                         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                     </div>
                     <div class="drop-title">Drop files or click to browse</div>
-                    <div class="drop-sub"><b>Images:</b> JPEG, PNG, WebP · 1MB &nbsp;·&nbsp; <b>Videos:</b> MP4, MOV · 30MB</div>
+                    <div class="drop-sub"><b>Images:</b> JPEG, PNG, WebP · 100MB &nbsp;·&nbsp; <b>Videos:</b> MP4, MOV · 100MB</div>
                 </div>
                 <div class="media-grid" id="mediaGrid"></div>
+                <div id="reorderHint" class="reorder-hint" style="display:none;">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+                    Drag tiles to reorder · Number = post order
+                </div>
                 <div class="media-count" id="mediaCount" style="display:none;">
                     <span id="countVal">0 / 10 files</span>
-                    <span id="uploadStatus" style="color:var(--muted);">Ready</span>
+                    <span id="uploadStatus" style="color:var(--muted);">Select files and confirm each</span>
                 </div>
             </div>
         </div>
 
+        <!-- CAPTION & DETAILS -->
         <div class="card">
             <div class="card-head">
                 <div class="card-icon">
@@ -578,6 +556,7 @@
             </div>
         </div>
 
+        <!-- SETTINGS -->
         <div class="card">
             <div class="card-head">
                 <div class="card-icon">
@@ -588,21 +567,22 @@
             <div class="card-body">
                 <div class="tog-item">
                     <div class="tog-text"><span>Disable Comments</span><small>Nobody can comment on this post</small></div>
-                    <label class="tog"><input type="checkbox" id="noComments" onchange="syncPreview()"><div class="tog-track"></div></label>
+                    <label class="tog"><input type="checkbox" id="noComments"><div class="tog-track"></div></label>
                 </div>
                 <div class="tog-item">
                     <div class="tog-text"><span>Hide Like Count</span><small>Only you see the like count</small></div>
-                    <label class="tog"><input type="checkbox" id="hideLikes" onchange="syncPreview()"><div class="tog-track"></div></label>
+                    <label class="tog"><input type="checkbox" id="hideLikes"><div class="tog-track"></div></label>
                 </div>
                 <div class="tog-item">
                     <div class="tog-text"><span>Hide Comment Count</span><small>Hidden from others</small></div>
-                    <label class="tog"><input type="checkbox" id="hideComments" onchange="syncPreview()"><div class="tog-track"></div></label>
+                    <label class="tog"><input type="checkbox" id="hideComments"><div class="tog-track"></div></label>
                 </div>
             </div>
         </div>
 
     </div>
 
+    <!-- RIGHT PANEL -->
     <div class="right">
 
         <div class="preview-card">
@@ -643,7 +623,7 @@
 
         <div class="flow-card">
             <div class="flow-title">API Flow</div>
-            <div class="flow-row"><div class="fn" id="fs1">1</div><div class="ft"><b>Request signed URLs</b>POST /api/v1/upload</div></div>
+            <div class="flow-row"><div class="fn" id="fs1">1</div><div class="ft"><b>Confirm file → request URL</b>POST /api/v1/upload</div></div>
             <div class="flow-row"><div class="fn" id="fs2">2</div><div class="ft"><b>Upload to Supabase</b>PUT signedUrl</div></div>
             <div class="flow-row"><div class="fn" id="fs3">3</div><div class="ft"><b>Create draft</b>POST /api/v1/content/post</div></div>
             <div class="flow-row"><div class="fn" id="fs4">4</div><div class="ft"><b>Publish</b>PATCH /api/v1/content/post/{id}/publish</div></div>
@@ -655,6 +635,7 @@
 <div class="sb" id="sb"></div>
 
 <script>
+    // ─── CONFIG ───────────────────────────────────────────────────────────────
     let API = window.location.origin;
     let JWT = '';
     let USERNAME = 'younes_dev';
@@ -694,37 +675,99 @@
       document.getElementById('cfgOverlay').style.display = 'none';
     }
 
-    let files = [], tags = [], postId = null, pidx = 0;
+    // ─── STATE ────────────────────────────────────────────────────────────────
+    // Each file entry:
+    // { file, url, requestId: null|string, status: 'pending'|'uploading'|'confirmed'|'failed' }
+    let files = [];
+    let tags = [];
+    let postId = null;
+    let pidx = 0;
 
+    // Drag-to-reorder state
+    let dragSrcIndex = null;
+
+    // ─── FILE HANDLING ────────────────────────────────────────────────────────
     function onDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('over'); }
     function onDragLeave() { document.getElementById('dropZone').classList.remove('over'); }
     function onDrop(e) { e.preventDefault(); document.getElementById('dropZone').classList.remove('over'); handleFiles(e.dataTransfer.files); }
 
     function handleFiles(list) {
       Array.from(list).slice(0, 10 - files.length).forEach(f => {
-        files.push({ file: f, url: URL.createObjectURL(f), requestId: null, uploaded: false });
+        files.push({ file: f, url: URL.createObjectURL(f), requestId: null, status: 'pending' });
       });
-      renderGrid(); syncPreview();
-      document.getElementById('publishBtn').disabled = !files.length;
+      renderGrid();
+      syncPreview();
+      updatePublishBtn();
     }
 
+    // ─── GRID RENDERING ───────────────────────────────────────────────────────
     function renderGrid() {
       const g = document.getElementById('mediaGrid');
       const mc = document.getElementById('mediaCount');
-      if (!files.length) { g.innerHTML = ''; mc.style.display = 'none'; return; }
+      const hint = document.getElementById('reorderHint');
+
+      if (!files.length) {
+        g.innerHTML = '';
+        mc.style.display = 'none';
+        hint.style.display = 'none';
+        return;
+      }
+
       mc.style.display = 'flex';
+      hint.style.display = files.length > 1 ? 'flex' : 'none';
       document.getElementById('countVal').textContent = `${files.length} / 10 files`;
+
+      const confirmedCount = files.filter(f => f.status === 'confirmed').length;
+      document.getElementById('uploadStatus').textContent =
+        confirmedCount === 0 ? 'Confirm each file to upload' :
+        confirmedCount === files.length ? `All ${files.length} uploaded ✓` :
+        `${confirmedCount} / ${files.length} confirmed`;
+
       const C = 2 * Math.PI * 13;
+
       g.innerHTML = files.map((m, i) => {
-        const v = m.file.type.startsWith('video/');
-        return `<div class="media-tile" id="tile_${i}">
-          ${v?`<video src="${m.url}" muted playsinline></video>`:`<img src="${m.url}">`}
+        const isVid = m.file.type.startsWith('video/');
+        const status = m.status;
+
+        // confirm button appearance
+        let confirmHtml = '';
+        if (status === 'pending') {
+          confirmHtml = `<button class="confirm-btn idle" onclick="confirmFile(event,${i})">
+            <svg width="8" height="8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Confirm
+          </button>`;
+        } else if (status === 'uploading') {
+          confirmHtml = `<button class="confirm-btn loading" disabled>
+            <div class="spin" style="width:8px;height:8px;border-width:1.5px;"></div>
+            Uploading
+          </button>`;
+        } else if (status === 'confirmed') {
+          confirmHtml = `<button class="confirm-btn done" disabled>
+            <svg width="8" height="8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Done
+          </button>`;
+        } else if (status === 'failed') {
+          confirmHtml = `<button class="confirm-btn failed" onclick="confirmFile(event,${i})">
+            Retry
+          </button>`;
+        }
+
+        const showProgress = status === 'uploading';
+
+        return `<div class="media-tile" id="tile_${i}"
+            draggable="true"
+            ondragstart="onTileDragStart(event,${i})"
+            ondragover="onTileDragOver(event,${i})"
+            ondragleave="onTileDragLeave(event,${i})"
+            ondrop="onTileDrop(event,${i})">
+          ${isVid ? `<video src="${m.url}" muted playsinline></video>` : `<img src="${m.url}">`}
           <div class="num">${i+1}</div>
-          <div class="tbadge">${v?'VID':'IMG'}</div>
-          <button class="del" onclick="rmFile(${i})">
+          <div class="tbadge">${isVid?'VID':'IMG'}</div>
+          <button class="del" onclick="rmFile(event,${i})">
             <svg width="8" height="8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
-          <div class="pw ${m.uploaded?'done':''}" id="pw_${i}">
+          ${confirmHtml}
+          <div class="pw ${!showProgress?'done':''}" id="pw_${i}">
             <svg class="pr" viewBox="0 0 32 32">
               <circle class="t" cx="16" cy="16" r="13"/>
               <circle class="f" id="ring_${i}" cx="16" cy="16" r="13" stroke-dasharray="${C}" stroke-dashoffset="${C}"/>
@@ -735,21 +778,294 @@
       }).join('');
     }
 
-    function rmFile(i) {
-      URL.revokeObjectURL(files[i].url); files.splice(i,1);
-      if (pidx >= files.length) pidx = Math.max(0, files.length-1);
-      renderGrid(); syncPreview();
-      document.getElementById('publishBtn').disabled = !files.length;
-    }
-
     function setRing(i, pct) {
       const C = 2 * Math.PI * 13;
       const r = document.getElementById('ring_'+i), p = document.getElementById('pct_'+i);
-      if (r) r.style.strokeDashoffset = C-(pct/100)*C;
-      if (p) p.textContent = pct+'%';
-      if (pct >= 100) setTimeout(() => { const w = document.getElementById('pw_'+i); if(w) w.classList.add('done'); }, 300);
+      if (r) r.style.strokeDashoffset = C - (pct/100)*C;
+      if (p) p.textContent = pct + '%';
+      if (pct >= 100) {
+        setTimeout(() => { const w = document.getElementById('pw_'+i); if(w) w.classList.add('done'); }, 300);
+      }
     }
 
+    // ─── CONFIRM BUTTON → UPLOAD ──────────────────────────────────────────────
+    // User clicks "Confirm" on a tile → requestUpload() → PUT to Supabase → store requestId
+    async function confirmFile(event, i) {
+      event.stopPropagation();
+      const m = files[i];
+      if (m.status === 'uploading' || m.status === 'confirmed') return;
+
+      m.status = 'uploading';
+      m.requestId = null;
+      renderGrid();
+      setRing(i, 0);
+      setFS(1, 'active');
+
+      try {
+        // Step 1: POST /api/v1/upload → get signedUrl + requestId
+        const { signedUrl, requestId } = await apiFetch('/api/v1/upload', {
+          method: 'POST',
+          body: JSON.stringify({
+            uploadType: 'POST',
+            fileMimeType: m.file.type,
+            fileSize: m.file.size,
+            duration: m.file.type.startsWith('video/') ? 15 : 1
+          })
+        });
+
+        m.requestId = requestId;
+        setFS(1, 'done'); setFS(2, 'active');
+
+        // Step 2: PUT directly to Supabase using signedUrl
+        await uploadDirect(signedUrl, m.file, pct => setRing(i, pct));
+
+        m.status = 'confirmed';
+        setRing(i, 100);
+        setFS(2, 'done');
+        renderGrid();
+        syncPreview();
+        updatePublishBtn();
+
+      } catch(err) {
+        console.error(err);
+        m.status = 'failed';
+        renderGrid();
+        toast('Upload failed — click Retry', 'err');
+      }
+    }
+
+    async function uploadDirect(signedUrl, file, onProg) {
+      return new Promise((res, rej) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.onprogress = e => { if (e.lengthComputable) onProg(Math.round(e.loaded/e.total*100)); };
+        xhr.onload = () => xhr.status < 300 ? res() : rej(new Error('Upload failed: ' + xhr.status));
+        xhr.onerror = () => rej(new Error('Network error'));
+        xhr.open('PUT', signedUrl);
+        xhr.setRequestHeader('Content-Type', file.type);
+        xhr.send(file);
+      });
+    }
+
+    // ─── DRAG-TO-REORDER ──────────────────────────────────────────────────────
+    // Pure drag-and-drop between tiles. Reorders files[] in place and re-renders.
+    function onTileDragStart(event, i) {
+      dragSrcIndex = i;
+      event.dataTransfer.effectAllowed = 'move';
+      setTimeout(() => {
+        const tile = document.getElementById('tile_'+i);
+        if (tile) tile.classList.add('dragging');
+      }, 0);
+    }
+
+    function onTileDragOver(event, i) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+      if (i === dragSrcIndex) return;
+      document.querySelectorAll('.media-tile').forEach(t => t.classList.remove('drag-over-tile'));
+      const tile = document.getElementById('tile_'+i);
+      if (tile) tile.classList.add('drag-over-tile');
+    }
+
+    function onTileDragLeave(event, i) {
+      const tile = document.getElementById('tile_'+i);
+      if (tile) tile.classList.remove('drag-over-tile');
+    }
+
+    function onTileDrop(event, i) {
+      event.preventDefault();
+      event.stopPropagation();
+      document.querySelectorAll('.media-tile').forEach(t => {
+        t.classList.remove('drag-over-tile');
+        t.classList.remove('dragging');
+      });
+      if (dragSrcIndex === null || dragSrcIndex === i) return;
+
+      // Reorder files array
+      const moved = files.splice(dragSrcIndex, 1)[0];
+      files.splice(i, 0, moved);
+      dragSrcIndex = null;
+
+      // Update preview index
+      pidx = 0;
+      renderGrid();
+      syncPreview();
+    }
+
+    // ─── REMOVE FILE ──────────────────────────────────────────────────────────
+    function rmFile(event, i) {
+      event.stopPropagation();
+      URL.revokeObjectURL(files[i].url);
+      files.splice(i, 1);
+      if (pidx >= files.length) pidx = Math.max(0, files.length - 1);
+      renderGrid();
+      syncPreview();
+      updatePublishBtn();
+    }
+
+    // ─── PUBLISH ──────────────────────────────────────────────────────────────
+    // Requires every file to be individually confirmed first.
+    // Sends requestIds in the exact order files[] is currently in (user-defined order).
+    async function publishPost() {
+      const unconfirmed = files.filter(f => f.status !== 'confirmed');
+      if (unconfirmed.length > 0) {
+        toast(`${unconfirmed.length} file(s) not yet confirmed`, 'err');
+        return;
+      }
+      if (!files.length) { toast('Add at least one file', 'err'); return; }
+
+      document.getElementById('publishBtn').disabled = true;
+
+      // requestIds in current display order (user may have reordered)
+      const orderedIds = files.map(f => f.requestId);
+
+      try {
+        setFS(3, 'active');
+        toast('Creating post…', 'loading', 0);
+
+        const body = {
+          caption: document.getElementById('caption').value.trim() || null,
+          uploadRequestsIds: orderedIds,   // ← ordered as user arranged tiles
+          tags: tags.length ? tags : null,
+          postSettings: {
+            commentsDisabled: document.getElementById('noComments').checked,
+            hideLikes: document.getElementById('hideLikes').checked,
+            hideComments: document.getElementById('hideComments').checked
+          },
+          location: document.getElementById('locName').value.trim()
+            ? { locationName: document.getElementById('locName').value.trim(), latitude: null, longitude: null }
+            : null
+        };
+
+        // Try once; if 422 + failedUploadIds → silent retry of those specific files
+        let post;
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            post = await apiFetch('/api/v1/content/post', { method: 'POST', body: JSON.stringify(body) });
+            break;
+          } catch(e) {
+            const isUploadFailure = e.status === 422 && e.body && e.body.failedUploadIds && e.body.failedUploadIds.length;
+            if (isUploadFailure && attempt === 0) {
+              setFS(3, ''); setFS(1, 'active'); setFS(2, 'active');
+              toast(`Re-uploading ${e.body.failedUploadIds.length} expired file(s)…`, 'loading', 0);
+              await retryFailedUploads(e.body.failedUploadIds, body.uploadRequestsIds);
+              setFS(1, 'done'); setFS(2, 'done'); setFS(3, 'active');
+              toast('Retrying…', 'loading', 0);
+            } else {
+              throw e;
+            }
+          }
+        }
+
+        postId = post.id;
+        setFS(3, 'done');
+        applyPostRepresentation(post);
+
+        setFS(4, 'active');
+        toast('Publishing…', 'loading', 0);
+        await apiFetch(`/api/v1/content/post/${postId}/publish`, { method: 'PATCH' });
+        setFS(4, 'done');
+        toast('Published!', 'ok');
+
+        const publishedAt = post.publishedAt ? new Date(post.publishedAt) : new Date();
+        document.getElementById('successTime').textContent =
+          publishedAt.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+
+        setTimeout(() => document.getElementById('successScreen').classList.add('show'), 500);
+
+      } catch(e) {
+        toast('Error: ' + (e.message || 'Something went wrong'), 'err', 5000);
+        document.getElementById('publishBtn').disabled = false;
+      }
+    }
+
+    // Retry only the specific failed uploads (422 case), re-upload and patch orderedIds
+    async function retryFailedUploads(failedIds, orderedIds) {
+      for (const failedId of failedIds) {
+        const i = files.findIndex(f => f.requestId === failedId);
+        if (i === -1) continue;
+        const m = files[i];
+
+        m.status = 'uploading';
+        m.requestId = null;
+        renderGrid(); setRing(i, 0);
+
+        const { signedUrl, requestId } = await apiFetch('/api/v1/upload', {
+          method: 'POST',
+          body: JSON.stringify({ uploadType:'POST', fileMimeType:m.file.type, fileSize:m.file.size, duration: m.file.type.startsWith('video/') ? 15 : 1 })
+        });
+        m.requestId = requestId;
+        await uploadDirect(signedUrl, m.file, pct => setRing(i, pct));
+        m.status = 'confirmed';
+        setRing(i, 100);
+        renderGrid();
+
+        // Update the reference in the ordered ids array
+        const idx = orderedIds.indexOf(failedId);
+        if (idx !== -1) orderedIds[idx] = requestId;
+      }
+    }
+
+    // ─── PUBLISH BUTTON GUARD ─────────────────────────────────────────────────
+    function updatePublishBtn() {
+      const hasFiles = files.length > 0;
+      const allConfirmed = files.every(f => f.status === 'confirmed');
+      document.getElementById('publishBtn').disabled = !(hasFiles && allConfirmed);
+    }
+
+    // ─── PREVIEW SYNC ─────────────────────────────────────────────────────────
+    function syncPreview() {
+      const cap = document.getElementById('caption').value.trim();
+      const ct = document.getElementById('pCapText');
+      ct.textContent = cap || 'Your caption…';
+      ct.className = cap ? '' : 'p-placeholder';
+      document.getElementById('pTags').innerHTML = tags.map(t => `<span class="p-tag">#${t}</span>`).join('');
+      const loc = document.getElementById('locName').value.trim();
+      document.getElementById('pLoc').style.display = loc ? 'flex' : 'none';
+      document.getElementById('pLocText').textContent = loc;
+
+      const pm = document.getElementById('pMedia'), pd = document.getElementById('pDots');
+      if (files.length) {
+        const m = files[pidx] || files[0];
+        const v = m.file.type.startsWith('video/');
+        pm.innerHTML = v
+          ? `<video src="${m.url}" muted autoplay loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>`
+          : `<img src="${m.url}" style="width:100%;height:100%;object-fit:cover;">`;
+        if (files.length > 1) {
+          pd.style.display = 'flex';
+          pd.innerHTML = files.map((_,i) => `<div class="p-dot ${i===pidx?'on':''}" onclick="pidx=${i};syncPreview()"></div>`).join('');
+        } else pd.style.display = 'none';
+      } else {
+        pm.innerHTML = `<div class="p-empty"><svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24" color="#c8c4bc"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>No media yet</span></div>`;
+        pd.style.display = 'none';
+      }
+    }
+
+    function applyPostRepresentation(post) {
+      if (post.AuthorProfile) {
+        const av = document.getElementById('pAv');
+        const p = post.AuthorProfile;
+        if (p.avatarurl) { av.style.backgroundImage='url('+p.avatarurl+')'; av.style.backgroundSize='cover'; av.textContent=''; }
+        if (p.username) { document.getElementById('pNm').textContent=p.username; document.getElementById('pNmInline').textContent=p.username; }
+      }
+      if (post.mediaList && post.mediaList.length) {
+        const rl = post.mediaList;
+        const pm = document.getElementById('pMedia'), pd = document.getElementById('pDots');
+        function show(idx) {
+          const m = rl[idx]; const v = m.mediaType==='VIDEO';
+          pm.innerHTML = v
+            ? '<video src="'+m.filepath+'" muted autoplay loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>'
+            : '<img src="'+m.filepath+'" style="width:100%;height:100%;object-fit:cover;">';
+          if (rl.length > 1) {
+            pd.style.display='flex';
+            pd.innerHTML = rl.map((_,i) => '<div class="p-dot '+(i===idx?'on':'')+'" onclick="showR('+i+')"></div>').join('');
+          }
+        }
+        window.showR = show;
+        show(0);
+      }
+    }
+
+    // ─── TAGS ─────────────────────────────────────────────────────────────────
     function onTagKey(e) {
       if ((e.key==='Enter'||e.key===',') && e.target.value.trim()) {
         e.preventDefault();
@@ -760,7 +1076,6 @@
         tags.pop(); renderTags(); syncPreview();
       }
     }
-
     function renderTags() {
       const box = document.getElementById('tagsBox'), inp = document.getElementById('tagIn');
       box.innerHTML = '';
@@ -771,35 +1086,9 @@
       });
       box.appendChild(inp);
     }
-
     function rmTag(i) { tags.splice(i,1); renderTags(); syncPreview(); }
 
-    function syncPreview() {
-      const cap = document.getElementById('caption').value.trim();
-      const ct = document.getElementById('pCapText');
-      ct.textContent = cap || 'Your caption…';
-      ct.className = cap ? '' : 'p-placeholder';
-      document.getElementById('pTags').innerHTML = tags.map(t=>`<span class="p-tag">#${t}</span>`).join('');
-      const loc = document.getElementById('locName').value.trim();
-      document.getElementById('pLoc').style.display = loc ? 'flex' : 'none';
-      document.getElementById('pLocText').textContent = loc;
-      const pm = document.getElementById('pMedia'), pd = document.getElementById('pDots');
-      if (files.length) {
-        const m = files[pidx]||files[0];
-        const v = m.file.type.startsWith('video/');
-        pm.innerHTML = v
-          ? `<video src="${m.url}" muted autoplay loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>`
-          : `<img src="${m.url}" style="width:100%;height:100%;object-fit:cover;">`;
-        if (files.length > 1) {
-          pd.style.display='flex';
-          pd.innerHTML = files.map((_,i)=>`<div class="p-dot ${i===pidx?'on':''}" onclick="pidx=${i};syncPreview()"></div>`).join('');
-        } else pd.style.display='none';
-      } else {
-        pm.innerHTML=`<div class="p-empty"><svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24" color="#c8c4bc"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>No media yet</span></div>`;
-        pd.style.display='none';
-      }
-    }
-
+    // ─── UTILS ────────────────────────────────────────────────────────────────
     function updateCC(el, max, id) {
       const l = el.value.length, c = document.getElementById(id);
       c.textContent = `${l} / ${max}`; c.classList.toggle('warn', l > max*.9);
@@ -807,209 +1096,45 @@
 
     function setFS(n, s) {
       const el = document.getElementById('fs'+n);
-      el.className = 'fn'+(s==='active'?' active':s==='done'?' done':'');
-      el.textContent = s==='done'?'✓':n;
+      el.className = 'fn' + (s==='active' ? ' active' : s==='done' ? ' done' : '');
+      el.textContent = s==='done' ? '✓' : n;
     }
 
     let sbT;
     function toast(msg, type='', dur=3500) {
       const el = document.getElementById('sb');
-      el.className = 'sb show'+(type?' '+type:'');
-      el.innerHTML = type==='loading'?`<div class="spin"></div>${msg}`:msg;
+      el.className = 'sb show' + (type ? ' '+type : '');
+      el.innerHTML = type==='loading' ? `<div class="spin"></div>${msg}` : msg;
       clearTimeout(sbT);
-      if (dur) sbT = setTimeout(()=>el.classList.remove('show'), dur);
+      if (dur) sbT = setTimeout(() => el.classList.remove('show'), dur);
     }
 
     async function apiFetch(path, opts={}) {
-      const h = {'Content-Type':'application/json'};
-      if (JWT) h['Authorization'] = 'Bearer '+JWT;
-      const r = await fetch(API+path, {...opts, headers:{...h,...(opts.headers||{})}});
+      const h = { 'Content-Type': 'application/json' };
+      if (JWT) h['Authorization'] = 'Bearer ' + JWT;
+      const r = await fetch(API + path, { ...opts, headers: { ...h, ...(opts.headers||{}) } });
       if (!r.ok) {
-        // Parse body so callers can inspect structured error responses
-        const errBody = await r.json().catch(()=>({}));
+        const errBody = await r.json().catch(() => ({}));
         const err = new Error(`HTTP ${r.status}`);
         err.status = r.status;
         err.body = errBody;
         throw err;
       }
-      return r.json().catch(()=>({}));
-    }
-
-    // Retry only the files whose requestIds are in failedUploadIds,
-    // get fresh signed URLs and re-upload, then update ids[] in place.
-    async function retryFailedUploads(failedUploadIds, ids) {
-      toast(`Retrying ${failedUploadIds.length} failed file(s)…`, 'loading', 0);
-
-      for (const failedId of failedUploadIds) {
-        // Find the file that matches this requestId
-        const i = files.findIndex(m => m.requestId === failedId);
-        if (i === -1) continue;
-        const m = files[i];
-
-        // Mark it as not uploaded so the progress ring reappears
-        m.uploaded = false;
-        const pw = document.getElementById('pw_' + i);
-        if (pw) pw.classList.remove('done');
-        setRing(i, 0);
-
-        // Step 1 again: get a fresh signed URL
-        const { signedUrl, requestId } = await getSignedUrl(m.file);
-        m.requestId = requestId;
-
-        // Step 2 again: re-upload this file
-        toast(`Re-uploading file ${i+1}…`, 'loading', 0);
-        await uploadDirect(signedUrl, m.file, p => setRing(i, p));
-        m.uploaded = true;
-        setRing(i, 100);
-
-        // Replace the old failed id with the new requestId in the ids array
-        const idIdx = ids.indexOf(failedId);
-        if (idIdx !== -1) ids[idIdx] = requestId;
-      }
-    }
-
-    async function getSignedUrl(file) {
-      return apiFetch('/api/v1/upload', {
-        method: 'POST',
-        body: JSON.stringify({ uploadType:'POST', fileMimeType:file.type, fileSize:file.size, duration:file.type.startsWith('video/')?15:1 })
-      });
-    }
-
-    async function uploadDirect(signedUrl, file, onProg) {
-      return new Promise((res,rej) => {
-        const xhr = new XMLHttpRequest();
-        xhr.upload.onprogress = e => { if(e.lengthComputable) onProg(Math.round(e.loaded/e.total*100)); };
-        xhr.onload = () => xhr.status<300?res():rej(new Error('Upload failed'));
-        xhr.onerror = ()=>rej(new Error('Network error'));
-        xhr.open('PUT', signedUrl);
-        xhr.setRequestHeader('Content-Type', file.type);
-        xhr.send(file);
-      });
-    }
-
-    async function publishPost() {
-      if (!files.length) { toast('Add at least one file','err'); return; }
-      document.getElementById('publishBtn').disabled = true;
-      const ids = [];
-      try {
-        setFS(1,'active'); toast('Requesting upload URLs…','loading',0);
-        for (let i=0; i<files.length; i++) {
-          const m = files[i];
-          const { signedUrl, requestId } = await getSignedUrl(m.file);
-          m.requestId = requestId; setFS(1,'done'); setFS(2,'active');
-          toast(`Uploading ${i+1} of ${files.length}…`,'loading',0);
-          await uploadDirect(signedUrl, m.file, p=>setRing(i,p));
-          m.uploaded=true; setRing(i,100); ids.push(requestId);
-        }
-        setFS(2,'done'); setFS(3,'active'); toast('Creating post…','loading',0);
-        document.getElementById('uploadStatus').textContent='All uploaded ✓';
-        const body = {
-          caption: document.getElementById('caption').value.trim()||null,
-          uploadRequestsIds: ids,
-          tags: tags.length?tags:null,
-          postSettings: {
-            commentsDisabled: document.getElementById('noComments').checked,
-            hideLikes: document.getElementById('hideLikes').checked,
-            hideComments: document.getElementById('hideComments').checked
-          },
-          location: document.getElementById('locName').value.trim()
-            ? {locationName:document.getElementById('locName').value.trim(),latitude:null,longitude:null}
-            : null
-        };
-        // Try creating the post. If some upload sessions expired (422 + failedUploadIds),
-        // silently retry just those files then re-submit. Max 2 attempts total.
-        let post;
-        for (let attempt = 0; attempt < 2; attempt++) {
-          try {
-            post = await apiFetch('/api/v1/content/post', {method:'POST', body:JSON.stringify(body)});
-            break; // success
-          } catch(e) {
-            const isUploadFailure = e.status === 422 && e.body && e.body.failedUploadIds && e.body.failedUploadIds.length;
-            if (isUploadFailure && attempt === 0) {
-              // Silent retry: re-upload only the failed files and update their ids in body
-              setFS(3, ''); setFS(1, 'active'); setFS(2, 'active');
-              await retryFailedUploads(e.body.failedUploadIds, body.uploadRequestsIds);
-              setFS(1, 'done'); setFS(2, 'done'); setFS(3, 'active');
-              toast('Retrying post creation…', 'loading', 0);
-              // loop will retry apiFetch with updated body.uploadRequestsIds
-            } else {
-              throw e; // not retryable or second attempt also failed
-            }
-          }
-        }
-        postId = post.id; setFS(3,'done');
-
-        // Update preview with real data from PostRepresentation
-        applyPostRepresentation(post);
-
-        setFS(4,'active'); toast('Publishing…','loading',0);
-        await apiFetch(`/api/v1/content/post/${postId}/publish`,{method:'PATCH'});
-        setFS(4,'done'); toast('Published!','ok');
-
-        // Update success screen with real publishedAt
-        const publishedAt = post.publishedAt ? new Date(post.publishedAt) : new Date();
-        document.getElementById('successTime').textContent =
-          publishedAt.toLocaleString(undefined, {dateStyle:'medium', timeStyle:'short'});
-
-        setTimeout(()=>document.getElementById('successScreen').classList.add('show'),500);
-      } catch(e) {
-        toast('Error: '+(e.message||'Something went wrong'),'err',5000);
-        document.getElementById('publishBtn').disabled=false;
-      }
-    }
-
-
-    function applyPostRepresentation(post) {
-      const profile = post.AuthorProfile;
-      if (profile) {
-        const av = document.getElementById('pAv');
-        if (profile.avatarurl) {
-          av.style.background = 'none';
-          av.style.backgroundImage = 'url(' + profile.avatarurl + ')';
-          av.style.backgroundSize = 'cover';
-          av.textContent = '';
-        }
-        if (profile.username) {
-          document.getElementById('pNm').textContent = profile.username;
-          document.getElementById('pNmInline').textContent = profile.username;
-        }
-      }
-      if (post.mediaList && post.mediaList.length) {
-        const realFiles = post.mediaList;
-        const pm = document.getElementById('pMedia');
-        const pd = document.getElementById('pDots');
-        function showMedia(idx) {
-          const m = realFiles[idx];
-          const v = m.mediaType === 'VIDEO';
-          pm.innerHTML = v
-            ? '<video src="' + m.filepath + '" muted autoplay loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>'
-            : '<img src="' + m.filepath + '" style="width:100%;height:100%;object-fit:cover;">';
-          if (realFiles.length > 1) {
-            pd.style.display = 'flex';
-            pd.innerHTML = realFiles.map((_,i) =>
-              '<div class="p-dot ' + (i===idx?'on':'') + '" onclick="showMediaReal(' + i + ')"></div>'
-            ).join('');
-          }
-        }
-        window.showMediaReal = function(idx) { showMedia(idx); };
-        showMedia(0);
-      }
-      document.querySelector('.p-tm').textContent = 'Just now · Draft';
+      return r.json().catch(() => ({}));
     }
 
     function resetPage() {
-      files.forEach(m=>URL.revokeObjectURL(m.url));
-      files=[]; tags=[]; postId=null; pidx=0;
-      document.getElementById('caption').value='';
-      document.getElementById('locName').value='';
-      document.getElementById('noComments').checked=false;
-      document.getElementById('hideLikes').checked=false;
-      document.getElementById('hideComments').checked=false;
-      document.getElementById('cc').textContent='0 / 2200';
-      document.getElementById('uploadStatus').textContent='Ready';
+      files.forEach(m => URL.revokeObjectURL(m.url));
+      files = []; tags = []; postId = null; pidx = 0;
+      document.getElementById('caption').value = '';
+      document.getElementById('locName').value = '';
+      document.getElementById('noComments').checked = false;
+      document.getElementById('hideLikes').checked = false;
+      document.getElementById('hideComments').checked = false;
+      document.getElementById('cc').textContent = '0 / 2200';
       renderTags(); renderGrid(); syncPreview();
-      [1,2,3,4].forEach(n=>setFS(n,''));
-      document.getElementById('publishBtn').disabled=true;
+      [1,2,3,4].forEach(n => setFS(n,''));
+      document.getElementById('publishBtn').disabled = true;
       document.getElementById('successScreen').classList.remove('show');
     }
 </script>

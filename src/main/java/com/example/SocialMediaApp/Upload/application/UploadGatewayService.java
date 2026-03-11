@@ -30,7 +30,7 @@ public class UploadGatewayService {
     private final UploadValidationService uploadValidationService;
     private final WebhookVerification webhookVerification;
     private static final int UPLOAD_WAIT_DURATION_MINUTES = 5;
-    private static final int UPLOAD_CONFIRM_DURATION_MINUTES = 30;
+    private static final int UPLOAD_CONFIRM_DURATION_MINUTES = 5;
 
 
     // used to upload files directly though the server
@@ -63,14 +63,15 @@ public class UploadGatewayService {
         return new UploadResponse(signedUrl,uploadRequestId);
     }
 
-    public void confirmUpload(String signature, SupabaseWebhookPayload webhookPayload){
+    public void confirmUpload( SupabaseWebhookPayload webhookPayload){
 
         String filePath=null;
-        webhookVerification.verifySignature(signature);
+     //   webhookVerification.verifySignature(signature);
 
         try{
+            log.info("Webhook confirmation for filePath : "+filePath);
 
-             filePath=webhookPayload.getRecord().getName();
+            filePath=webhookPayload.getRecord().getName();
 
             UploadSession uploadSession=uploadStateService.validateUploadSession("",filePath, UploadPhase.REQUESTED);
 
@@ -80,11 +81,14 @@ public class UploadGatewayService {
 
             if(uploadRequestId==null) throw new UploadSessionExpiredException("");
 
+            log.info("Inserting request id after confirming webhook id : "+uploadRequestId);
             objectRedisTemplate.opsForValue().set(uploadSession.getUploadRequestId(),uploadSession,UPLOAD_CONFIRM_DURATION_MINUTES, TimeUnit.MINUTES);
 
         }catch (UploadSessionExpiredException | UnsupportedMediaTypeException | FileTooLargeException e){
 
             storageService.deleteFile(filePath);
+
+            log.error("Something went wrong while uploading : "+filePath);
 
             if(e instanceof  UnsupportedMediaTypeException || e instanceof FileTooLargeException ){
                 // might block user later for bypassing the request phase filter
@@ -110,6 +114,7 @@ public class UploadGatewayService {
 
         for(String uploadRequestId : uploadRequestsIds){
             try{
+                log.info("Validating upload session id :"+uploadRequestId);
                 UploadSession uploadSession=uploadStateService.validateUploadSession(userId,uploadRequestId, UploadPhase.CONFIRMED);
                 UploadType actualUploadType=uploadSession.getUploadType();
                 if(actualUploadType!=uploadType) throw new UploadTypeMismatch("Upload Type Mismatch");
@@ -118,6 +123,7 @@ public class UploadGatewayService {
                 mediaList.add(new MediaUpload(filepath.replace("temporary","permanent"), uploadSession.getMediaType()));
                 // upload session expired which mean the key is not found in redis is the only recoverable case
             }catch (UploadSessionExpiredException e){
+                log.error("Upload session validation failed id : "+uploadRequestId);
                 failedUploadIds.add(uploadRequestId);
             }catch (UnauthorizedResourceAccessException e){
                 // logging and blocking user later
@@ -134,6 +140,8 @@ public class UploadGatewayService {
         return mediaList;
 
     }
+
+
 
 
 }

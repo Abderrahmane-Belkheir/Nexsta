@@ -27,7 +27,7 @@ public class Securityconfig {
                         "/v3/api-docs/**",
                         "/create-post.html",
                         "/create-story.html",
-                        "api/v1/upload/confirm").permitAll().anyRequest().authenticated());
+                        "/api/v1/upload/confirm").permitAll().anyRequest().authenticated());
         return http.build();
     }
 

@@ -28,7 +28,7 @@ public class StorageService {
     // profile avatar uploading is done directly via the server
     public void uploadFile(MultipartFile file,String filepath) throws IOException {
 
-        String bucket=storageEnv.getMedia();
+        String bucket=storageEnv.getMediaBucket();
 
         ResponseEntity<String> response= webClient.put().uri("/storage/v1/object/{bucket}/{filename}", bucket, filepath).
                 header(HttpHeaders.CONTENT_TYPE, file.getContentType()).
@@ -41,7 +41,7 @@ public class StorageService {
     }
 
     public void deleteFile(String filepath){
-        String bucket=storageEnv.getMedia();
+        String bucket=storageEnv.getMediaBucket();
         webClient.delete().uri("/storage/v1/object/{bucket}/{filename}", bucket, filepath).retrieve().toBodilessEntity().block();
     }
 
@@ -50,7 +50,7 @@ public class StorageService {
         filepaths.forEach(oldPath -> {
             String newPath = oldPath.replace("temporary", "permanent");
             webClient.post().uri("/storage/v1/object/move").contentType(MediaType.APPLICATION_JSON).bodyValue(Map.of(
-                    "bucketId", storageEnv.getMedia(),
+                    "bucketId", storageEnv.getMediaBucket(),
                     "sourceKey", oldPath,
                     "destinationKey", newPath
             )).retrieve().toBodilessEntity().block();
@@ -58,8 +58,8 @@ public class StorageService {
     }
 
     // used to generate a temporary signed url that the client can use to upload files
-    public String generateSignedUrl(String filepath) {
-        String bucket=storageEnv.getMedia();
+    public String generateSignedUrl(String filepath){
+        String bucket=storageEnv.getMediaBucket();
         SignRequest signRequest=new SignRequest(5);
         String uri = "/storage/v1/object/upload/sign/" + bucket + "/" + filepath;
         log.info("Generating Supabase signed Url : "+uri);

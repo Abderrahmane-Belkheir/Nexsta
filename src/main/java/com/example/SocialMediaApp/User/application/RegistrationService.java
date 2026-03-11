@@ -20,8 +20,6 @@ import org.springframework.stereotype.Service;
 public class RegistrationService {
 
     private final UserRepo userRepo;
-    private final ProfileRepo profileRepo;
-    private final NotificationSettingsRepo notificationSettingsRepo;
     private final Usermapper usermapper;
     private final IdentityService identityService;
 
@@ -30,10 +28,8 @@ public class RegistrationService {
     @Transactional
     public String registerUser(UserRegistration userregistration){
         String userId=identityService.UserProvision(userregistration);
-        log.info("user id "+userId);
         User user=usermapper.toUser(userregistration);
         user.setId(userId);
-
         Profile profile=new Profile(userregistration.getUsername());
         profile.setUser(user);
         NotificationsSettings notificationsSettings=new NotificationsSettings();
@@ -41,7 +37,7 @@ public class RegistrationService {
         user.setProfile(profile);
         user.setNotificationsSettings(notificationsSettings);
         try{
-        userRepo.save(user);
+        userRepo.saveAndFlush(user);
         }catch (Exception e){
             identityService.UserRemoval(userId);
           log.error("failed to save user in database removing it from auth server");

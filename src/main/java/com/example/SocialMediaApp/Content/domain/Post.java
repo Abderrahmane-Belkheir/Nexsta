@@ -47,7 +47,7 @@ public class Post {
 
     private Instant deletedAt;
 
-    private Instant unpublishedAt;
+    private Instant unPublishedAt;
 
     private String caption;
 

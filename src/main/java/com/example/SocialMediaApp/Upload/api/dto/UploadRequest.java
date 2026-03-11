@@ -2,6 +2,7 @@ package com.example.SocialMediaApp.Upload.api.dto;
 
 import com.example.SocialMediaApp.Upload.domain.UploadSession;
 import com.example.SocialMediaApp.Upload.domain.UploadType;
+import com.mongodb.lang.Nullable;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
