@@ -9,12 +9,15 @@ import com.example.SocialMediaApp.Content.persistence.*;
 import com.example.SocialMediaApp.Shared.Exceptions.ActionNotAllowedException;
 import com.example.SocialMediaApp.Shared.Mappers.Contentmapper;
 import com.example.SocialMediaApp.Shared.VisibilityPolicy;
+import com.example.SocialMediaApp.Upload.Exceptions.UnauthorizedResourceAccessException;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class PostInteractionService {
 
     private final PostRepo postRepo;
@@ -23,8 +26,6 @@ public class PostInteractionService {
     private final VisibilityPolicy visibilityPolicy;
     private final CommentRepo commentRepo;
     private final Contentmapper contentmapper;
-    private final LikeRepo likeRepo;
-    private final ReplyRepo replyRepo;
 
     // toggle between Post liked and not liked
     public LikeResponse addPostLike(String postId){
@@ -38,23 +39,15 @@ public class PostInteractionService {
 
         boolean liked=postLikeRepo.existsByPostIdAndUserId(postId,currentUserId);
 
-        long likeCount;
-
         if(liked){
             postLikeRepo.deleteByPostIdAndUserId(postId,currentUserId);
-            likeCount=postRepo.updatePostLikes(postId,-1);
+            postRepo.decrementPostLikes(postId);
         }else{
             postLikeRepo.save(new PostLike(currentUserId,postId));
-            likeCount=postRepo.updatePostLikes(postId,1);
+            postRepo.incrementPostLikes(postId);
             // handling notifications later
         }
-
-        LikeResponse likeResponse=new LikeResponse(!liked);
-        PostSettings postSettings=post.getPostSettings();
-        if(!postSettings.isHideLikes()){
-            likeResponse.setLikeCount(likeCount);
-        }
-        return likeResponse;
+        return new LikeResponse(!liked);
     }
 
 
@@ -80,11 +73,15 @@ public class PostInteractionService {
 
     public void removePostComment(String commentId){
         String currentUserId=authenticatedUserService.getCurrentUser();
-        int updated=commentRepo.deleteByIdAndUserId(currentUserId,commentId);
+        Comment comment=commentRepo.findById(commentId).orElseThrow(()->new ContentNotFoundException("Comment Not Found"));
+        boolean isAllowed=comment.getUserId().equals(currentUserId);
+        if(!isAllowed) throw new UnauthorizedResourceAccessException("Action could not be completed");
+        int updated=commentRepo.deleteByIdAndUserId(commentId,currentUserId);
         if(updated==0){
-            throw new ActionNotAllowedException("Unable to remove comment");
+            throw new ActionNotAllowedException("Unable to remove comment : "+commentId);
         }
-        postRepo.decrementPostComments(commentId);
+        String postId=comment.getPostId();
+        postRepo.decrementPostComments(postId);
     }
 
 }

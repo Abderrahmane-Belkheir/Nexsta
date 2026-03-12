@@ -1,5 +1,6 @@
 package com.example.SocialMediaApp.User.application;
 
+import com.example.SocialMediaApp.Profile.domain.ProfileSettings;
 import com.example.SocialMediaApp.User.Exceptions.UserRegistrationException;
 import com.example.SocialMediaApp.User.api.dto.UserRegistration;
 import com.example.SocialMediaApp.User.domain.User;

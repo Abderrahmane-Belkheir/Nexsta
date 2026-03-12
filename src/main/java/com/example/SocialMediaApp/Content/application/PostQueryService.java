@@ -19,6 +19,7 @@ import com.example.SocialMediaApp.Shared.VisibilityPolicy;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
 import com.example.SocialMediaApp.User.persistence.UserRepo;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +33,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class PostQueryService {
 
@@ -88,27 +90,27 @@ public class PostQueryService {
             List<MediaRepresentation> mediaRepresentations=mediaRepresentationMap.get(postId);
             PostRepresentation postRepresentation=contentmapper.toPostRepresentation(post);
             postRepresentation.setPostStatus(postStatus);
-            postRepresentation.setLikes(post.getLikeCount());
-            postRepresentation.setComments(post.getCommentCount());
             postRepresentation.setProfileInfo(profileInfo);
             postRepresentation.getMediaList().addAll(mediaRepresentations);
-
+            PostSettings postSettings=post.getPostSettings();
             if(viewerType==ViewerType.VIEWER){
-
-                PostSettings postSettings=post.getPostSettings();
 
                 if(!postSettings.isHideLikes()){
                     postRepresentation.setLikes(post.getLikeCount());
-                }
-
-                if(postSettings.isCommentsDisabled()){
-                    postRepresentation.setCommentsDisabled(true);
                 }
 
                 if(!postSettings.isHideComments()){
                     postRepresentation.setComments(post.getCommentCount());
                 }
                 postRepresentation.setLikedByMe(likesFunction.apply(postId));
+            }else{
+                // likes and comments count can be seen by the owner directly
+                postRepresentation.setLikes(post.getLikeCount());
+                postRepresentation.setComments(post.getCommentCount());
+            }
+
+            if(postSettings.isCommentsDisabled()){
+                postRepresentation.setCommentsDisabled(true);
             }
 
             return postRepresentation;

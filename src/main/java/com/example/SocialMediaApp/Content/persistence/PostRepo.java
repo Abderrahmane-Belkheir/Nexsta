@@ -24,19 +24,24 @@ public interface PostRepo extends JpaRepository<Post,String> {
     Optional<Post> findByIdAndUserIdAndPostStatus(String userId, String postId, Post.PostStatus postStatus);
     @Modifying
     @Transactional
-    @Query(value = "UPDATE Post SET likes = likes + :delta WHERE id = :postId RETURNING likeCount",nativeQuery = true)
-    int updatePostLikes(@Param("postId") String postId,@Param("delta") long delta);
+    @Query("UPDATE Post p SET p.likeCount = p.likeCount + 1 WHERE p.id = :postId ")
+    void incrementPostLikes(@Param("postId") String postId);
 
     @Modifying
     @Transactional
-    @Query(value = "UPDATE Post SET commentCount = commentCount + 1 WHERE id = :postId RETURNING commentCount",nativeQuery = true)
-    long incrementPostComments(@Param("postId") String postId);
+    @Query("UPDATE Post p SET p.likeCount = p.likeCount - 1 WHERE p.id = :postId AND p.likeCount>0")
+    void decrementPostLikes(@Param("postId") String postId);
 
     @Modifying
     @Transactional
-    @Query(value = "UPDATE Post SET commentCount = commentCount - 1 WHERE Post.id=(SELECT p.id FROM Post p JOIN Comment c ON p.id=c.post_id WHERE c.id=:commentId) RETURNING commentCount",nativeQuery = true)
-    long decrementPostComments(@Param("commentId") String commentId);
+    @Query("UPDATE Post p SET p.commentCount = p.commentCount + 1 WHERE p.id = :postId")
+    void incrementPostComments(@Param("postId") String postId);
 
+    @Modifying
+    @Transactional
+    @Query("UPDATE Post p SET p.commentCount=p.commentCount-1 WHERE p.id= :postId AND p.commentCount>0")
+    void decrementPostComments(@Param("postId") String postId);
+    
 
     Page<Post> findByUserIdAndPostStatus(String userId, Post.PostStatus postStatus, Pageable pageable);
 

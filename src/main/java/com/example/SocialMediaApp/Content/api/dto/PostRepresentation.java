@@ -25,7 +25,8 @@ public class PostRepresentation {
     private Long likes;
     private boolean commentsDisabled;
     private Long comments;
+    @Builder.Default
     private List<MediaRepresentation> mediaList=new ArrayList<>();
     private Location location;
-    private boolean likedByMe;
+    private Boolean likedByMe;
 }

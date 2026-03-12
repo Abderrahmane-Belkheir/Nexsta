@@ -34,7 +34,7 @@ public class Profile {
     private String avatarPath;
 
     @Embedded
-    private ProfileSettings profileSettings;
+    private ProfileSettings profileSettings=new ProfileSettings();
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="user_id")

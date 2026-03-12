@@ -1,8 +1,7 @@
 package com.example.SocialMediaApp.IntegrationTests.SocialGraph;
 
 import com.example.SocialMediaApp.IntegrationTests.TestContainerConfig;
-import com.example.SocialMediaApp.Shared.Exceptions.BadFollowRequestException;
-import com.example.SocialMediaApp.Shared.Exceptions.UserNotFoundException;
+import com.example.SocialMediaApp.SocialGraph.Exceptions.BadFollowRequestException;
 import com.example.SocialMediaApp.SocialGraph.application.FollowQueryHelper;
 import com.example.SocialMediaApp.SocialGraph.application.FollowRequestService;
 import com.example.SocialMediaApp.SocialGraph.application.FollowService;
