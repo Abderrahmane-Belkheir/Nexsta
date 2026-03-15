@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-public interface PostLikeRepo extends JpaRepository<PostLike, UUID> {
+public interface PostLikeRepo extends JpaRepository<PostLike,String> {
     boolean existsByPostIdAndUserId(String postId,String userId);
     void deleteByPostIdAndUserId(String postId,String userId);
     @Query("SELECT pl.post.id FROM PostLike pl WHERE pl.user.id = :userId AND pl.post.id IN :postIds")

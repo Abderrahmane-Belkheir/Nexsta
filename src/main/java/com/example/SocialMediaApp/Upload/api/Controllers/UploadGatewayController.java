@@ -26,8 +26,8 @@ public class UploadGatewayController {
     }
 
     @DeleteMapping
-    public ResponseEntity<Void>  discardUpload(@AuthenticationPrincipal(expression = "subject") String currentUserId,@RequestParam String filepath){
-        uploadGatewayService.discardUpload(currentUserId,filepath);
+    public ResponseEntity<Void>  discardUpload(@AuthenticationPrincipal(expression = "subject") String currentUserId,@RequestParam String requestId){
+        uploadGatewayService.discardUpload(currentUserId, requestId);
         return ResponseEntity.noContent().build();
     }
 

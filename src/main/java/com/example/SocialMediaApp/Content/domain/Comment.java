@@ -4,6 +4,8 @@ import com.example.SocialMediaApp.User.domain.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.GenericGenerator;
@@ -11,11 +13,14 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
 @EntityListeners(AuditingEntityListener.class)
 @Data
+@AllArgsConstructor
+@Builder
 @NoArgsConstructor
 @Table(indexes ={
         @Index(name ="post_comment",columnList = "post_id")
@@ -53,13 +58,20 @@ public class Comment {
     @Column(name = "user_id",updatable = false,insertable = false)
     private String userId;
 
-    public Comment(String content,String userId,String postId,String postOwnerId){
+    @OneToMany(mappedBy = "parentComment",fetch = FetchType.LAZY,orphanRemoval = true)
+    private List<Comment> replies;
+
+    @ManyToOne
+    @JoinColumn(name = "parent_id")
+    private Comment parentComment;
+
+    public Comment(Comment parentComment,String content,String userId,String postId,String postOwnerId){
+        this.parentComment=parentComment;
         this.content=content;
         this.user=new User(userId);
         this.post=new Post(postId);
         this.postOwnerId=postOwnerId;
     }
-
     public Comment(String id){
         this.id=id;
     }

@@ -22,27 +22,19 @@ public interface PostRepo extends JpaRepository<Post,String> {
                          @Param("userId") String userId, @Param("allowedStatuses") List<Post.PostStatus> allowedStatuses);
 
     Optional<Post> findByIdAndUserIdAndPostStatus(String userId, String postId, Post.PostStatus postStatus);
-    @Modifying
-    @Transactional
-    @Query("UPDATE Post p SET p.likeCount = p.likeCount + 1 WHERE p.id = :postId ")
-    void incrementPostLikes(@Param("postId") String postId);
 
     @Modifying
     @Transactional
-    @Query("UPDATE Post p SET p.likeCount = p.likeCount - 1 WHERE p.id = :postId AND p.likeCount>0")
-    void decrementPostLikes(@Param("postId") String postId);
+    @Query("UPDATE Post p SET p.likeCount = p.likeCount + delta WHERE p.id = :postId")
+    void updatePostLikes(@Param("postId") String postId,@Param("delta") int delta);
 
     @Modifying
     @Transactional
-    @Query("UPDATE Post p SET p.commentCount = p.commentCount + 1 WHERE p.id = :postId")
-    void incrementPostComments(@Param("postId") String postId);
-
-    @Modifying
-    @Transactional
-    @Query("UPDATE Post p SET p.commentCount=p.commentCount-1 WHERE p.id= :postId AND p.commentCount>0")
-    void decrementPostComments(@Param("postId") String postId);
+    @Query("UPDATE Post p SET p.commentCount = p.commentCount + delta WHERE p.id= :postId")
+    void updatePostComments(@Param("postId") String postId,@Param("delta") int delta);
     
 
     Page<Post> findByUserIdAndPostStatus(String userId, Post.PostStatus postStatus, Pageable pageable);
 
+    Optional<Post> findByIdAndPostStatus(String postId,Post.PostStatus postStatus);
 }

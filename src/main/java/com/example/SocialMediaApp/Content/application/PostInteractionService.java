@@ -41,10 +41,10 @@ public class PostInteractionService {
 
         if(liked){
             postLikeRepo.deleteByPostIdAndUserId(postId,currentUserId);
-            postRepo.decrementPostLikes(postId);
+            postRepo.updatePostLikes(postId,-1);
         }else{
             postLikeRepo.save(new PostLike(currentUserId,postId));
-            postRepo.incrementPostLikes(postId);
+            postRepo.updatePostLikes(postId,1);
             // handling notifications later
         }
         return new LikeResponse(!liked);
@@ -60,28 +60,37 @@ public class PostInteractionService {
 
         PostSettings postSettings=post.getPostSettings();
 
-        boolean isAllowed=visibilityPolicy.isAllowed(currentUserId,postOwnerId)&&!postSettings.isCommentsDisabled();
+        boolean isAllowed=visibilityPolicy.isAllowed(currentUserId,postOwnerId);
 
         if(!isAllowed) throw new ActionNotAllowedException("Action could not be completed");
 
-        Comment comment=commentRepo.save(new Comment(commentRequest.getContent(),currentUserId,postId,postOwnerId));
+        if(!postSettings.isCommentsDisabled()) throw new ActionNotAllowedException("Comments Are Disabled On This Post");
 
-        postRepo.incrementPostComments(postId);
+        Comment comment=commentRepo.save(new Comment(null,commentRequest.getContent(),currentUserId,postId,postOwnerId));
+
+        postRepo.updatePostComments(postId,1);
         // handling notification later
         return contentmapper.toCommentResponse(comment);
     }
 
+    // in this method i am dealing with both top level comments and replies on comment
     public void removePostComment(String commentId){
         String currentUserId=authenticatedUserService.getCurrentUser();
         Comment comment=commentRepo.findById(commentId).orElseThrow(()->new ContentNotFoundException("Comment Not Found"));
-        boolean isAllowed=comment.getUserId().equals(currentUserId);
+        boolean isAllowed=comment.getUserId().equals(currentUserId)||comment.getPostOwnerId().equals(currentUserId);
         if(!isAllowed) throw new UnauthorizedResourceAccessException("Action could not be completed");
-        int updated=commentRepo.deleteByIdAndUserId(commentId,currentUserId);
-        if(updated==0){
-            throw new ActionNotAllowedException("Unable to remove comment : "+commentId);
-        }
+
+        Comment parentComment=comment.getParentComment();
         String postId=comment.getPostId();
-        postRepo.decrementPostComments(postId);
+        if(parentComment!=null){
+            commentRepo.updateCommentReplies(parentComment.getId(),-1);
+            postRepo.updatePostComments(postId,-1);
+        }else{
+            int count= commentRepo.countByParentComment(comment);
+            postRepo.updatePostComments(postId,-(count+1));
+        }
+
+        commentRepo.delete(comment);
     }
 
 }

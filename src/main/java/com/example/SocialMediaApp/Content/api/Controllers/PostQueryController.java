@@ -25,5 +25,7 @@ public class PostQueryController {
         return ResponseEntity.ok(postQueryService.getUserPosts(userId,page));
     }
 
+
+
 }
 

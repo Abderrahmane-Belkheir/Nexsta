@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;
 
-public interface LikeRepo extends JpaRepository<Like, UUID> {
+public interface LikeRepo extends JpaRepository<Like,String> {
 
     void deleteByUserIdAndTargetIdAndType(String userId, String targetId, LikeType likeType);
     boolean existsByUserIdAndTargetIdAndType(String userId, String targetId, LikeType likeType);

@@ -892,16 +892,23 @@
     }
 
     // ─── REMOVE FILE ──────────────────────────────────────────────────────────
-    function rmFile(event, i) {
-      event.stopPropagation();
-      URL.revokeObjectURL(files[i].url);
-      files.splice(i, 1);
-      if (pidx >= files.length) pidx = Math.max(0, files.length - 1);
-      renderGrid();
-      syncPreview();
-      updatePublishBtn();
+   async function rmFile(event, i) {
+  event.stopPropagation();
+  const m = files[i];
+  if (m.requestId) {
+    try {
+      await apiFetch(`/api/v1/upload?requestId=${m.requestId}`, { method: 'DELETE' });
+    } catch(err) {
+      console.warn('Discard failed silently', err);
     }
-
+  }
+  URL.revokeObjectURL(m.url);
+  files.splice(i, 1);
+  if (pidx >= files.length) pidx = Math.max(0, files.length - 1);
+  renderGrid();
+  syncPreview();
+  updatePublishBtn();
+}
     // ─── PUBLISH ──────────────────────────────────────────────────────────────
     // Requires every file to be individually confirmed first.
     // Sends requestIds in the exact order files[] is currently in (user-defined order).
