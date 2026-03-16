@@ -1,17 +1,16 @@
 package com.example.SocialMediaApp.Content.application;
 
 import com.example.SocialMediaApp.Content.Exceptions.ContentNotFoundException;
-import com.example.SocialMediaApp.Content.api.dto.CommentRequest;
+import com.example.SocialMediaApp.Content.api.dto.CommentCreationRequest;
+import com.example.SocialMediaApp.Content.api.dto.CommentRepresentation;
 import com.example.SocialMediaApp.Content.api.dto.LikeResponse;
-import com.example.SocialMediaApp.Content.domain.Comment;
-import com.example.SocialMediaApp.Content.domain.Like;
-import com.example.SocialMediaApp.Content.domain.LikeType;
+import com.example.SocialMediaApp.Content.domain.*;
 import com.example.SocialMediaApp.Content.persistence.CommentRepo;
 import com.example.SocialMediaApp.Content.persistence.LikeRepo;
 import com.example.SocialMediaApp.Content.persistence.PostRepo;
 import com.example.SocialMediaApp.Shared.Exceptions.ActionNotAllowedException;
+import com.example.SocialMediaApp.Shared.Mappers.Contentmapper;
 import com.example.SocialMediaApp.Shared.VisibilityPolicy;
-import com.example.SocialMediaApp.Upload.Exceptions.UnauthorizedResourceAccessException;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +24,7 @@ public class CommentInteractionService {
     private final AuthenticatedUserService authenticatedUserService;
     private final LikeRepo likeRepo;
     private final PostRepo postRepo;
+    private final Contentmapper contentmapper;
 
     // toggle between Comment liked and not liked
     public LikeResponse addCommentLike(String commentId){
@@ -52,24 +52,24 @@ public class CommentInteractionService {
         return new LikeResponse(!liked);
     }
 
-    public void addCommentReply(String commentId, CommentRequest commentRequest){
+    public CommentRepresentation addCommentReply(String commentId, CommentCreationRequest commentRequest){
         String currentUserId=authenticatedUserService.getCurrentUser();
 
-        Comment comment=commentRepo.findById(commentId).orElseThrow(()-> new ContentNotFoundException("Comment Not Found"));
-        String postId=comment.getPostId();
-
+        Comment comment=commentRepo.findWithDetailsById(commentId).orElseThrow(()-> new ContentNotFoundException("Comment Not Found"));
+        Post post=comment.getPost();
+        PostSettings postSettings=post.getPostSettings();
+        if(postSettings.isCommentsDisabled()) throw new ActionNotAllowedException("Comments Are Disabled On This Post");
         boolean isAllowed=visibilityPolicy.isAllowed(currentUserId,comment.getPostOwnerId());
 
-        if(!isAllowed){
-            throw new ActionNotAllowedException("Action could not be completed");
-        }
+        if(!isAllowed) throw new ActionNotAllowedException("Action could not be completed");
 
         if(comment.getParentComment()!=null) throw new ActionNotAllowedException("Cannot Reply on a Reply");
 
-        commentRepo.save(new Comment(comment,commentRequest.getContent(),currentUserId,postId,comment.getPostOwnerId()));
+        commentRepo.save(new Comment(comment,commentRequest.getContent(),currentUserId,post.getId(),comment.getPostOwnerId()));
         commentRepo.updateCommentReplies(commentId,1);
-        postRepo.updatePostComments(postId,1);
+        postRepo.updatePostComments(post.getId(),1);
 
+        return contentmapper.toCommentRepresentation(comment);
     }
 
 }

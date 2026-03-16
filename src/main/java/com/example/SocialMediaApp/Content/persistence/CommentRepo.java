@@ -1,6 +1,7 @@
 package com.example.SocialMediaApp.Content.persistence;
 
 import com.example.SocialMediaApp.Content.domain.Comment;
+import com.example.SocialMediaApp.Content.domain.Post;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface CommentRepo extends JpaRepository<Comment,String> {
@@ -25,6 +27,11 @@ public interface CommentRepo extends JpaRepository<Comment,String> {
 
     int countByParentComment(Comment comment);
 
+    @Query("SELECT c FROM Comment c LEFT JOIN FETCH c.post LEFT JOIN FETCH c.parentComment WHERE c.id=:commentId")
+    Optional<Comment> findWithDetailsById(@Param("commentId") String commentId);
 
+    Page<Comment> findByParentComment(Comment comment, Pageable pageable);
+
+    Page<Comment> findByPostIdAndParentComment(String postId, Comment comment, Pageable pageable);
 
 }

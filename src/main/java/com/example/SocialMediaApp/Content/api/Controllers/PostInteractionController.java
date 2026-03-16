@@ -1,8 +1,7 @@
 package com.example.SocialMediaApp.Content.api.Controllers;
 
+import com.example.SocialMediaApp.Content.api.dto.CommentCreationRequest;
 import com.example.SocialMediaApp.Content.api.dto.CommentRepresentation;
-import com.example.SocialMediaApp.Content.api.dto.CommentRequest;
-import com.example.SocialMediaApp.Content.api.dto.CommentResponse;
 import com.example.SocialMediaApp.Content.api.dto.LikeResponse;
 import com.example.SocialMediaApp.Content.application.CommentQueryService;
 import com.example.SocialMediaApp.Content.application.PostInteractionService;
@@ -26,7 +25,7 @@ public class PostInteractionController {
     }
 
     @PostMapping("/{postId}/comments")
-    public ResponseEntity<CommentResponse> commentPost(@PathVariable String postId, @RequestBody @Valid CommentRequest commentRequest){
+    public ResponseEntity<CommentRepresentation> commentPost(@PathVariable String postId, @RequestBody @Valid CommentCreationRequest commentRequest){
         return ResponseEntity.ok(postInteractionService.addPostComment(postId,commentRequest));
     }
 

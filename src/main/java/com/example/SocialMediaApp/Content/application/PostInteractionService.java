@@ -1,8 +1,8 @@
 package com.example.SocialMediaApp.Content.application;
 
 import com.example.SocialMediaApp.Content.Exceptions.ContentNotFoundException;
-import com.example.SocialMediaApp.Content.api.dto.CommentRequest;
-import com.example.SocialMediaApp.Content.api.dto.CommentResponse;
+import com.example.SocialMediaApp.Content.api.dto.CommentCreationRequest;
+import com.example.SocialMediaApp.Content.api.dto.CommentRepresentation;
 import com.example.SocialMediaApp.Content.api.dto.LikeResponse;
 import com.example.SocialMediaApp.Content.domain.*;
 import com.example.SocialMediaApp.Content.persistence.*;
@@ -51,7 +51,7 @@ public class PostInteractionService {
     }
 
 
-    public CommentResponse addPostComment(String postId, CommentRequest commentRequest){
+    public CommentRepresentation addPostComment(String postId, CommentCreationRequest commentRequest){
         String currentUserId=authenticatedUserService.getCurrentUser();
 
         Post post=postRepo.findById(postId).orElseThrow(()-> new ContentNotFoundException("Post Not Found"));
@@ -70,7 +70,7 @@ public class PostInteractionService {
 
         postRepo.updatePostComments(postId,1);
         // handling notification later
-        return contentmapper.toCommentResponse(comment);
+        return contentmapper.toCommentRepresentation(comment);
     }
 
     // in this method i am dealing with both top level comments and replies on comment
@@ -82,6 +82,7 @@ public class PostInteractionService {
 
         Comment parentComment=comment.getParentComment();
         String postId=comment.getPostId();
+        // here i am handling the case where the comment is a reply so i will just decrement the comment count on both post and the comment
         if(parentComment!=null){
             commentRepo.updateCommentReplies(parentComment.getId(),-1);
             postRepo.updatePostComments(postId,-1);

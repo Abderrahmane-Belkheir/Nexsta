@@ -3,7 +3,6 @@ package com.example.SocialMediaApp.Shared.Mappers;
 import com.example.SocialMediaApp.Content.api.dto.*;
 import com.example.SocialMediaApp.Content.domain.*;
 import com.example.SocialMediaApp.Shared.MediaUrlResolver;
-import com.example.SocialMediaApp.Upload.domain.MediaUpload;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -18,7 +17,7 @@ public interface Contentmapper {
     @Mapping(target = "mediaList",ignore = true)
     PostRepresentation toPostRepresentation(Post post);
 
-    CommentResponse toCommentResponse(Comment comment);
+    CommentRepresentation toCommentRepresentation(Comment comment);
     @Mapping(target = "filepath",qualifiedByName = "resolveUrl")
     MediaRepresentation toMediaRepresentation(Media media);
     @Mapping(target = "storyStatus",ignore = true)

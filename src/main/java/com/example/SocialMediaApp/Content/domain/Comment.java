@@ -61,7 +61,7 @@ public class Comment {
     @OneToMany(mappedBy = "parentComment",fetch = FetchType.LAZY,orphanRemoval = true)
     private List<Comment> replies;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private Comment parentComment;
 
@@ -75,5 +75,7 @@ public class Comment {
     public Comment(String id){
         this.id=id;
     }
+
+    public enum CommentType{REPLY,COMMENT};
 
 }
