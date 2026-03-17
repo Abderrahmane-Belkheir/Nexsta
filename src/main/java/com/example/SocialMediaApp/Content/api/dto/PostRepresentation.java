@@ -2,6 +2,8 @@ package com.example.SocialMediaApp.Content.api.dto;
 
 import com.example.SocialMediaApp.Content.domain.Location;
 import com.example.SocialMediaApp.Content.domain.Post;
+import com.example.SocialMediaApp.Profile.api.dto.ProfileSummary;
+import com.example.SocialMediaApp.Profile.domain.Profile;
 import com.example.SocialMediaApp.Profile.domain.cache.ProfileInfo;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;

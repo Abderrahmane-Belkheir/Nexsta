@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/upload")
-@Hidden
 public class UploadGatewayController {
 
     private final UploadGatewayService uploadGatewayService;

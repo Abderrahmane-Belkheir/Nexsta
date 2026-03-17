@@ -56,20 +56,24 @@ public class CommentInteractionService {
         String currentUserId=authenticatedUserService.getCurrentUser();
 
         Comment comment=commentRepo.findWithDetailsById(commentId).orElseThrow(()-> new ContentNotFoundException("Comment Not Found"));
-        Post post=comment.getPost();
-        PostSettings postSettings=post.getPostSettings();
-        if(postSettings.isCommentsDisabled()) throw new ActionNotAllowedException("Comments Are Disabled On This Post");
+
         boolean isAllowed=visibilityPolicy.isAllowed(currentUserId,comment.getPostOwnerId());
 
         if(!isAllowed) throw new ActionNotAllowedException("Action could not be completed");
+
+        Post post=comment.getPost();
+        PostSettings postSettings=post.getPostSettings();
+
+        if(postSettings.isCommentsDisabled()) throw new ActionNotAllowedException("Comments Are Disabled On This Post");
 
         if(comment.getParentComment()!=null) throw new ActionNotAllowedException("Cannot Reply on a Reply");
 
         commentRepo.save(new Comment(comment,commentRequest.getContent(),currentUserId,post.getId(),comment.getPostOwnerId()));
         commentRepo.updateCommentReplies(commentId,1);
         postRepo.updatePostComments(post.getId(),1);
-
-        return contentmapper.toCommentRepresentation(comment);
+        CommentRepresentation commentRepresentation=contentmapper.toCommentRepresentation(comment);
+        commentRepresentation.setReplyCount(null);
+        return commentRepresentation;
     }
 
 }

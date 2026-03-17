@@ -25,12 +25,12 @@ public interface PostRepo extends JpaRepository<Post,String> {
 
     @Modifying
     @Transactional
-    @Query("UPDATE Post p SET p.likeCount = p.likeCount + delta WHERE p.id = :postId")
+    @Query("UPDATE Post p SET p.likeCount = p.likeCount + :delta WHERE p.id = :postId")
     void updatePostLikes(@Param("postId") String postId,@Param("delta") int delta);
 
     @Modifying
     @Transactional
-    @Query("UPDATE Post p SET p.commentCount = p.commentCount + delta WHERE p.id= :postId")
+    @Query("UPDATE Post p SET p.commentCount = p.commentCount + :delta WHERE p.id= :postId")
     void updatePostComments(@Param("postId") String postId,@Param("delta") int delta);
     
 

@@ -20,7 +20,6 @@ import java.util.UUID;
 @EntityListeners(AuditingEntityListener.class)
 @Data
 @AllArgsConstructor
-@Builder
 @NoArgsConstructor
 @Table(indexes ={
         @Index(name ="post_comment",columnList = "post_id")
@@ -34,9 +33,9 @@ public class Comment {
     @CreatedDate
     private Instant createdAt;
 
-    private Long likeCount=0L;
+    private long likeCount=0L;
 
-    private Long replyCount=0L;
+    private Long replyCount;
 
     @Column(updatable = false)
     private String postOwnerId;
@@ -67,6 +66,8 @@ public class Comment {
 
     public Comment(Comment parentComment,String content,String userId,String postId,String postOwnerId){
         this.parentComment=parentComment;
+        // replies don't have reply counts, null signals mapper to exclude this field
+        this.replyCount = parentComment == null ? 0L : null;
         this.content=content;
         this.user=new User(userId);
         this.post=new Post(postId);

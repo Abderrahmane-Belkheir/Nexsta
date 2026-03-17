@@ -2,9 +2,10 @@ package com.example.SocialMediaApp.Content.api.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.Data;
 import lombok.Getter;
 
-@Getter
+@Data
 public class CommentCreationRequest {
     @NotBlank
     @Size(max = 500)

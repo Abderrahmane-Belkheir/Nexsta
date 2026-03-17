@@ -58,13 +58,13 @@ public class PostInteractionService {
 
         String postOwnerId=post.getUserId();
 
-        PostSettings postSettings=post.getPostSettings();
-
         boolean isAllowed=visibilityPolicy.isAllowed(currentUserId,postOwnerId);
 
         if(!isAllowed) throw new ActionNotAllowedException("Action could not be completed");
 
-        if(!postSettings.isCommentsDisabled()) throw new ActionNotAllowedException("Comments Are Disabled On This Post");
+        PostSettings postSettings=post.getPostSettings();
+
+        if(postSettings.isCommentsDisabled()) throw new ActionNotAllowedException("Comments Are Disabled On This Post");
 
         Comment comment=commentRepo.save(new Comment(null,commentRequest.getContent(),currentUserId,postId,postOwnerId));
 
@@ -76,10 +76,9 @@ public class PostInteractionService {
     // in this method i am dealing with both top level comments and replies on comment
     public void removePostComment(String commentId){
         String currentUserId=authenticatedUserService.getCurrentUser();
-        Comment comment=commentRepo.findById(commentId).orElseThrow(()->new ContentNotFoundException("Comment Not Found"));
+        Comment comment=commentRepo.findWithDetailsById(commentId).orElseThrow(()->new ContentNotFoundException("Comment Not Found"));
         boolean isAllowed=comment.getUserId().equals(currentUserId)||comment.getPostOwnerId().equals(currentUserId);
         if(!isAllowed) throw new UnauthorizedResourceAccessException("Action could not be completed");
-
         Comment parentComment=comment.getParentComment();
         String postId=comment.getPostId();
         // here i am handling the case where the comment is a reply so i will just decrement the comment count on both post and the comment

@@ -18,7 +18,7 @@ public class NotificationsController {
         notificationSettingsService.updateNotificationSettings(settings);
     }
 
-@GetMapping("/settings")
+    @GetMapping("/settings")
 public NotificationSettings getNotificationSettings(){
         return notificationSettingsService.getnotificationsettings();
 }

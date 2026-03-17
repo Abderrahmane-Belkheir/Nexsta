@@ -1,6 +1,8 @@
 package com.example.SocialMediaApp.Content.api.dto;
 
+import com.example.SocialMediaApp.Profile.api.dto.ProfileSummary;
 import com.example.SocialMediaApp.Profile.domain.cache.ProfileInfo;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,18 +14,15 @@ import java.time.Instant;
 @NoArgsConstructor
 @Builder
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class CommentRepresentation {
     @JsonProperty("AuthorProfile")
-    private ProfileInfo profileInfo;
+    private ProfileSummary profileSummary;
     private String id;
-    /*
-     Null for top comment (directly related to post)
-     parent comment id if reply
-    */
-    private String parentCommentId;
     private String content;
     private Instant createdAt;
     private long likeCount;
     // Null if current is a reply
     private Long replyCount;
+    private boolean likedByMe;
 }

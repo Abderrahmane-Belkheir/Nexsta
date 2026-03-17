@@ -58,7 +58,7 @@ public class PostQueryService {
         String currentUserId=authenticatedUserService.getCurrentUser();
 
         if(currentUserId.equals(targetId)) return getMyPosts(Post.PostStatus.PUBLISHED,page);
-        if(!visibilityPolicy.isAllowed(currentUserId,targetId)) throw new ContentNotAvailableException("");
+        if(!visibilityPolicy.isAllowed(currentUserId,targetId)) throw new ContentNotAvailableException("This content is not available");
 
         ProfileInfo profileInfo =profileQueryService.getUserProfileInfo(targetId);
         Post.PostStatus postStatus= Post.PostStatus.PUBLISHED;
