@@ -5,9 +5,11 @@ import com.example.SocialMediaApp.Profile.api.dto.ProfileDetails;
 import com.example.SocialMediaApp.Profile.persistence.ProfileRepo;
 import com.example.SocialMediaApp.Shared.Exceptions.BadFollowRequestException;
 import com.example.SocialMediaApp.Shared.Exceptions.NoRelationShipException;
+import com.example.SocialMediaApp.SocialGraph.Exceptions.BadFollowRequestException;
+import com.example.SocialMediaApp.SocialGraph.Exceptions.NoRelationShipException;
 import com.example.SocialMediaApp.SocialGraph.application.FollowQueryHelper;
-import com.example.SocialMediaApp.SocialGraph.application.FollowRequestService;
-import com.example.SocialMediaApp.SocialGraph.application.FollowService;
+import com.example.SocialMediaApp.SocialGraph.application.FollowerService;
+import com.example.SocialMediaApp.SocialGraph.application.FollowingService;
 import com.example.SocialMediaApp.SocialGraph.application.cache.FollowCacheUpdater;
 import com.example.SocialMediaApp.SocialGraph.domain.Follow;
 import com.example.SocialMediaApp.SocialGraph.domain.RelationshipStatus;
@@ -56,9 +58,9 @@ public class FollowServiceTest {
     @Mock
     private FollowCacheUpdater followCacheUpdater;
     @InjectMocks
-    private FollowRequestService followRequestService;
+    private FollowerService followRequestService;
     @InjectMocks
-    private FollowService followService;
+    private FollowingService followService;
 
     private final String currentUserId=UUID.randomUUID().toString();
     private final String targetUserId = UUID.randomUUID().toString();
@@ -75,7 +77,7 @@ public class FollowServiceTest {
 
         @Test
         public void Follow_yourself_throwsBadFollowException(){
-            Exception exception=assertThrows(BadFollowRequestException.class,
+            Exception exception=assertThrows(com.example.SocialMediaApp.SocialGraph.Exceptions.BadFollowRequestException.class,
                     ()->followService.Follow(currentUserId));
             assertEquals("you cant follow yourself", exception.getMessage());
         }
@@ -84,7 +86,7 @@ public class FollowServiceTest {
         public void follow_alreadyFollowedUser_throwsBadFollowException() {
             when(followRepo.existsByFollowerIdAndFollowingIdAndStatus(currentUserId, targetUserId, Follow.Status.ACCEPTED))
                     .thenReturn(true);
-            assertthrows(BadFollowRequestException.class,
+            assertthrows(com.example.SocialMediaApp.SocialGraph.Exceptions.BadFollowRequestException.class,
                     () -> followService.Follow(targetUserId), "Already followed");
         }
 
@@ -153,7 +155,7 @@ public class FollowServiceTest {
         @Test
         public void unfollow_notfollowing_throwsNoRelationShipException(){
             when(followRepo.findByFollowerIdAndFollowingId(currentUserId,targetUserId)).thenReturn(Optional.empty());
-            assertThrows(NoRelationShipException.class,()->followService.UnFollow(targetUserId),"No relation with user found");
+            assertThrows(com.example.SocialMediaApp.SocialGraph.Exceptions.NoRelationShipException.class,()->followService.unFollow(targetUserId),"No relation with user found");
         }
 
         @ParameterizedTest
@@ -162,7 +164,7 @@ public class FollowServiceTest {
             Follow follow =new Follow(currentUserId,targetUserId);
             follow.setStatus(status);
             when(followRepo.findByFollowerIdAndFollowingId(currentUserId,targetUserId)).thenReturn(Optional.of(follow));
-            followService.UnFollow(targetUserId);
+            followService.unFollow(targetUserId);
             verify(followRepo).delete(follow);
             if(status== Follow.Status.ACCEPTED){
                 verify(eventPublisher).publishEvent(any(FollowRemoved.class));
@@ -173,7 +175,7 @@ public class FollowServiceTest {
         @Test
         public void removefollower_notfollower_throwsNoRelationShipException(){
             when(followRepo.findByFollowerIdAndFollowingId(targetUserId,currentUserId)).thenReturn(Optional.empty());
-            assertThrows(NoRelationShipException.class,()->followService.removefollower(targetUserId),"No relation with user found");
+            assertThrows(NoRelationShipException.class,()->followService.removeFollower(targetUserId),"No relation with user found");
         }
 
         @ParameterizedTest
@@ -182,7 +184,7 @@ public class FollowServiceTest {
             Follow follow=new Follow(targetUserId,currentUserId);
             follow.setStatus(status);
             when(followRepo.findByFollowerIdAndFollowingId(targetUserId,currentUserId)).thenReturn(Optional.of(follow));
-            followService.removefollower(targetUserId);
+            followService.removeFollower(targetUserId);
             verify(followRepo).delete(follow);
             if(status== Follow.Status.ACCEPTED){
                 ArgumentCaptor<FollowRemoved> captor=ArgumentCaptor.forClass(FollowRemoved.class);

@@ -10,8 +10,7 @@ import com.example.SocialMediaApp.SocialGraph.domain.Follow;
 import com.example.SocialMediaApp.SocialGraph.domain.events.FollowAdded;
 import com.example.SocialMediaApp.SocialGraph.persistence.FollowRepo;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
@@ -19,11 +18,11 @@ import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
-public class FollowRequestService {
+@Slf4j
+public class FollowerService {
 
     private final FollowRepo followRepo;
     private final AuthenticatedUserService authenticatedUserService;
-    private final Logger logger= LoggerFactory.getLogger(FollowRequestService.class);
     private final ApplicationEventPublisher eventPublisher;
     private final FollowCacheUpdater followCacheUpdater;
 
@@ -42,7 +41,7 @@ public class FollowRequestService {
         followRequest.setStatus(Follow.Status.ACCEPTED);
         followRequest.setFollowDate(Instant.now());
         followRepo.save(followRequest);
-        logger.info("publishing following accepted event to "+targetUserId);
+        log.info("publishing following accepted event to "+targetUserId);
         eventPublisher.publishEvent(new FollowNotification(currentUserId,targetUserId,
                 FollowNotification.notificationType.FOLLOWING_ACCEPTED));
         eventPublisher.publishEvent(new FollowAdded(followRequest));
@@ -52,7 +51,6 @@ public class FollowRequestService {
 
     @CheckUserExistence
     public void rejectFollow(String targetUserId) {
-
         String currentUserId = authenticatedUserService.getCurrentUser();
         Follow follow = followRepo.findByFollowerIdAndFollowingId(targetUserId, currentUserId).
                 orElseThrow(()->new NoRelationShipException("No relation with user found"));
@@ -60,21 +58,8 @@ public class FollowRequestService {
             throw new BadFollowRequestException("couldn't perform reject follow action on this user");
         }
         followRepo.delete(follow);
-        logger.info("publishing following rejected event to "+targetUserId);
+        log.info("publishing following rejected event to "+targetUserId);
         eventPublisher.publishEvent(new FollowNotification(currentUserId,targetUserId,
                 FollowNotification.notificationType.FOLLOWING_REJECTED));
     }
-
-    @CheckUserExistence
-    public void unsendFollowingRequest(String targetUserId){
-        String currentUserId=authenticatedUserService.getCurrentUser();
-        Follow followingRequest = followRepo.findByFollowerIdAndFollowingId(currentUserId,targetUserId).
-            orElseThrow(()->new NoRelationShipException("No relation with user found"));
-        if (followingRequest.getStatus() == Follow.Status.ACCEPTED) {
-        throw new BadFollowRequestException("couldn't perform unsend follow request on this user");
-    }
-        followRepo.delete(followingRequest);
-}
-
-
 }

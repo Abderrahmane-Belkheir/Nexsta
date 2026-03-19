@@ -17,7 +17,7 @@ public class BlockService {
     private final BlocksRepo blocksRepo;
     private final AuthenticatedUserService authenticatedUserService;
     private final FollowRepo followRepo;
-    private final FollowService followService;
+    private final FollowingService followService;
 
     @CheckUserExistence
     public void block(String targetUserId) {
@@ -34,13 +34,13 @@ public class BlockService {
         boolean follower=followRepo.existsByFollowerIdAndFollowingId(currentUserId,targetUserId);
 
         if(follower){
-            followService.UnFollow(targetUserId);
+            followService.toggleFollow(targetUserId);
         }
 
         boolean followed=followRepo.existsByFollowerIdAndFollowingId(targetUserId,currentUserId);
 
         if (followed){
-            followService.removefollower(targetUserId);
+            followService.removeFollower(targetUserId);
         }
         blocksRepo.save(block);
     }

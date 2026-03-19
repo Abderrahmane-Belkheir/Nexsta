@@ -24,30 +24,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class KeycloakService implements IdentityService {
 
-    // injecting keycloak details from properties
-    @Value("${keycloak.username}")
-    private String username;
-    @Value("${keycloak.password}")
-    private String password;
-    @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
-    private String issuerUri;
-
-    private RealmResource getRealmResource(){
-        Keycloak keycloak= KeycloakBuilder.builder().
-                realm("master").username(username).password(password).
-                serverUrl(issuerUri.substring(0, issuerUri.indexOf("/realms"))).clientId("admin-cli").build();
-        String realmName=issuerUri.substring(issuerUri.lastIndexOf("/")+1);
-      return keycloak.realm(realmName);
-
-    }
-
-    public void UserRemoval(String userId){
-        getRealmResource().users().get(userId).remove();
-    }
+    private final RealmResource realmResource;
 
     // method responsible for creating the user record inside the identity provider
-
-
     public String  UserProvision(UserRegistration userregistration){
         org.keycloak.representations.idm.UserRepresentation userRepresentation= new org.keycloak.representations.idm.UserRepresentation();
         userRepresentation.setEmail(userregistration.getEmail());
@@ -62,7 +41,7 @@ public class KeycloakService implements IdentityService {
         credentialRepresentation.setValue(userregistration.getPassword());
         userRepresentation.setCredentials(List.of(credentialRepresentation));
         userRepresentation.setEnabled(true);
-        Response response= getRealmResource().users().create(userRepresentation);
+        Response response= realmResource.users().create(userRepresentation);
             if(response.getStatus()!=201){
                 response.close();
                 log.error("failed to provision user in auth server "+response.readEntity(String.class));
@@ -71,9 +50,13 @@ public class KeycloakService implements IdentityService {
        return  CreatedResponseUtil.getCreatedId(response);
     }
 
+    public void UserRemoval(String userId){
+        realmResource.users().get(userId).remove();
+    }
+
     public void changeUsername(String userId,String username){
         try{
-            UserResource userResource= getRealmResource().users().get(userId);
+            UserResource userResource= realmResource.users().get(userId);
             UserRepresentation userRepresentation=userResource.toRepresentation();
             userRepresentation.setUsername(username);
             userResource.update(userRepresentation);

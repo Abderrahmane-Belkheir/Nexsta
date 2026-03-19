@@ -19,19 +19,19 @@ public class FollowQueryController {
     private final FollowQueryService followQueryService;
 
     @GetMapping("/{userid}/followers")
-    public List<ProfileSummary> getuserFollowers(@PathVariable String userid,
+    public List<ProfileSummary> getUserFollowers(@PathVariable String userid,
                                                  @RequestParam(defaultValue = "0") @PositiveOrZero int page) {
         return followQueryService.listUserFollowers(userid, page);
     }
 
     @GetMapping("/{userid}/followings")
-    public List<ProfileSummary> getuserFollowings(@PathVariable String userid,
+    public List<ProfileSummary> getUserFollowings(@PathVariable String userid,
                                                   @RequestParam(defaultValue = "0") @PositiveOrZero int page) {
         return followQueryService.listUserFollowing(userid, page);
     }
 
     @GetMapping("/me/followers")
-    public List<ProfileSummary> getFollowers(@RequestParam(defaultValue = "ACCEPTED") Follow.Status status,
+    public List<ProfileSummary> getMyFollowers(@RequestParam(defaultValue = "ACCEPTED") Follow.Status status,
                                              @RequestParam(defaultValue = "0") @PositiveOrZero  int page) {
 
         return status==Follow.Status.ACCEPTED?
@@ -39,7 +39,7 @@ public class FollowQueryController {
     }
 
     @GetMapping("/me/followings")
-    public List<ProfileSummary> getFollowings(@RequestParam(defaultValue = "ACCEPTED") Follow.Status status,
+    public List<ProfileSummary> getMyFollowings(@RequestParam(defaultValue = "ACCEPTED") Follow.Status status,
                                               @RequestParam(defaultValue = "0") @PositiveOrZero  int page) {
 
         return status==Follow.Status.ACCEPTED?

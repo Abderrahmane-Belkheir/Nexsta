@@ -12,11 +12,14 @@ import com.example.SocialMediaApp.Shared.Exceptions.ActionNotAllowedException;
 import com.example.SocialMediaApp.Shared.Mappers.Contentmapper;
 import com.example.SocialMediaApp.Shared.VisibilityPolicy;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CommentInteractionService {
 
     private final CommentRepo commentRepo;
@@ -55,20 +58,20 @@ public class CommentInteractionService {
     public CommentRepresentation addCommentReply(String commentId, CommentCreationRequest commentRequest){
         String currentUserId=authenticatedUserService.getCurrentUser();
 
-        Comment comment=commentRepo.findWithDetailsById(commentId).orElseThrow(()-> new ContentNotFoundException("Comment Not Found"));
+        Comment parentComment =commentRepo.findWithDetailsById(commentId).orElseThrow(()-> new ContentNotFoundException("Comment Not Found"));
 
-        boolean isAllowed=visibilityPolicy.isAllowed(currentUserId,comment.getPostOwnerId());
+        boolean isAllowed=visibilityPolicy.isAllowed(currentUserId, parentComment.getPostOwnerId());
 
         if(!isAllowed) throw new ActionNotAllowedException("Action could not be completed");
 
-        Post post=comment.getPost();
+        Post post= parentComment.getPost();
         PostSettings postSettings=post.getPostSettings();
 
         if(postSettings.isCommentsDisabled()) throw new ActionNotAllowedException("Comments Are Disabled On This Post");
 
-        if(comment.getParentComment()!=null) throw new ActionNotAllowedException("Cannot Reply on a Reply");
+        if(parentComment.getParentComment()!=null) throw new ActionNotAllowedException("Cannot Reply on a Reply");
 
-        commentRepo.save(new Comment(comment,commentRequest.getContent(),currentUserId,post.getId(),comment.getPostOwnerId()));
+        Comment comment=commentRepo.save(new Comment(parentComment,commentRequest.getContent(),currentUserId,post.getId(), parentComment.getPostOwnerId()));
         commentRepo.updateCommentReplies(commentId,1);
         postRepo.updatePostComments(post.getId(),1);
         CommentRepresentation commentRepresentation=contentmapper.toCommentRepresentation(comment);

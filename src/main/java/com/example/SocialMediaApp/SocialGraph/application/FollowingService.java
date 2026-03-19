@@ -2,6 +2,7 @@ package com.example.SocialMediaApp.SocialGraph.application;
 
 import com.example.SocialMediaApp.SocialGraph.Exceptions.BadFollowRequestException;
 import com.example.SocialMediaApp.SocialGraph.Exceptions.NoRelationShipException;
+import com.example.SocialMediaApp.SocialGraph.api.dto.FollowToggleResponse;
 import com.example.SocialMediaApp.SocialGraph.application.cache.FollowCacheUpdater;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
 import com.example.SocialMediaApp.Notification.domain.events.FollowNotification;
@@ -21,12 +22,13 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 @Slf4j
-public class FollowService {
+public class FollowingService {
 
     private final FollowRepo followRepo;
     private final ProfileRepo profileRepo;
@@ -36,20 +38,33 @@ public class FollowService {
     private final FollowCacheUpdater followCacheUpdater;
 
     @CheckUserExistence
-    public ProfileDetails Follow(String targetUserId) {
-        String currentUserId = authenticatedUserService.getCurrentUser();
+    public FollowToggleResponse toggleFollow(String targetUserId){
+
+        String currentUserId=authenticatedUserService.getCurrentUser();
+
         if (currentUserId.equals(targetUserId)) {
             throw new BadFollowRequestException("you cant follow yourself");
         }
-        if(followRepo.existsByFollowerIdAndFollowingIdAndStatus(currentUserId, targetUserId, Follow.Status.ACCEPTED)){
-            throw new BadFollowRequestException("Already followed");
+
+        if(blocksRepo.existsByBlockerIdAndBlockedId(currentUserId,targetUserId)||blocksRepo.existsByBlockerIdAndBlockedId(targetUserId,currentUserId)) {
+            throw new BadFollowRequestException("You cant follow this user");
         }
-        if(blocksRepo.existsByBlockerIdAndBlockedId(targetUserId, currentUserId)||blocksRepo.existsByBlockerIdAndBlockedId(currentUserId,targetUserId)){
-            throw new BadFollowRequestException("You cant follow this User");
+
+        Optional<Follow> follow=followRepo.findByFollowerIdAndFollowingId(currentUserId,targetUserId);
+        FollowToggleResponse followToggleResponse=new FollowToggleResponse(targetUserId);
+
+        if(follow.isEmpty()) {
+           RelationshipStatus relationshipStatus=follow(currentUserId,targetUserId);
+            followToggleResponse.setRelationshipStatus(relationshipStatus);
+            return followToggleResponse;
         }
-       if(followRepo.existsByFollowerIdAndFollowingIdAndStatus(currentUserId,targetUserId, Follow.Status.PENDING)){
-           throw new BadFollowRequestException("request already sent");
-       }
+        unFollow(follow.get());
+        followToggleResponse.setRelationshipStatus(RelationshipStatus.NOT_FOLLOWING);
+        return followToggleResponse;
+
+    }
+
+    private RelationshipStatus follow(String currentUserId,String targetUserId) {
 
         Follow follow = new Follow(currentUserId,targetUserId);
 
@@ -74,26 +89,21 @@ public class FollowService {
         }
 
         followRepo.save(follow);
-        return new ProfileDetails(targetUserId,status);
+        return status;
     }
 
     // this method works for both pending and accepted followings
-    @CheckUserExistence
-    public void UnFollow(String targetUserId) {
-        String currentUserId = authenticatedUserService.getCurrentUser();
-        Follow follow = followRepo.findByFollowerIdAndFollowingId( currentUserId,targetUserId).
-                orElseThrow(()->new NoRelationShipException("No relation with user found"));
+    public void unFollow(Follow follow) {
         followRepo.delete(follow);
-        if(follow.getStatus()== Follow.Status.ACCEPTED){
+        if(follow.getStatus()==Follow.Status.ACCEPTED){
             eventPublisher.publishEvent(new FollowRemoved(follow));
-            followCacheUpdater.UpdateCount(FollowQueryHelper.Position.FOLLOWINGS,currentUserId, FollowCacheUpdater.UpdateType.DECREMENT);
-            followCacheUpdater.UpdateCount(FollowQueryHelper.Position.FOLLOWERS, targetUserId, FollowCacheUpdater.UpdateType.DECREMENT);
+            followCacheUpdater.UpdateCount(FollowQueryHelper.Position.FOLLOWINGS,follow.getFollower_id(), FollowCacheUpdater.UpdateType.DECREMENT);
+            followCacheUpdater.UpdateCount(FollowQueryHelper.Position.FOLLOWERS, follow.getFollowing_id(), FollowCacheUpdater.UpdateType.DECREMENT);
         }
     }
 
     // this method works for both pending and accepted followers
-    @CheckUserExistence
-    public void removefollower(String targetUserId) {
+    public void removeFollower(String targetUserId) {
         String  currentUserId= authenticatedUserService.getCurrentUser();
         Follow follow = followRepo.findByFollowerIdAndFollowingId(targetUserId,currentUserId).
                 orElseThrow(()->new NoRelationShipException("No relationship with user found"));
@@ -108,6 +118,7 @@ public class FollowService {
             eventPublisher.publishEvent(notification);
         }
     }
+
 }
 
 
