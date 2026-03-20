@@ -1,8 +1,8 @@
 package com.example.SocialMediaApp.Upload.application;
 
-import com.example.SocialMediaApp.Shared.Exceptions.ActionNotAllowedException;
+import com.example.SocialMediaApp.Storage.StorageDir;
 import com.example.SocialMediaApp.Storage.StorageService;
-
+import com.example.SocialMediaApp.Storage.StorageTransfer;
 import com.example.SocialMediaApp.Upload.Exceptions.*;
 import com.example.SocialMediaApp.Upload.api.dto.*;
 import com.example.SocialMediaApp.Upload.domain.*;
@@ -20,7 +20,8 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UploadGatewayService {
+public class
+UploadGatewayService {
 
     private final StorageService storageService;
     private final RedisTemplate<String,Object> objectRedisTemplate;
@@ -52,7 +53,6 @@ public class UploadGatewayService {
          String filepath=uploadInitiation.getFilepath();
          String uploadRequestId=uploadInitiation.getUploadRequestId();
          String signedUrl=storageService.generateSignedUrl(filepath);
-         log.info("the final signed Url : "+signedUrl);
 
          // creating an upload session containing the user id for authorization later + the request id and the upload type
         UploadSession uploadSession=UploadSession.builder()
@@ -69,7 +69,6 @@ public class UploadGatewayService {
      //   webhookVerification.verifySignature(signature);
 
         try{
-            log.info("Webhook confirmation for filePath : "+filePath);
 
             filePath=webhookPayload.getRecord().getName();
 
@@ -81,14 +80,11 @@ public class UploadGatewayService {
 
             if(uploadRequestId==null) throw new UploadSessionExpiredException("");
 
-            log.info("Inserting request id after confirming webhook id : "+uploadRequestId);
             objectRedisTemplate.opsForValue().set(uploadSession.getUploadRequestId(),uploadSession,UPLOAD_CONFIRM_DURATION_MINUTES, TimeUnit.MINUTES);
 
         }catch (UploadSessionExpiredException | UnsupportedMediaTypeException | FileTooLargeException e){
 
             storageService.deleteFile(filePath);
-
-            log.error("Something went wrong while uploading : "+filePath);
 
             if(e instanceof  UnsupportedMediaTypeException || e instanceof FileTooLargeException ){
                 // might block user later for bypassing the request phase filter
@@ -114,7 +110,6 @@ public class UploadGatewayService {
 
         for(String uploadRequestId : uploadRequestsIds){
             try{
-                log.info("Validating upload session id :"+uploadRequestId);
                 UploadSession uploadSession=uploadStateService.validateUploadSession(userId,uploadRequestId, UploadPhase.CONFIRMED);
                 UploadType actualUploadType=uploadSession.getUploadType();
                 if(actualUploadType!=uploadType) throw new UploadTypeMismatch("Upload Type Mismatch");
@@ -123,7 +118,6 @@ public class UploadGatewayService {
                 mediaList.add(new MediaUpload(filepath.replace("temporary","permanent"), uploadSession.getMediaType()));
                 // upload session expired which mean the key is not found in redis is the only recoverable case
             }catch (UploadSessionExpiredException e){
-                log.error("Upload session validation failed id : "+uploadRequestId);
                 failedUploadIds.add(uploadRequestId);
             }catch (UnauthorizedResourceAccessException e){
                 // logging and blocking user later
@@ -133,12 +127,11 @@ public class UploadGatewayService {
 
         if(!failedUploadIds.isEmpty()) throw new UploadFailedException(failedUploadIds);
 
-        storageService.moveFilesToPermanent(filesPaths);
+        storageService.moveFiles(filesPaths,new StorageTransfer(StorageDir.TEMPORARY,StorageDir.PERMANENT));
 
         objectRedisTemplate.delete(uploadRequestsIds);
 
         return mediaList;
-
     }
 
 

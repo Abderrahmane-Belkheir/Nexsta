@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.web.bind.annotation.PatchMapping;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,12 +17,15 @@ public interface PostRepo extends JpaRepository<Post,String> {
 
     @Modifying
     @Transactional
-    @Query("update Post p set p.postStatus = :status where " +
-            "p.id = :postId and p.postStatus in :allowedStatuses and p.user.id = :userId")
+    @Query("UPDATE Post p SET p.postStatus = :status WHERE " +
+            "p.id = :postId AND p.postStatus IN :allowedStatuses AND p.user.id = :userId")
     int updatePostStatus(@Param("postId") String postId, @Param("status") Post.PostStatus status,
                          @Param("userId") String userId, @Param("allowedStatuses") List<Post.PostStatus> allowedStatuses);
 
     Optional<Post> findByIdAndUserIdAndPostStatus(String userId, String postId, Post.PostStatus postStatus);
+
+    @Query("SELECT p FROM Post p LEFT JOIN p.mediaList WHERE p.id= :postId AND p.user.id= :userId AND p.postStatus= :status")
+    Optional<Post> findPostWithMediaList(@Param("postId") String postId,@Param("userId") String userId,@Param("status") Post.PostStatus postStatus);
 
     @Modifying
     @Transactional
@@ -37,4 +41,7 @@ public interface PostRepo extends JpaRepository<Post,String> {
     Page<Post> findByUserIdAndPostStatus(String userId, Post.PostStatus postStatus, Pageable pageable);
 
     Optional<Post> findByIdAndPostStatus(String postId,Post.PostStatus postStatus);
+
+    void deleteByPostStatus(Post.PostStatus postStatus);
+
 }

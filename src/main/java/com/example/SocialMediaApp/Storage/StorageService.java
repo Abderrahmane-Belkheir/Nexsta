@@ -5,16 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledFuture;
 
 @Service
 @Slf4j
@@ -45,10 +42,10 @@ public class StorageService {
         webClient.delete().uri("/storage/v1/object/{bucket}/{filename}", bucket, filepath).retrieve().toBodilessEntity().block();
     }
 
-    //
-    public void moveFilesToPermanent(List<String> filepaths) {
-        filepaths.forEach(oldPath -> {
-            String newPath = oldPath.replace("temporary", "permanent");
+
+    public void moveFiles(List<String> filePaths,StorageTransfer storageTransfer) {
+        filePaths.forEach(oldPath -> {
+            String newPath = oldPath.replace(storageTransfer.getSource(), storageTransfer.getDestination());
             webClient.post().uri("/storage/v1/object/move").contentType(MediaType.APPLICATION_JSON).bodyValue(Map.of(
                     "bucketId", storageEnv.getMediaBucket(),
                     "sourceKey", oldPath,

@@ -1,7 +1,6 @@
 package com.example.SocialMediaApp.Upload.application;
 
 import com.example.SocialMediaApp.Content.domain.Media;
-import com.example.SocialMediaApp.Upload.Exceptions.UnsupportedMediaTypeException;
 import com.example.SocialMediaApp.Upload.Exceptions.WebhookSignatureException;
 import com.example.SocialMediaApp.Upload.api.dto.UploadRequest;
 import com.example.SocialMediaApp.Upload.domain.SupabaseWebhookPayload;

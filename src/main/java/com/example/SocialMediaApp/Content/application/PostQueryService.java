@@ -13,11 +13,9 @@ import com.example.SocialMediaApp.Profile.application.ProfileQueryService;
 import com.example.SocialMediaApp.Profile.domain.cache.ProfileInfo;
 import com.example.SocialMediaApp.Shared.CheckUserExistence;
 import com.example.SocialMediaApp.Shared.Mappers.Contentmapper;
-import com.example.SocialMediaApp.Shared.MediaUrlResolver;
 import com.example.SocialMediaApp.Shared.ViewerType;
 import com.example.SocialMediaApp.Shared.VisibilityPolicy;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
-import com.example.SocialMediaApp.User.persistence.UserRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -109,9 +107,7 @@ public class PostQueryService {
                 postRepresentation.setComments(post.getCommentCount());
             }
 
-            if(postSettings.isCommentsDisabled()){
-                postRepresentation.setCommentsDisabled(true);
-            }
+                postRepresentation.setCommentsDisabled(postSettings.isCommentsDisabled());
 
             return postRepresentation;
         });

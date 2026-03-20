@@ -49,6 +49,8 @@ public class Post {
 
     private Instant unPublishedAt;
 
+    private boolean restored;
+
     private String caption;
 
     @Builder.Default

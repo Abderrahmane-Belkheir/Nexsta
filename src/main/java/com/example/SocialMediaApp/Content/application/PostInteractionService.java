@@ -26,12 +26,11 @@ public class PostInteractionService {
     private final VisibilityPolicy visibilityPolicy;
     private final CommentRepo commentRepo;
     private final Contentmapper contentmapper;
-
     // toggle between Post liked and not liked
     public LikeResponse addPostLike(String postId){
         String currentUserId=authenticatedUserService.getCurrentUser();
 
-        Post post=postRepo.findById(postId).orElseThrow(()-> new ContentNotFoundException("Post Not Found"));
+        Post post=postRepo.findByIdAndPostStatus(postId, Post.PostStatus.PUBLISHED).orElseThrow(()-> new ContentNotFoundException("Post Not Found"));
 
         boolean isAllowed=visibilityPolicy.isAllowed(currentUserId,post.getUserId());
 
@@ -54,7 +53,7 @@ public class PostInteractionService {
     public CommentRepresentation addPostComment(String postId, CommentCreationRequest commentRequest){
         String currentUserId=authenticatedUserService.getCurrentUser();
 
-        Post post=postRepo.findById(postId).orElseThrow(()-> new ContentNotFoundException("Post Not Found"));
+        Post post=postRepo.findByIdAndPostStatus(postId, Post.PostStatus.PUBLISHED).orElseThrow(()-> new ContentNotFoundException("Post Not Found"));
 
         String postOwnerId=post.getUserId();
 

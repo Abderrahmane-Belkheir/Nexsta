@@ -80,7 +80,7 @@ public class ProfileUpdatingService {
         com.example.SocialMediaApp.Profile.domain.Profile currentprofile= profileQueryService.getUserProfile(currentuser.getId(),false);
         currentprofile.setUsername(profile.getUsername());
         currentprofile.setBio(profile.getBio());
-        currentuser.setUsername(profile.getUsername());
+        currentuser.setUserName(profile.getUsername());
         currentprofile.setUsername(profile.getUsername());
         currentuser.setProfile(currentprofile);
         userRepo.save(currentuser);

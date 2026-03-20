@@ -1,12 +1,17 @@
 package com.example.SocialMediaApp.Content.application;
+import com.example.SocialMediaApp.Content.Exceptions.ContentNotFoundException;
 import com.example.SocialMediaApp.Content.api.dto.MediaRepresentation;
 import com.example.SocialMediaApp.Content.api.dto.PostCreationRequest;
 import com.example.SocialMediaApp.Content.api.dto.PostRepresentation;
 import com.example.SocialMediaApp.Content.domain.Media;
 import com.example.SocialMediaApp.Content.domain.Post;
+import com.example.SocialMediaApp.Content.persistence.MediaRepo;
 import com.example.SocialMediaApp.Content.persistence.PostRepo;
 import com.example.SocialMediaApp.Shared.Exceptions.ActionNotAllowedException;
 import com.example.SocialMediaApp.Shared.Mappers.Contentmapper;
+import com.example.SocialMediaApp.Storage.StorageDir;
+import com.example.SocialMediaApp.Storage.StorageService;
+import com.example.SocialMediaApp.Storage.StorageTransfer;
 import com.example.SocialMediaApp.Upload.domain.MediaUpload;
 import com.example.SocialMediaApp.Upload.domain.UploadType;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
@@ -16,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 
 @Service
@@ -26,6 +32,8 @@ public class PostLifecycleService {
     private final PostRepo postRepo;
     private final MediaLifecycleService mediaLifecycleService;
     private final Contentmapper contentmapper;
+    private final MediaRepo mediaRepo;
+    private final StorageService storageService;
 
     public PostRepresentation createPost(PostCreationRequest postCreation){
         String currentUserId=authenticatedUserService.getCurrentUser();
@@ -69,10 +77,30 @@ public class PostLifecycleService {
 
     public void deletePost(String postId){
         String currentUserId=authenticatedUserService.getCurrentUser();
-        int updated=postRepo.updatePostStatus(postId, Post.PostStatus.DELETED,currentUserId,List.of(Post.PostStatus.values()));
-        if(updated==0){
-            throw new ActionNotAllowedException("Action could not be completed");
+        Post post=postRepo.findPostWithMediaList(postId,currentUserId, Post.PostStatus.DELETED).orElseThrow(()->new ContentNotFoundException("Post to Delete Not Found"));
+        List<Media> mediaList=post.getMediaList();
+        List<String> filePaths=mediaList.stream().map(Media::getFilepath).toList();
+        if(post.isRestored()){
+
+        }else{
+            storageService.moveFiles(filePaths, new StorageTransfer(StorageDir.PERMANENT,StorageDir.DELETED));
+            post.setDeletedAt(Instant.now());
         }
+    }
+
+
+    public PostRepresentation restorePost(String postId){
+        String currentUserId=authenticatedUserService.getCurrentUser();
+        Post post=postRepo.findPostWithMediaList(postId,currentUserId,Post.PostStatus.DELETED).
+                orElseThrow(()->new ContentNotFoundException("Post to Restore Not Found"));
+        post.setRestored(true);
+        List<Media> mediaList=post.getMediaList();
+        List<String> filePaths=mediaList.stream().map(Media::getFilepath).toList();
+        storageService.moveFiles(filePaths,new StorageTransfer(StorageDir.DELETED,StorageDir.PERMANENT));
+
+
+
+        return null;
     }
 
 

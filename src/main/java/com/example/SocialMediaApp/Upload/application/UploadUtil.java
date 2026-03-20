@@ -1,5 +1,6 @@
 package com.example.SocialMediaApp.Upload.application;
 
+import com.example.SocialMediaApp.Storage.StorageDir;
 import com.example.SocialMediaApp.Upload.api.dto.UploadRequest;
 import com.example.SocialMediaApp.Upload.domain.UploadInitiation;
 import com.example.SocialMediaApp.Upload.domain.UploadType;
@@ -9,7 +10,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
-import static com.example.SocialMediaApp.Upload.domain.UploadType.*;
 
 @Service
 @RequiredArgsConstructor
@@ -18,7 +18,7 @@ import static com.example.SocialMediaApp.Upload.domain.UploadType.*;
     public UploadInitiation generateUploadResponse(String userId, UploadRequest request){
         String uploadRequestId = UUID.randomUUID().toString();
         UploadType uploadType=request.getUploadType();
-        return new UploadInitiation(String.format("temporary/%s/%s/%s",uploadType.toString().toLowerCase(),userId,uploadRequestId),uploadRequestId);
+        return new UploadInitiation(String.format("%s/%s/%s/%s", StorageDir.TEMPORARY.getDirName(),uploadType.toString().toLowerCase(),userId,uploadRequestId),uploadRequestId);
     }
 
     public UploadRequest toUploadRequest(MultipartFile file){

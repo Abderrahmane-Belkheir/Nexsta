@@ -6,7 +6,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.GenericGenerator;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -28,20 +27,20 @@ public class User {
     private Instant createddate;
 
     @LastModifiedDate
-    private Instant lastmodifieddate;
+    private Instant lastModifiedDate;
 
-    private String firstname;
+    private String firstName;
 
-    private String lastname;
+    private String lastName;
 
     @Column(unique = true)
-    private String username;
+    private String userName;
 
     @Email
     @Column(unique = true)
     private String email;
 
-    private LocalDate birthday;
+    private LocalDate birthDay;
 
     private Long followerCount=0L;
 
@@ -55,19 +54,19 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private NotificationsSettings notificationsSettings;
 
-    public User(String username, String firstname, String lastname, String email){
-        this.firstname=firstname;
-        this.lastname=lastname;
+    public User(String userName, String firstName, String lastName, String email){
+        this.firstName= firstName;
+        this.lastName= lastName;
         this.email=email;
-        this.username=username;
+        this.userName= userName;
     }
 
     public User(String uuid){
      this.id=uuid;
     }
 
-    public User(String username, String uuid){
-        this.username=username;
+    public User(String userName, String uuid){
+        this.userName= userName;
         this.id=uuid;
     }
 

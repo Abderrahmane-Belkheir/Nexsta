@@ -22,7 +22,7 @@ public class Like {
     @Enumerated(EnumType.STRING)
     private LikeType type;
 
-    // this could be (story,comment,reply)
+    // this could be (story,comment)
     private String targetId;
 
     @ManyToOne

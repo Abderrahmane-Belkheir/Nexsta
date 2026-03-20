@@ -36,7 +36,6 @@ public class PostLifeCycleController {
     }
 
     @PostMapping
-    @Hidden
     public ResponseEntity<PostRepresentation> createPost(@RequestBody @Valid PostCreationRequest postCreation){
         return ResponseEntity.ok(postLifecycleService.createPost(postCreation));
     }
@@ -45,6 +44,11 @@ public class PostLifeCycleController {
     public ResponseEntity<Void>  deletePost(@PathVariable  String postId){
         postLifecycleService.deletePost(postId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{postId}/restore")
+    public ResponseEntity<PostRepresentation> restorePost(@PathVariable String postId){
+        return ResponseEntity.ok(postLifecycleService.restorePost(postId));
     }
 
     @PatchMapping("/{postId}/publish")
@@ -59,5 +63,6 @@ public class PostLifeCycleController {
         postLifecycleService.togglePostVisibility(postId, status);
         return ResponseEntity.noContent().build();
     }
+
 
 }

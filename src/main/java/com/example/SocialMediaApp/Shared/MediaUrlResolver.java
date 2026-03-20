@@ -3,7 +3,6 @@ package com.example.SocialMediaApp.Shared;
 import com.example.SocialMediaApp.Storage.StorageProperties;
 import lombok.RequiredArgsConstructor;
 import org.mapstruct.Named;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;

@@ -6,7 +6,6 @@ import com.example.SocialMediaApp.SocialGraph.api.dto.FollowToggleResponse;
 import com.example.SocialMediaApp.SocialGraph.application.cache.FollowCacheUpdater;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
 import com.example.SocialMediaApp.Notification.domain.events.FollowNotification;
-import com.example.SocialMediaApp.Profile.api.dto.ProfileDetails;
 import com.example.SocialMediaApp.Profile.persistence.ProfileRepo;
 import com.example.SocialMediaApp.Shared.CheckUserExistence;
 import com.example.SocialMediaApp.SocialGraph.domain.Follow;
