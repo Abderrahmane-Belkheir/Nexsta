@@ -25,8 +25,10 @@ public class PostRepresentation {
     private String caption;
     private Post.PostStatus postStatus;
     private Long likes;
-    private boolean commentsDisabled;
     private Long comments;
+    private boolean commentsDisabled;
+    // this will appear only when the owner is fetching post
+    private boolean restored;
     @Builder.Default
     private List<MediaRepresentation> mediaList=new ArrayList<>();
     private Location location;

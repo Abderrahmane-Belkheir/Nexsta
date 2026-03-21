@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.web.bind.annotation.PatchMapping;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,8 +23,10 @@ public interface PostRepo extends JpaRepository<Post,String> {
 
     Optional<Post> findByIdAndUserIdAndPostStatus(String userId, String postId, Post.PostStatus postStatus);
 
-    @Query("SELECT p FROM Post p LEFT JOIN p.mediaList WHERE p.id= :postId AND p.user.id= :userId AND p.postStatus= :status")
-    Optional<Post> findPostWithMediaList(@Param("postId") String postId,@Param("userId") String userId,@Param("status") Post.PostStatus postStatus);
+    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.mediaList WHERE p.id= :postId AND p.user.id= :userId AND p.postStatus= 'DELETED' ")
+    Optional<Post> findPostToRestore(@Param("postId") String postId, @Param("userId") String userId);
+    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.mediaList WHERE p.id= :postId AND p.user.id= :userId")
+    Optional<Post> findByIdAndUserIdAndPostStatusWithMediaList(@Param("postId") String postId ,@Param("userId") String userId);
 
     @Modifying
     @Transactional

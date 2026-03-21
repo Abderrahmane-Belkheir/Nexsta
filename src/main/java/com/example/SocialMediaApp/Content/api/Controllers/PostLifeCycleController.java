@@ -1,5 +1,6 @@
 package com.example.SocialMediaApp.Content.api.Controllers;
 
+import com.example.SocialMediaApp.Content.api.dto.DeletePostResponse;
 import com.example.SocialMediaApp.Content.api.dto.PostCreationRequest;
 import com.example.SocialMediaApp.Content.api.dto.PostRepresentation;
 import com.example.SocialMediaApp.Content.application.PostLifecycleService;
@@ -41,9 +42,8 @@ public class PostLifeCycleController {
     }
 
     @DeleteMapping("/{postId}")
-    public ResponseEntity<Void>  deletePost(@PathVariable  String postId){
-        postLifecycleService.deletePost(postId);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<DeletePostResponse>  deletePost(@PathVariable  String postId){
+       return ResponseEntity.ok(postLifecycleService.deletePost(postId));
     }
 
     @PutMapping("/{postId}/restore")

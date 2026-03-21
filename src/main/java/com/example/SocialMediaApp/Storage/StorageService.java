@@ -37,11 +37,14 @@ public class StorageService {
 
     }
 
-    public void deleteFile(String filepath){
+    public void deleteFile(String filePath){
         String bucket=storageEnv.getMediaBucket();
-        webClient.delete().uri("/storage/v1/object/{bucket}/{filename}", bucket, filepath).retrieve().toBodilessEntity().block();
+        webClient.delete().uri("/storage/v1/object/{bucket}/{filename}", bucket, filePath).retrieve().toBodilessEntity().block();
     }
 
+    public void deleteFiles(List<String> filePaths){
+       filePaths.forEach(this::deleteFile);
+    }
 
     public void moveFiles(List<String> filePaths,StorageTransfer storageTransfer) {
         filePaths.forEach(oldPath -> {

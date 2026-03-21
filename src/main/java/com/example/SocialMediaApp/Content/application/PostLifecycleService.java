@@ -1,5 +1,6 @@
 package com.example.SocialMediaApp.Content.application;
 import com.example.SocialMediaApp.Content.Exceptions.ContentNotFoundException;
+import com.example.SocialMediaApp.Content.api.dto.DeletePostResponse;
 import com.example.SocialMediaApp.Content.api.dto.MediaRepresentation;
 import com.example.SocialMediaApp.Content.api.dto.PostCreationRequest;
 import com.example.SocialMediaApp.Content.api.dto.PostRepresentation;
@@ -21,7 +22,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 
 
 @Service
@@ -32,7 +32,6 @@ public class PostLifecycleService {
     private final PostRepo postRepo;
     private final MediaLifecycleService mediaLifecycleService;
     private final Contentmapper contentmapper;
-    private final MediaRepo mediaRepo;
     private final StorageService storageService;
 
     public PostRepresentation createPost(PostCreationRequest postCreation){
@@ -75,35 +74,44 @@ public class PostLifecycleService {
     }
 
 
-    public void deletePost(String postId){
+    public DeletePostResponse deletePost(String postId){
         String currentUserId=authenticatedUserService.getCurrentUser();
-        Post post=postRepo.findPostWithMediaList(postId,currentUserId, Post.PostStatus.DELETED).orElseThrow(()->new ContentNotFoundException("Post to Delete Not Found"));
+        Post post=postRepo.findByIdAndUserIdAndPostStatusWithMediaList(postId,currentUserId).orElseThrow(()->new ContentNotFoundException("Post to Delete Not Found"));
+        if(post.getPostStatus()== Post.PostStatus.DELETED) throw new ActionNotAllowedException("Post Already Deleted");
         List<Media> mediaList=post.getMediaList();
         List<String> filePaths=mediaList.stream().map(Media::getFilepath).toList();
         if(post.isRestored()){
-
+            storageService.deleteFiles(filePaths);
+            postRepo.delete(post);
+           return  new DeletePostResponse(false);
         }else{
-            storageService.moveFiles(filePaths, new StorageTransfer(StorageDir.PERMANENT,StorageDir.DELETED));
+            StorageTransfer storageTransfer=new StorageTransfer(StorageDir.PERMANENT,StorageDir.DELETED);
+            storageService.moveFiles(filePaths, storageTransfer);
             post.setDeletedAt(Instant.now());
+            mediaList.forEach(media -> media.transformFilePath(storageTransfer));
+            postRepo.save(post);
+           return new DeletePostResponse(true);
         }
     }
 
-
     public PostRepresentation restorePost(String postId){
         String currentUserId=authenticatedUserService.getCurrentUser();
-        Post post=postRepo.findPostWithMediaList(postId,currentUserId,Post.PostStatus.DELETED).
+        Post post=postRepo.findPostToRestore(postId,currentUserId).
                 orElseThrow(()->new ContentNotFoundException("Post to Restore Not Found"));
         post.setRestored(true);
         List<Media> mediaList=post.getMediaList();
         List<String> filePaths=mediaList.stream().map(Media::getFilepath).toList();
-        storageService.moveFiles(filePaths,new StorageTransfer(StorageDir.DELETED,StorageDir.PERMANENT));
-
-
-
-        return null;
+        StorageTransfer storageTransfer=new StorageTransfer(StorageDir.DELETED,StorageDir.PERMANENT);
+        storageService.moveFiles(filePaths,storageTransfer);
+        mediaList.forEach(media -> media.transformFilePath(storageTransfer));
+        // will save the media also thanks to cascading
+        postRepo.save(post);
+        PostRepresentation postRepresentation=contentmapper.toPostRepresentation(post);
+        postRepresentation.getMediaList().addAll(mediaList.stream().map(contentmapper::toMediaRepresentation).toList());
+        postRepresentation.setLikes(post.getLikeCount());
+        postRepresentation.setComments(post.getCommentCount());
+        postRepresentation.setRestored(true);
+        return postRepresentation;
     }
-
-
-
 
 }

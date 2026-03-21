@@ -69,7 +69,7 @@ public class Post {
     private PostSettings postSettings;
 
 
-    @OneToMany(mappedBy = "post",fetch = FetchType.LAZY,orphanRemoval = true,cascade =CascadeType.PERSIST)
+    @OneToMany(mappedBy = "post",fetch = FetchType.LAZY,orphanRemoval = true,cascade ={CascadeType.PERSIST,CascadeType.MERGE})
     @Builder.Default
     private List<Media> mediaList=new ArrayList<>();
 

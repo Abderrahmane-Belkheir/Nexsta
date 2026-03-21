@@ -89,7 +89,8 @@ public class PostQueryService {
             PostRepresentation postRepresentation=contentmapper.toPostRepresentation(post);
             postRepresentation.setPostStatus(postStatus);
             postRepresentation.setProfileInfo(profileInfo);
-            postRepresentation.getMediaList().addAll(mediaRepresentations);
+            // here the intent is clear we want to restrict the media access on deleted posts that's the cost of deletion
+            if (postStatus!= Post.PostStatus.DELETED) postRepresentation.getMediaList().addAll(mediaRepresentations);
             PostSettings postSettings=post.getPostSettings();
             if(viewerType==ViewerType.VIEWER){
 
@@ -102,9 +103,11 @@ public class PostQueryService {
                 }
                 postRepresentation.setLikedByMe(likesFunction.apply(postId));
             }else{
-                // likes and comments count can be seen by the owner directly
+                // likes and comments count can be seen by the owner directly.
                 postRepresentation.setLikes(post.getLikeCount());
                 postRepresentation.setComments(post.getCommentCount());
+                // restored should be seen by the owner.
+                postRepresentation.setRestored(post.isRestored());
             }
 
                 postRepresentation.setCommentsDisabled(postSettings.isCommentsDisabled());

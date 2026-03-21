@@ -1,5 +1,6 @@
 package com.example.SocialMediaApp.Content.domain;
 
+import com.example.SocialMediaApp.Storage.StorageTransfer;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -40,6 +41,9 @@ public class Media {
     @Column(name = "story_id",insertable = false,updatable = false)
     private String storyId;
 
+    public void transformFilePath(StorageTransfer storageTransfer){
+        this.filepath=filepath.replace(storageTransfer.getSource(),storageTransfer.getDestination());
+    }
 
 
     public enum MediaType {
