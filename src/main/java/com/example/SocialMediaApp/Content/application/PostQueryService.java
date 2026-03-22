@@ -89,8 +89,6 @@ public class PostQueryService {
             PostRepresentation postRepresentation=contentmapper.toPostRepresentation(post);
             postRepresentation.setPostStatus(postStatus);
             postRepresentation.setProfileInfo(profileInfo);
-            // here the intent is clear we want to restrict the media access on deleted posts that's the cost of deletion
-            if (postStatus!= Post.PostStatus.DELETED) postRepresentation.getMediaList().addAll(mediaRepresentations);
             PostSettings postSettings=post.getPostSettings();
             if(viewerType==ViewerType.VIEWER){
 
@@ -108,6 +106,13 @@ public class PostQueryService {
                 postRepresentation.setComments(post.getCommentCount());
                 // restored should be seen by the owner.
                 postRepresentation.setRestored(post.isRestored());
+
+                if(postStatus== Post.PostStatus.DELETED){
+                    postRepresentation.setPreDeletionPostStatus(post.getPreDeletionStatus());
+                }else {
+                    // here the intent is clear we want to restrict the media access on deleted posts that's the cost of deletion
+                    postRepresentation.getMediaList().addAll(mediaRepresentations);
+                }
             }
 
                 postRepresentation.setCommentsDisabled(postSettings.isCommentsDisabled());

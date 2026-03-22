@@ -6,7 +6,6 @@ import com.example.SocialMediaApp.Content.api.dto.PostCreationRequest;
 import com.example.SocialMediaApp.Content.api.dto.PostRepresentation;
 import com.example.SocialMediaApp.Content.domain.Media;
 import com.example.SocialMediaApp.Content.domain.Post;
-import com.example.SocialMediaApp.Content.persistence.MediaRepo;
 import com.example.SocialMediaApp.Content.persistence.PostRepo;
 import com.example.SocialMediaApp.Shared.Exceptions.ActionNotAllowedException;
 import com.example.SocialMediaApp.Shared.Mappers.Contentmapper;
@@ -18,6 +17,7 @@ import com.example.SocialMediaApp.Upload.domain.UploadType;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
 import com.example.SocialMediaApp.User.domain.User;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -26,6 +26,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PostLifecycleService {
 
     private final AuthenticatedUserService authenticatedUserService;
@@ -73,7 +74,6 @@ public class PostLifecycleService {
         }
     }
 
-
     public DeletePostResponse deletePost(String postId){
         String currentUserId=authenticatedUserService.getCurrentUser();
         Post post=postRepo.findByIdAndUserIdAndPostStatusWithMediaList(postId,currentUserId).orElseThrow(()->new ContentNotFoundException("Post to Delete Not Found"));
@@ -81,12 +81,20 @@ public class PostLifecycleService {
         List<Media> mediaList=post.getMediaList();
         List<String> filePaths=mediaList.stream().map(Media::getFilepath).toList();
         if(post.isRestored()){
-            storageService.deleteFiles(filePaths);
+            try {
+                storageService.deleteFiles(filePaths);
+            } catch (Exception e) {
+                log.error("Failed to delete files from storage for post {}: {}",
+                        postId, e.getMessage());
+                // continue with DB deletion regardless
+            }
             postRepo.delete(post);
-           return  new DeletePostResponse(false);
+            return new DeletePostResponse(false);
         }else{
             StorageTransfer storageTransfer=new StorageTransfer(StorageDir.PERMANENT,StorageDir.DELETED);
             storageService.moveFiles(filePaths, storageTransfer);
+            post.setPreDeletionStatus(post.getPostStatus());
+            post.setPostStatus(Post.PostStatus.DELETED);
             post.setDeletedAt(Instant.now());
             mediaList.forEach(media -> media.transformFilePath(storageTransfer));
             postRepo.save(post);
@@ -99,6 +107,9 @@ public class PostLifecycleService {
         Post post=postRepo.findPostToRestore(postId,currentUserId).
                 orElseThrow(()->new ContentNotFoundException("Post to Restore Not Found"));
         post.setRestored(true);
+        post.setPostStatus(post.getPreDeletionStatus());
+        // not needed because post can only be restored if deleted once
+        post.setPreDeletionStatus(null);
         List<Media> mediaList=post.getMediaList();
         List<String> filePaths=mediaList.stream().map(Media::getFilepath).toList();
         StorageTransfer storageTransfer=new StorageTransfer(StorageDir.DELETED,StorageDir.PERMANENT);
@@ -111,6 +122,7 @@ public class PostLifecycleService {
         postRepresentation.setLikes(post.getLikeCount());
         postRepresentation.setComments(post.getCommentCount());
         postRepresentation.setRestored(true);
+        postRepresentation.setPostStatus(post.getPostStatus());
         return postRepresentation;
     }
 

@@ -26,6 +26,7 @@ public class PostInteractionService {
     private final VisibilityPolicy visibilityPolicy;
     private final CommentRepo commentRepo;
     private final Contentmapper contentmapper;
+    private final LikeRepo likeRepo;
     // toggle between Post liked and not liked
     public LikeResponse addPostLike(String postId){
         String currentUserId=authenticatedUserService.getCurrentUser();
@@ -88,7 +89,7 @@ public class PostInteractionService {
             int count= commentRepo.countByParentComment(comment);
             postRepo.updatePostComments(postId,-(count+1));
         }
-
+        likeRepo.deleteByTargetId(commentId);
         commentRepo.delete(comment);
     }
 

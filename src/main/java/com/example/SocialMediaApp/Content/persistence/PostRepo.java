@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,6 +44,14 @@ public interface PostRepo extends JpaRepository<Post,String> {
 
     Optional<Post> findByIdAndPostStatus(String postId,Post.PostStatus postStatus);
 
-    void deleteByPostStatus(Post.PostStatus postStatus);
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Post p WHERE p.postStatus=:status AND p.deletedAt < :date ")
+    void deleteByOldPostsWithStatus(@Param("status") Post.PostStatus status,@Param("date") Instant date);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Post p SET p.restored=:bool")
+    void setAllPostsToNotRestored(@Param("bool") boolean bool);
 
 }

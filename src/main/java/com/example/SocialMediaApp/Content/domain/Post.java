@@ -49,8 +49,6 @@ public class Post {
 
     private Instant unPublishedAt;
 
-    private boolean restored;
-
     private String caption;
 
     @Builder.Default
@@ -64,14 +62,24 @@ public class Post {
     @Builder.Default
     private PostStatus postStatus=PostStatus.DRAFT;
 
+    @Column(name = "restored", nullable = false, columnDefinition = "boolean default false")
+    private boolean restored = false;
+
+    @Enumerated(EnumType.STRING)
+    private PostStatus preDeletionStatus;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private PostSettings postSettings;
 
 
-    @OneToMany(mappedBy = "post",fetch = FetchType.LAZY,orphanRemoval = true,cascade ={CascadeType.PERSIST,CascadeType.MERGE})
+    @OneToMany(mappedBy = "post",fetch = FetchType.LAZY,orphanRemoval = true,cascade =CascadeType.ALL)
     @Builder.Default
     private List<Media> mediaList=new ArrayList<>();
+
+    @OneToMany(mappedBy = "",fetch = FetchType.LAZY,orphanRemoval = true,cascade=CascadeType.ALL)
+    @Builder.Default
+    private List<PostLike> postLikesList=new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")

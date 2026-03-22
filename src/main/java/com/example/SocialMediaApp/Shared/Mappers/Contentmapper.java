@@ -15,6 +15,7 @@ public interface Contentmapper {
     @Mapping(target = "comments", ignore = true)
     @Mapping(target = "postStatus" ,ignore = true)
     @Mapping(target = "mediaList",ignore = true)
+    @Mapping(target = "restored" ,ignore = true)
     PostRepresentation toPostRepresentation(Post post);
 
     CommentRepresentation toCommentRepresentation(Comment comment);

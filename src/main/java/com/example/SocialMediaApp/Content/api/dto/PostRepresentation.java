@@ -28,7 +28,9 @@ public class PostRepresentation {
     private Long comments;
     private boolean commentsDisabled;
     // this will appear only when the owner is fetching post
-    private boolean restored;
+    private Boolean restored;
+    // only when fetching deleted post so user can know the post status if he wants to restore it
+    private Post.PostStatus preDeletionPostStatus;
     @Builder.Default
     private List<MediaRepresentation> mediaList=new ArrayList<>();
     private Location location;

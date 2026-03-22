@@ -12,6 +12,7 @@ import java.util.UUID;
 
 public interface LikeRepo extends JpaRepository<Like,String> {
 
+    void deleteByTargetId(String targetId);
     void deleteByUserIdAndTargetIdAndType(String userId, String targetId, LikeType likeType);
     boolean existsByUserIdAndTargetIdAndType(String userId, String targetId, LikeType likeType);
     @Query("SELECT l.targetId FROM Like l WHERE l.user.id = :userId AND l.targetId IN :commentIds")
