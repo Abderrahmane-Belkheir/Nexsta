@@ -49,9 +49,6 @@ public interface PostRepo extends JpaRepository<Post,String> {
     @Query("DELETE FROM Post p WHERE p.postStatus=:status AND p.deletedAt < :date ")
     void deleteByOldPostsWithStatus(@Param("status") Post.PostStatus status,@Param("date") Instant date);
 
-    @Modifying
-    @Transactional
-    @Query("UPDATE Post p SET p.restored=:bool")
-    void setAllPostsToNotRestored(@Param("bool") boolean bool);
+    Optional<Post> findByIdAndUserId(String userId,String postId);
 
 }

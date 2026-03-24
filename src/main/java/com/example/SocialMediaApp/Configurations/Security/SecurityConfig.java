@@ -16,7 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableJpaAuditing
 @EnableScheduling
 @EnableConfigurationProperties({StorageProperties.class, ClientPropeties.class})
-public class Securityconfig {
+public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
         http

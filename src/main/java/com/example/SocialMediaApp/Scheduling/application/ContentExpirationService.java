@@ -1,4 +1,4 @@
-package com.example.SocialMediaApp.Content.application;
+package com.example.SocialMediaApp.Scheduling.application;
 
 import com.example.SocialMediaApp.Content.domain.Post;
 import com.example.SocialMediaApp.Content.persistence.MediaRepo;

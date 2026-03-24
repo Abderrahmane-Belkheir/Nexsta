@@ -31,10 +31,15 @@
             <version>${mapstruct.version}</version>
         </dependency>
 
-        <!-- Spring Boot / JPA / Web / Security / Redis / mongo -->
+        <!-- Spring Boot / JPA / Web / Security / Redis / mongo / Quartz -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-mongodb</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-quartz</artifactId>
         </dependency>
 
         <dependency>

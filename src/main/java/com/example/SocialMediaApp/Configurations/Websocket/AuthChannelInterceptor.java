@@ -19,7 +19,7 @@ import java.util.Objects;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class Authchannelinterceptor implements ChannelInterceptor {
+public class AuthChannelInterceptor implements ChannelInterceptor {
 
      private final JwtDecoder jwtDecoder;
 

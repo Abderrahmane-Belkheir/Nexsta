@@ -5,6 +5,7 @@ import com.example.SocialMediaApp.Content.domain.PostSettings;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 
+import java.time.Instant;
 import java.util.List;
 
 @Getter
@@ -15,4 +16,5 @@ public class PostCreationRequest {
     private List<String> tags;
     private PostSettings postSettings;
     private Location location;
+    private Instant scheduledAt;
 }

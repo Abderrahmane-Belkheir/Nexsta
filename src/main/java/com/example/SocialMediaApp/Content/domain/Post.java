@@ -77,7 +77,7 @@ public class Post {
     @Builder.Default
     private List<Media> mediaList=new ArrayList<>();
 
-    @OneToMany(mappedBy = "",fetch = FetchType.LAZY,orphanRemoval = true,cascade=CascadeType.ALL)
+    @OneToMany(mappedBy = "post",fetch = FetchType.LAZY,orphanRemoval = true,cascade=CascadeType.ALL)
     @Builder.Default
     private List<PostLike> postLikesList=new ArrayList<>();
 
@@ -93,7 +93,7 @@ public class Post {
     private Location location;
 
     public enum PostStatus{
-        PUBLISHED,UNPUBLISHED,DRAFT,DELETED
+        PUBLISHED,UNPUBLISHED,DRAFT,DELETED,SCHEDULED
     }
 
     public Post(String id){

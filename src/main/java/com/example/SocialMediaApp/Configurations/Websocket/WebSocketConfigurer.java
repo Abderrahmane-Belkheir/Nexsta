@@ -12,7 +12,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @Configuration
 @EnableWebSocketMessageBroker
 @RequiredArgsConstructor
-public class websockerconfigurer implements WebSocketMessageBrokerConfigurer {
+public class WebSocketConfigurer implements WebSocketMessageBrokerConfigurer {
 
     private final ChannelInterceptor channelInterceptor;
 

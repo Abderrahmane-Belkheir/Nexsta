@@ -1,12 +1,10 @@
 package com.example.SocialMediaApp.Content.application;
 import com.example.SocialMediaApp.Content.Exceptions.ContentNotFoundException;
-import com.example.SocialMediaApp.Content.api.dto.DeletePostResponse;
-import com.example.SocialMediaApp.Content.api.dto.MediaRepresentation;
-import com.example.SocialMediaApp.Content.api.dto.PostCreationRequest;
-import com.example.SocialMediaApp.Content.api.dto.PostRepresentation;
+import com.example.SocialMediaApp.Content.api.dto.*;
 import com.example.SocialMediaApp.Content.domain.Media;
 import com.example.SocialMediaApp.Content.domain.Post;
 import com.example.SocialMediaApp.Content.persistence.PostRepo;
+import com.example.SocialMediaApp.Scheduling.application.ContentSchedulingService;
 import com.example.SocialMediaApp.Shared.Exceptions.ActionNotAllowedException;
 import com.example.SocialMediaApp.Shared.Mappers.Contentmapper;
 import com.example.SocialMediaApp.Storage.StorageDir;
@@ -18,7 +16,9 @@ import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
 import com.example.SocialMediaApp.User.domain.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.quartz.SchedulerException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -26,6 +26,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 @Slf4j
 public class PostLifecycleService {
 
@@ -34,6 +35,7 @@ public class PostLifecycleService {
     private final MediaLifecycleService mediaLifecycleService;
     private final Contentmapper contentmapper;
     private final StorageService storageService;
+    private final ContentSchedulingService contentSchedulingService;
 
     public PostRepresentation createPost(PostCreationRequest postCreation){
         String currentUserId=authenticatedUserService.getCurrentUser();
@@ -50,28 +52,35 @@ public class PostLifecycleService {
         return postRepresentation;
     }
 
-    // publishing post for first time draft -> published
-    public void publishPost(String postId){
+    // publishing post for first time draft -> published / scheduled
+    public void publishPost(PostPublish postPublish) throws SchedulerException {
         String currentUserId=authenticatedUserService.getCurrentUser();
-        Post draftPost=postRepo.findByIdAndUserIdAndPostStatus(postId,currentUserId, Post.PostStatus.DRAFT).
+        Post draftPost=postRepo.findByIdAndUserIdAndPostStatus(postPublish.getPostId(),currentUserId, Post.PostStatus.DRAFT).
                 orElseThrow(()-> new ActionNotAllowedException("Action could not be completed"));
+        if(postPublish.getScheduledAt()!=null) {
+            draftPost.setPostStatus(Post.PostStatus.SCHEDULED);
+            contentSchedulingService.schedulePostPublishing(currentUserId,postPublish);
+            return;
+        }
         draftPost.setPublishedAt(Instant.now());
         draftPost.setPostStatus(Post.PostStatus.PUBLISHED);
         postRepo.save(draftPost);
     }
 
+
     // switching between published <-> unpublished
-    public void togglePostVisibility(String postId,Post.PostStatus status){
-       List<Post.PostStatus> allowedStatus=List.of(Post.PostStatus.PUBLISHED, Post.PostStatus.UNPUBLISHED);
-        if(!allowedStatus.contains(status)){
-            throw new ActionNotAllowedException("Action could not be completed");
-        }
+    public PostVisibilityToggleResponse togglePostVisibility(String postId){
         String currentUserId=authenticatedUserService.getCurrentUser();
-        int updated= postRepo.updatePostStatus(postId,status,currentUserId,allowedStatus);
-        if(updated==0){
-            // can be thrown if post not found or user don't have access or post status is originally in draft or deleted
-            throw new ActionNotAllowedException("Action could not be completed");
+        Post post=postRepo.findByIdAndUserId(postId,currentUserId).orElseThrow(()->new ContentNotFoundException("Post to Toggle Visibility Not Found"));
+
+        if(post.getPostStatus()== Post.PostStatus.PUBLISHED){
+            post.setPostStatus(Post.PostStatus.UNPUBLISHED);
+            return new PostVisibilityToggleResponse(PostVisibilityToggleResponse.PostStatus.UNPUBLISHED);
+        }else if (post.getPostStatus()== Post.PostStatus.UNPUBLISHED){
+            post.setPostStatus(Post.PostStatus.PUBLISHED);
+            return new PostVisibilityToggleResponse(PostVisibilityToggleResponse.PostStatus.PUBLISHED);
         }
+        throw new ActionNotAllowedException("");
     }
 
     public DeletePostResponse deletePost(String postId){

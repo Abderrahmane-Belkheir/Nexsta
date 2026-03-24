@@ -127,6 +127,7 @@ public class PostQueryService {
             case DELETED -> "deletedAt";
             case DRAFT -> "createdAt";
             case UNPUBLISHED -> "unPublishedAt";
+            case SCHEDULED -> "";
         };
         return PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, sortBy));
     }
