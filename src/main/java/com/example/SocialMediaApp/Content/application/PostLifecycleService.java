@@ -59,6 +59,7 @@ public class PostLifecycleService {
                 orElseThrow(()-> new ActionNotAllowedException("Action could not be completed"));
         if(postPublish.getScheduledAt()!=null) {
             draftPost.setPostStatus(Post.PostStatus.SCHEDULED);
+            postRepo.save(draftPost);
             contentSchedulingService.schedulePostPublishing(currentUserId,postPublish);
             return;
         }

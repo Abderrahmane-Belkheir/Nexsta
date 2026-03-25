@@ -16,5 +16,4 @@ public class PostCreationRequest {
     private List<String> tags;
     private PostSettings postSettings;
     private Location location;
-    private Instant scheduledAt;
 }

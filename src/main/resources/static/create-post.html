@@ -20,6 +20,9 @@
           --success: #16a34a;
           --success-bg: #f0fdf4;
           --success-border: #bbf7d0;
+          --warning: #d97706;
+          --warning-bg: #fffbeb;
+          --warning-border: #fde68a;
           --error: #dc2626;
           --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
           --shadow: 0 4px 16px rgba(0,0,0,0.07);
@@ -71,6 +74,10 @@
         .btn-primary:hover { background: #1d4ed8; box-shadow: 0 4px 14px rgba(37,99,235,0.35); transform: translateY(-1px); }
         .btn-primary:active { transform: none; }
         .btn-primary:disabled { background: var(--dim); box-shadow: none; cursor: not-allowed; transform: none; }
+        .btn-success { background: var(--success); color: white; box-shadow: 0 2px 8px rgba(22,163,74,0.25); }
+        .btn-success:hover { background: #15803d; }
+        .btn-warning { background: var(--warning); color: white; box-shadow: 0 2px 8px rgba(217,119,6,0.2); }
+        .btn-warning:hover { background: #b45309; }
 
         .page {
           max-width: 860px; margin: 0 auto;
@@ -103,7 +110,6 @@
         .card-head h3 { font-family: 'Fraunces', serif; font-size: 14px; font-weight: 600; color: var(--text); }
         .card-body { padding: 18px; }
 
-        /* DROP ZONE */
         .drop-zone {
           border: 2px dashed var(--border); border-radius: var(--r-sm);
           padding: 32px 20px; text-align: center;
@@ -122,14 +128,12 @@
         .drop-sub { font-size: 12px; color: var(--muted); line-height: 1.5; }
         .drop-sub b { color: var(--accent); font-weight: 600; }
 
-        /* MEDIA GRID */
         .media-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
           gap: 8px; margin-top: 14px;
         }
 
-        /* TILE */
         .media-tile {
           position: relative; aspect-ratio: 1;
           border-radius: var(--r-sm); overflow: hidden;
@@ -140,13 +144,7 @@
         .media-tile:active { cursor: grabbing; }
         .media-tile.drag-over-tile { border-color: var(--accent); transform: scale(1.03); }
         .media-tile.dragging { opacity: 0.4; }
-
-        .media-tile img, .media-tile video {
-          width: 100%; height: 100%; object-fit: cover; display: block;
-          pointer-events: none;
-        }
-
-        /* order number badge */
+        .media-tile img, .media-tile video { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
         .media-tile .num {
           position: absolute; top: 5px; left: 5px;
           width: 18px; height: 18px; background: var(--accent);
@@ -154,8 +152,6 @@
           border-radius: 50%; display: flex; align-items: center; justify-content: center;
           pointer-events: none;
         }
-
-        /* type badge */
         .media-tile .tbadge {
           position: absolute; bottom: 5px; left: 5px;
           background: rgba(0,0,0,0.5); color: white;
@@ -164,8 +160,6 @@
           text-transform: uppercase; letter-spacing: 0.4px;
           pointer-events: none;
         }
-
-        /* delete button */
         .media-tile .del {
           position: absolute; top: 5px; right: 5px;
           width: 22px; height: 22px; border-radius: 50%;
@@ -174,8 +168,6 @@
           opacity: 0; transition: opacity 0.15s; backdrop-filter: blur(4px);
         }
         .media-tile:hover .del { opacity: 1; }
-
-        /* CONFIRM BUTTON — the key UX element */
         .media-tile .confirm-btn {
           position: absolute; bottom: 5px; right: 5px;
           height: 22px; padding: 0 8px;
@@ -185,155 +177,70 @@
           display: flex; align-items: center; gap: 4px;
           transition: all 0.2s; white-space: nowrap;
         }
-        .confirm-btn.idle {
-          background: var(--accent); color: white;
-          box-shadow: 0 2px 6px rgba(37,99,235,0.4);
-        }
+        .confirm-btn.idle { background: var(--accent); color: white; box-shadow: 0 2px 6px rgba(37,99,235,0.4); }
         .confirm-btn.idle:hover { background: #1d4ed8; transform: scale(1.05); }
-        .confirm-btn.loading {
-          background: rgba(0,0,0,0.6); color: white;
-          backdrop-filter: blur(4px); cursor: not-allowed;
-        }
-        .confirm-btn.done {
-          background: var(--success); color: white;
-          cursor: default;
-        }
-        .confirm-btn.failed {
-          background: var(--error); color: white;
-        }
+        .confirm-btn.loading { background: rgba(0,0,0,0.6); color: white; backdrop-filter: blur(4px); cursor: not-allowed; }
+        .confirm-btn.done { background: var(--success); color: white; cursor: default; }
+        .confirm-btn.failed { background: var(--error); color: white; }
         .confirm-btn.failed:hover { opacity: 0.85; }
 
-        /* progress overlay while uploading */
         .media-tile .pw {
           position: absolute; inset: 0;
           background: rgba(0,0,0,0.45);
           display: flex; flex-direction: column;
           align-items: center; justify-content: center; gap: 4px;
-          pointer-events: none;
-          transition: opacity 0.3s;
+          pointer-events: none; transition: opacity 0.3s;
         }
         .media-tile .pw.done { opacity: 0; }
         .pr { width: 32px; height: 32px; }
         .pr circle { fill: none; stroke-width: 3; }
         .pr .t { stroke: rgba(255,255,255,0.2); }
-        .pr .f {
-          stroke: white; stroke-linecap: round;
-          stroke-dasharray: 82; stroke-dashoffset: 82;
-          transition: stroke-dashoffset 0.3s;
-          transform: rotate(-90deg); transform-origin: center;
-        }
+        .pr .f { stroke: white; stroke-linecap: round; stroke-dasharray: 82; stroke-dashoffset: 82; transition: stroke-dashoffset 0.3s; transform: rotate(-90deg); transform-origin: center; }
         .pp { font-size: 10px; color: white; font-weight: 700; }
 
-        .media-count {
-          margin-top: 10px; font-size: 12px; color: var(--muted);
-          display: flex; justify-content: space-between;
-        }
+        .media-count { margin-top: 10px; font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
 
-        /* FIELDS */
         .field { margin-bottom: 16px; }
         .field:last-child { margin-bottom: 0; }
-        .field label {
-          display: block; font-size: 11px; font-weight: 700;
-          text-transform: uppercase; letter-spacing: 0.6px;
-          color: var(--muted); margin-bottom: 6px;
-        }
-        .field textarea, .field input[type="text"] {
-          width: 100%; background: var(--bg);
-          border: 1.5px solid var(--border); border-radius: var(--r-sm);
-          padding: 10px 13px; font-family: 'Mulish', sans-serif;
-          font-size: 14px; color: var(--text); outline: none; resize: none;
-          transition: border-color 0.15s, background 0.15s;
-        }
+        .field label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin-bottom: 6px; }
+        .field textarea, .field input[type="text"] { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--r-sm); padding: 10px 13px; font-family: 'Mulish', sans-serif; font-size: 14px; color: var(--text); outline: none; resize: none; transition: border-color 0.15s, background 0.15s; }
         .field textarea::placeholder, .field input::placeholder { color: var(--dim); }
-        .field textarea:focus, .field input:focus {
-          border-color: var(--accent); background: var(--white);
-          box-shadow: 0 0 0 3px var(--accent-bg);
-        }
+        .field textarea:focus, .field input:focus { border-color: var(--accent); background: var(--white); box-shadow: 0 0 0 3px var(--accent-bg); }
         .cc { text-align: right; font-size: 11px; color: var(--dim); margin-top: 4px; }
         .cc.warn { color: var(--error); }
 
-        /* TAGS */
-        .tags-box {
-          display: flex; flex-wrap: wrap; gap: 6px;
-          padding: 8px 10px; background: var(--bg);
-          border: 1.5px solid var(--border); border-radius: var(--r-sm);
-          min-height: 42px; cursor: text;
-          transition: border-color 0.15s, background 0.15s;
-        }
-        .tags-box:focus-within {
-          border-color: var(--accent); background: var(--white);
-          box-shadow: 0 0 0 3px var(--accent-bg);
-        }
-        .tag {
-          display: flex; align-items: center; gap: 4px;
-          background: var(--accent-bg); border: 1px solid var(--accent-border);
-          color: var(--accent); padding: 2px 8px; border-radius: 20px;
-          font-size: 12px; font-weight: 600;
-        }
+        .tags-box { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px; background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--r-sm); min-height: 42px; cursor: text; transition: border-color 0.15s, background 0.15s; }
+        .tags-box:focus-within { border-color: var(--accent); background: var(--white); box-shadow: 0 0 0 3px var(--accent-bg); }
+        .tag { display: flex; align-items: center; gap: 4px; background: var(--accent-bg); border: 1px solid var(--accent-border); color: var(--accent); padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: 600; }
         .tag button { background: none; border: none; color: var(--accent); cursor: pointer; opacity: 0.5; padding: 0; display: flex; transition: opacity 0.15s; }
         .tag button:hover { opacity: 1; }
-        .tag-inp {
-          border: none; outline: none; background: transparent;
-          font-family: 'Mulish', sans-serif; font-size: 13px; color: var(--text);
-          min-width: 80px; flex: 1;
-        }
+        .tag-inp { border: none; outline: none; background: transparent; font-family: 'Mulish', sans-serif; font-size: 13px; color: var(--text); min-width: 80px; flex: 1; }
         .tag-inp::placeholder { color: var(--dim); }
 
-        /* LOCATION */
         .loc-wrap { position: relative; }
         .loc-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
         .loc-wrap input { padding-left: 32px; }
 
-        /* TOGGLES */
-        .tog-item {
-          display: flex; align-items: center; justify-content: space-between;
-          padding: 12px 0; border-bottom: 1px solid var(--border2);
-        }
+        .tog-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border2); }
         .tog-item:last-child { border-bottom: none; padding-bottom: 0; }
         .tog-item:first-child { padding-top: 0; }
         .tog-text span { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 1px; }
         .tog-text small { font-size: 11px; color: var(--muted); }
         .tog { position: relative; width: 38px; height: 21px; flex-shrink: 0; }
         .tog input { opacity: 0; width: 0; height: 0; }
-        .tog-track {
-          position: absolute; inset: 0; background: var(--border);
-          border-radius: 20px; cursor: pointer; transition: background 0.2s;
-        }
-        .tog-track::after {
-          content: ''; position: absolute; width: 15px; height: 15px;
-          background: white; border-radius: 50%; top: 3px; left: 3px;
-          transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-        }
+        .tog-track { position: absolute; inset: 0; background: var(--border); border-radius: 20px; cursor: pointer; transition: background 0.2s; }
+        .tog-track::after { content: ''; position: absolute; width: 15px; height: 15px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
         .tog input:checked ~ .tog-track { background: var(--accent); }
         .tog input:checked ~ .tog-track::after { transform: translateX(17px); }
 
-        /* RIGHT PANEL */
-        .right {
-          position: sticky; top: 74px;
-          display: flex; flex-direction: column; gap: 14px;
-          animation: up 0.35s ease 0.1s both;
-        }
+        .right { position: sticky; top: 74px; display: flex; flex-direction: column; gap: 14px; animation: up 0.35s ease 0.1s both; }
 
-        .preview-card {
-          background: var(--white); border: 1px solid var(--border);
-          border-radius: var(--r); overflow: hidden; box-shadow: var(--shadow-sm);
-        }
-        .p-top {
-          padding: 12px 14px; display: flex; align-items: center; gap: 9px;
-          border-bottom: 1px solid var(--border2);
-        }
-        .p-av {
-          width: 32px; height: 32px; border-radius: 50%;
-          display: flex; align-items: center; justify-content: center;
-          font-family: 'Fraunces', serif; font-size: 12px; font-weight: 600;
-          color: white; flex-shrink: 0;
-        }
+        .preview-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; box-shadow: var(--shadow-sm); }
+        .p-top { padding: 12px 14px; display: flex; align-items: center; gap: 9px; border-bottom: 1px solid var(--border2); }
+        .p-av { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-size: 12px; font-weight: 600; color: white; flex-shrink: 0; }
         .p-nm { font-size: 13px; font-weight: 600; color: var(--text); }
         .p-tm { font-size: 11px; color: var(--muted); margin-top: 1px; }
-        .p-media {
-          width: 100%; aspect-ratio: 1; background: var(--bg);
-          display: flex; align-items: center; justify-content: center; overflow: hidden;
-        }
+        .p-media { width: 100%; aspect-ratio: 1; background: var(--bg); display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .p-media img, .p-media video { width: 100%; height: 100%; object-fit: cover; }
         .p-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--dim); }
         .p-empty span { font-size: 11px; }
@@ -349,97 +256,81 @@
         .p-tag { font-size: 12px; color: var(--accent); font-weight: 600; }
         .p-loc { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); margin-top: 6px; }
 
-        /* FLOW CARD */
-        .flow-card {
-          background: var(--white); border: 1px solid var(--border);
-          border-radius: var(--r); padding: 14px 16px; box-shadow: var(--shadow-sm);
-        }
+        .flow-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 16px; box-shadow: var(--shadow-sm); }
         .flow-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin-bottom: 12px; }
         .flow-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border2); }
         .flow-row:last-child { border-bottom: none; }
-        .fn {
-          width: 20px; height: 20px; border-radius: 50%;
-          background: var(--bg); border: 1.5px solid var(--border);
-          display: flex; align-items: center; justify-content: center;
-          font-size: 9px; font-weight: 700; color: var(--muted);
-          flex-shrink: 0; transition: all 0.2s;
-        }
+        .fn { width: 20px; height: 20px; border-radius: 50%; background: var(--bg); border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: var(--muted); flex-shrink: 0; transition: all 0.2s; }
         .fn.active { background: var(--accent); border-color: var(--accent); color: white; }
         .fn.done { background: var(--success); border-color: var(--success); color: white; }
         .ft { font-size: 12px; color: var(--muted); }
         .ft b { display: block; font-size: 12px; font-weight: 600; color: var(--text); }
 
-        /* SNACKBAR */
-        .sb {
-          position: fixed; bottom: 22px; left: 50%;
-          transform: translateX(-50%) translateY(70px);
-          background: var(--text); color: white;
-          padding: 10px 18px; border-radius: 30px;
-          font-size: 13px; font-weight: 500;
-          display: flex; align-items: center; gap: 8px;
-          box-shadow: var(--shadow-lg); z-index: 100; white-space: nowrap;
-          transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-        }
+        .sb { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(70px); background: var(--text); color: white; padding: 10px 18px; border-radius: 30px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-lg); z-index: 100; white-space: nowrap; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); }
         .sb.show { transform: translateX(-50%) translateY(0); }
         .sb.ok { background: var(--success); }
         .sb.err { background: var(--error); }
 
-        .spin {
-          width: 14px; height: 14px;
-          border: 2px solid rgba(255,255,255,0.3);
-          border-top-color: white; border-radius: 50%;
-          animation: spin 0.6s linear infinite; flex-shrink: 0;
-        }
+        .spin { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; flex-shrink: 0; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         /* SUCCESS SCREEN */
-        .success-screen {
-          position: fixed; inset: 0;
-          background: rgba(250,250,248,0.97); backdrop-filter: blur(8px);
-          z-index: 300; display: none; flex-direction: column;
-          align-items: center; justify-content: center; gap: 14px;
-        }
+        .success-screen { position: fixed; inset: 0; background: rgba(250,250,248,0.97); backdrop-filter: blur(8px); z-index: 300; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
         .success-screen.show { display: flex; }
-        .success-check {
-          width: 68px; height: 68px; border-radius: 50%;
-          background: var(--success);
-          display: flex; align-items: center; justify-content: center;
-          animation: pop 0.45s cubic-bezier(0.34,1.56,0.64,1);
-        }
+        .success-check { width: 68px; height: 68px; border-radius: 50%; background: var(--success); display: flex; align-items: center; justify-content: center; animation: pop 0.45s cubic-bezier(0.34,1.56,0.64,1); }
         @keyframes pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .success-screen h2 { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 600; color: var(--text); }
         .success-screen p { font-size: 14px; color: var(--muted); }
         .success-screen .btns { display: flex; gap: 10px; margin-top: 6px; }
 
         /* CONFIG OVERLAY */
-        .overlay {
-          position: fixed; inset: 0;
-          background: rgba(28,27,24,0.4); backdrop-filter: blur(6px);
-          z-index: 200; display: flex; align-items: center; justify-content: center;
-        }
-        .modal {
-          background: var(--white); border: 1px solid var(--border);
-          border-radius: 20px; padding: 32px; width: 400px; box-shadow: var(--shadow-lg);
-        }
+        .overlay { position: fixed; inset: 0; background: rgba(28,27,24,0.4); backdrop-filter: blur(6px); z-index: 200; display: flex; align-items: center; justify-content: center; }
+        .modal { background: var(--white); border: 1px solid var(--border); border-radius: 20px; padding: 32px; width: 400px; box-shadow: var(--shadow-lg); }
         .modal h2 { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
         .modal > p { font-size: 13px; color: var(--muted); margin-bottom: 22px; line-height: 1.6; }
         .mf { margin-bottom: 13px; }
         .mf label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin-bottom: 5px; }
-        .mf input {
-          width: 100%; background: var(--bg); border: 1.5px solid var(--border);
-          border-radius: var(--r-sm); padding: 9px 12px; color: var(--text);
-          font-family: 'Mulish', sans-serif; font-size: 14px; outline: none; transition: border-color 0.15s;
-        }
+        .mf input { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--r-sm); padding: 9px 12px; color: var(--text); font-family: 'Mulish', sans-serif; font-size: 14px; outline: none; transition: border-color 0.15s; }
         .mf input:focus { border-color: var(--accent); }
         .mf input::placeholder { color: var(--dim); }
 
-        /* Reorder hint */
-        .reorder-hint {
-          font-size: 11px; color: var(--muted);
-          display: flex; align-items: center; gap: 5px;
-          margin-top: 8px;
-        }
+        .reorder-hint { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 5px; margin-top: 8px; }
         .reorder-hint svg { color: var(--dim); flex-shrink: 0; }
+
+        /* ACTION MODAL */
+        .action-modal-overlay { position: fixed; inset: 0; background: rgba(28,27,24,0.45); backdrop-filter: blur(6px); z-index: 200; display: none; align-items: center; justify-content: center; }
+        .action-modal-overlay.show { display: flex; }
+        .action-modal { background: var(--white); border: 1px solid var(--border); border-radius: 20px; padding: 28px; width: 420px; box-shadow: var(--shadow-lg); animation: pop 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+        .action-modal h2 { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+        .action-modal .sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+
+        .action-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+        .action-option {
+          display: flex; align-items: flex-start; gap: 12px;
+          padding: 14px 16px; border-radius: 12px; border: 1.5px solid var(--border);
+          cursor: pointer; transition: all 0.15s; background: var(--bg);
+        }
+        .action-option:hover { border-color: var(--accent); background: var(--accent-bg); }
+        .action-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+        .action-option.selected .option-icon { background: var(--accent); color: white; }
+        .option-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--border2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--muted); transition: all 0.15s; }
+        .option-text { flex: 1; }
+        .option-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+        .option-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+        /* Schedule datetime input */
+        .schedule-picker { margin-top: 10px; display: none; }
+        .schedule-picker.show { display: block; }
+        .schedule-picker label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin-bottom: 6px; }
+        .schedule-picker input[type="datetime-local"] { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--r-sm); padding: 10px 13px; font-family: 'Mulish', sans-serif; font-size: 14px; color: var(--text); outline: none; transition: border-color 0.15s; }
+        .schedule-picker input:focus { border-color: var(--accent); background: var(--white); box-shadow: 0 0 0 3px var(--accent-bg); }
+
+        /* Draft warning banner */
+        .draft-warning { display: none; margin-top: 10px; padding: 10px 14px; background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: 10px; font-size: 12px; color: var(--warning); line-height: 1.5; }
+        .draft-warning.show { display: block; }
+        .draft-warning b { font-weight: 700; }
+
+        .action-modal-footer { display: flex; gap: 8px; justify-content: flex-end; }
     </style>
 </head>
 <body>
@@ -459,13 +350,73 @@
     </div>
 </div>
 
+<!-- ACTION CHOICE MODAL -->
+<div class="action-modal-overlay" id="actionOverlay">
+    <div class="action-modal">
+        <h2>What do you want to do?</h2>
+        <p class="sub">Your post has been created as a draft. Choose what happens next.</p>
+
+        <div class="action-options">
+
+            <!-- Publish now -->
+            <div class="action-option selected" id="opt-publish" onclick="selectOption('publish')">
+                <div class="option-icon">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </div>
+                <div class="option-text">
+                    <div class="option-title">Publish now</div>
+                    <div class="option-desc">Make it live immediately for your followers to see.</div>
+                </div>
+            </div>
+
+            <!-- Schedule -->
+            <div class="action-option" id="opt-schedule" onclick="selectOption('schedule')">
+                <div class="option-icon">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+                <div class="option-text">
+                    <div class="option-title">Schedule for later</div>
+                    <div class="option-desc">Pick a date and time to automatically publish.</div>
+                    <div class="schedule-picker" id="schedulePicker">
+                        <label style="margin-top:10px;">Publish at</label>
+                        <input type="datetime-local" id="scheduleDate">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Keep as draft -->
+            <div class="action-option" id="opt-draft" onclick="selectOption('draft')">
+                <div class="option-icon">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </div>
+                <div class="option-text">
+                    <div class="option-title">Save as draft</div>
+                    <div class="option-desc">Come back and publish later whenever you're ready.</div>
+                    <div class="draft-warning" id="draftWarning">
+                        <b>Heads up:</b> Draft posts are automatically deleted after <b>90 days</b> of inactivity. Make sure to publish before then.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="action-modal-footer">
+            <button class="btn btn-ghost" onclick="closeActionModal()">Cancel</button>
+            <button class="btn btn-primary" id="actionConfirmBtn" onclick="confirmAction()">
+                Publish now
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- SUCCESS SCREEN -->
 <div class="success-screen" id="successScreen">
     <div class="success-check">
         <svg width="30" height="30" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
     </div>
-    <h2>Post Published</h2>
-    <p>Your post is now live.</p>
+    <h2 id="successTitle">Post Published</h2>
+    <p id="successMsg">Your post is now live.</p>
     <p id="successTime" style="font-size:12px;color:var(--muted);"></p>
     <div class="btns">
         <button class="btn btn-ghost" onclick="resetPage()">New Post</button>
@@ -483,9 +434,9 @@
     </div>
     <div class="nav-right">
         <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px;" onclick="document.getElementById('cfgOverlay').style.display='flex'">Settings</button>
-        <button class="btn btn-primary" id="publishBtn" onclick="publishPost()" disabled>
-            Publish
-            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        <button class="btn btn-primary" id="createBtn" onclick="createPost()" disabled>
+            Create
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
     </div>
 </nav>
@@ -626,7 +577,7 @@
             <div class="flow-row"><div class="fn" id="fs1">1</div><div class="ft"><b>Confirm file → request URL</b>POST /api/v1/upload</div></div>
             <div class="flow-row"><div class="fn" id="fs2">2</div><div class="ft"><b>Upload to Supabase</b>PUT signedUrl</div></div>
             <div class="flow-row"><div class="fn" id="fs3">3</div><div class="ft"><b>Create draft</b>POST /api/v1/content/post</div></div>
-            <div class="flow-row"><div class="fn" id="fs4">4</div><div class="ft"><b>Publish</b>PATCH /api/v1/content/post/{id}/publish</div></div>
+            <div class="flow-row"><div class="fn" id="fs4">4</div><div class="ft"><b>Publish / Schedule / Draft</b>PATCH /api/v1/content/post/{id}/publish</div></div>
         </div>
 
     </div>
@@ -635,7 +586,6 @@
 <div class="sb" id="sb"></div>
 
 <script>
-    // ─── CONFIG ───────────────────────────────────────────────────────────────
     let API = window.location.origin;
     let JWT = '';
     let USERNAME = 'younes_dev';
@@ -675,18 +625,197 @@
       document.getElementById('cfgOverlay').style.display = 'none';
     }
 
-    // ─── STATE ────────────────────────────────────────────────────────────────
-    // Each file entry:
-    // { file, url, requestId: null|string, status: 'pending'|'uploading'|'confirmed'|'failed' }
     let files = [];
     let tags = [];
     let postId = null;
     let pidx = 0;
-
-    // Drag-to-reorder state
     let dragSrcIndex = null;
+    let selectedAction = 'publish'; // 'publish' | 'schedule' | 'draft'
+
+    // ─── ACTION MODAL ─────────────────────────────────────────────────────────
+
+    function openActionModal() {
+      selectedAction = 'publish';
+      document.getElementById('actionOverlay').classList.add('show');
+      // set default datetime to 1 hour from now
+      const now = new Date(Date.now() + 60 * 60 * 1000);
+      const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0,16);
+      document.getElementById('scheduleDate').value = local;
+      updateActionUI();
+    }
+
+    function closeActionModal() {
+      document.getElementById('actionOverlay').classList.remove('show');
+    }
+
+    function selectOption(opt) {
+      selectedAction = opt;
+      updateActionUI();
+    }
+
+    function updateActionUI() {
+      ['publish','schedule','draft'].forEach(o => {
+        document.getElementById('opt-'+o).classList.toggle('selected', selectedAction === o);
+        document.getElementById('opt-'+o).querySelector('.option-icon').style.background =
+          selectedAction === o ? 'var(--accent)' : '';
+        document.getElementById('opt-'+o).querySelector('.option-icon').style.color =
+          selectedAction === o ? 'white' : '';
+      });
+
+      // show/hide schedule picker
+      document.getElementById('schedulePicker').classList.toggle('show', selectedAction === 'schedule');
+      // show/hide draft warning
+      document.getElementById('draftWarning').classList.toggle('show', selectedAction === 'draft');
+
+      // update confirm button label
+      const btn = document.getElementById('actionConfirmBtn');
+      if (selectedAction === 'publish') {
+        btn.innerHTML = `Publish now <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`;
+      } else if (selectedAction === 'schedule') {
+        btn.innerHTML = `Schedule <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+      } else {
+        btn.innerHTML = `Save draft <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+      }
+    }
+
+    async function confirmAction() {
+      if (selectedAction === 'publish') {
+        await doPublish();
+      } else if (selectedAction === 'schedule') {
+        await doSchedule();
+      } else {
+        doSaveDraft();
+      }
+    }
+
+    async function doPublish() {
+      closeActionModal();
+      document.getElementById('createBtn').disabled = true;
+      try {
+        setFS(4, 'active');
+        toast('Publishing…', 'loading', 0);
+        // DTO: postId (String) + scheduledAt null = publish now
+        await apiFetch(`/api/v1/content/post/${postId}/publish`, {
+          method: 'PATCH',
+          body: JSON.stringify({ postId: postId, scheduledAt: null })
+        });
+        setFS(4, 'done');
+        toast('Published!', 'ok');
+        document.getElementById('successTitle').textContent = 'Post Published';
+        document.getElementById('successMsg').textContent = 'Your post is now live.';
+        document.getElementById('successTime').textContent = new Date().toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+        setTimeout(() => document.getElementById('successScreen').classList.add('show'), 500);
+      } catch(e) {
+        toast('Error: ' + (e.message || 'Something went wrong'), 'err', 5000);
+        document.getElementById('createBtn').disabled = false;
+      }
+    }
+
+    async function doSchedule() {
+      const dateVal = document.getElementById('scheduleDate').value;
+      if (!dateVal) {
+        toast('Please pick a date and time', 'err');
+        return;
+      }
+      const scheduledAt = new Date(dateVal).toISOString();
+      if (new Date(scheduledAt) <= new Date()) {
+        toast('Scheduled time must be in the future', 'err');
+        return;
+      }
+      closeActionModal();
+      document.getElementById('createBtn').disabled = true;
+      try {
+        setFS(4, 'active');
+        toast('Scheduling…', 'loading', 0);
+        // DTO: postId (String) + scheduledAt (Instant) = schedule
+        await apiFetch(`/api/v1/content/post/${postId}/publish`, {
+          method: 'PATCH',
+          body: JSON.stringify({ postId: postId, scheduledAt: scheduledAt })
+        });
+        setFS(4, 'done');
+        toast('Scheduled!', 'ok');
+        const readableDate = new Date(scheduledAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+        document.getElementById('successTitle').textContent = 'Post Scheduled';
+        document.getElementById('successMsg').textContent = 'Your post will go live on';
+        document.getElementById('successTime').textContent = readableDate;
+        setTimeout(() => document.getElementById('successScreen').classList.add('show'), 500);
+      } catch(e) {
+        toast('Error: ' + (e.message || 'Something went wrong'), 'err', 5000);
+        document.getElementById('createBtn').disabled = false;
+      }
+    }
+
+    function doSaveDraft() {
+      closeActionModal();
+      setFS(4, 'done');
+      toast('Saved as draft', 'ok');
+      document.getElementById('successTitle').textContent = 'Saved as Draft';
+      document.getElementById('successMsg').textContent = 'Your post was saved. Remember — drafts are deleted after 90 days.';
+      document.getElementById('successTime').textContent = '';
+      setTimeout(() => document.getElementById('successScreen').classList.add('show'), 300);
+    }
+
+    // ─── CREATE POST (step 1) ──────────────────────────────────────────────────
+
+    async function createPost() {
+      const unconfirmed = files.filter(f => f.status !== 'confirmed');
+      if (unconfirmed.length > 0) { toast(`${unconfirmed.length} file(s) not yet confirmed`, 'err'); return; }
+      if (!files.length) { toast('Add at least one file', 'err'); return; }
+
+      document.getElementById('createBtn').disabled = true;
+      const orderedIds = files.map(f => f.requestId);
+
+      try {
+        setFS(3, 'active');
+        toast('Creating post…', 'loading', 0);
+
+        const body = {
+          caption: document.getElementById('caption').value.trim() || null,
+          uploadRequestsIds: orderedIds,
+          tags: tags.length ? tags : null,
+          postSettings: {
+            commentsDisabled: document.getElementById('noComments').checked,
+            hideLikes: document.getElementById('hideLikes').checked,
+            hideComments: document.getElementById('hideComments').checked
+          },
+          location: document.getElementById('locName').value.trim()
+            ? { locationName: document.getElementById('locName').value.trim(), latitude: null, longitude: null }
+            : null
+        };
+
+        let post;
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            post = await apiFetch('/api/v1/content/post', { method: 'POST', body: JSON.stringify(body) });
+            break;
+          } catch(e) {
+            const isUploadFailure = e.status === 422 && e.body && e.body.failedUploadIds && e.body.failedUploadIds.length;
+            if (isUploadFailure && attempt === 0) {
+              setFS(3, ''); setFS(1, 'active'); setFS(2, 'active');
+              toast(`Re-uploading ${e.body.failedUploadIds.length} expired file(s)…`, 'loading', 0);
+              await retryFailedUploads(e.body.failedUploadIds, body.uploadRequestsIds);
+              setFS(1, 'done'); setFS(2, 'done'); setFS(3, 'active');
+              toast('Retrying…', 'loading', 0);
+            } else { throw e; }
+          }
+        }
+
+        postId = post.id;
+        setFS(3, 'done');
+        applyPostRepresentation(post);
+        toast('Post created!', 'ok', 1500);
+
+        // open action modal after short delay
+        setTimeout(() => openActionModal(), 600);
+
+      } catch(e) {
+        toast('Error: ' + (e.message || 'Something went wrong'), 'err', 5000);
+        document.getElementById('createBtn').disabled = false;
+      }
+    }
 
     // ─── FILE HANDLING ────────────────────────────────────────────────────────
+
     function onDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('over'); }
     function onDragLeave() { document.getElementById('dropZone').classList.remove('over'); }
     function onDrop(e) { e.preventDefault(); document.getElementById('dropZone').classList.remove('over'); handleFiles(e.dataTransfer.files); }
@@ -695,83 +824,45 @@
       Array.from(list).slice(0, 10 - files.length).forEach(f => {
         files.push({ file: f, url: URL.createObjectURL(f), requestId: null, status: 'pending' });
       });
-      renderGrid();
-      syncPreview();
-      updatePublishBtn();
+      renderGrid(); syncPreview(); updateCreateBtn();
     }
 
-    // ─── GRID RENDERING ───────────────────────────────────────────────────────
     function renderGrid() {
       const g = document.getElementById('mediaGrid');
       const mc = document.getElementById('mediaCount');
       const hint = document.getElementById('reorderHint');
-
-      if (!files.length) {
-        g.innerHTML = '';
-        mc.style.display = 'none';
-        hint.style.display = 'none';
-        return;
-      }
-
+      if (!files.length) { g.innerHTML = ''; mc.style.display = 'none'; hint.style.display = 'none'; return; }
       mc.style.display = 'flex';
       hint.style.display = files.length > 1 ? 'flex' : 'none';
       document.getElementById('countVal').textContent = `${files.length} / 10 files`;
-
       const confirmedCount = files.filter(f => f.status === 'confirmed').length;
       document.getElementById('uploadStatus').textContent =
         confirmedCount === 0 ? 'Confirm each file to upload' :
         confirmedCount === files.length ? `All ${files.length} uploaded ✓` :
         `${confirmedCount} / ${files.length} confirmed`;
-
       const C = 2 * Math.PI * 13;
-
       g.innerHTML = files.map((m, i) => {
         const isVid = m.file.type.startsWith('video/');
         const status = m.status;
-
-        // confirm button appearance
         let confirmHtml = '';
         if (status === 'pending') {
-          confirmHtml = `<button class="confirm-btn idle" onclick="confirmFile(event,${i})">
-            <svg width="8" height="8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-            Confirm
-          </button>`;
+          confirmHtml = `<button class="confirm-btn idle" onclick="confirmFile(event,${i})"><svg width="8" height="8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Confirm</button>`;
         } else if (status === 'uploading') {
-          confirmHtml = `<button class="confirm-btn loading" disabled>
-            <div class="spin" style="width:8px;height:8px;border-width:1.5px;"></div>
-            Uploading
-          </button>`;
+          confirmHtml = `<button class="confirm-btn loading" disabled><div class="spin" style="width:8px;height:8px;border-width:1.5px;"></div>Uploading</button>`;
         } else if (status === 'confirmed') {
-          confirmHtml = `<button class="confirm-btn done" disabled>
-            <svg width="8" height="8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-            Done
-          </button>`;
+          confirmHtml = `<button class="confirm-btn done" disabled><svg width="8" height="8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Done</button>`;
         } else if (status === 'failed') {
-          confirmHtml = `<button class="confirm-btn failed" onclick="confirmFile(event,${i})">
-            Retry
-          </button>`;
+          confirmHtml = `<button class="confirm-btn failed" onclick="confirmFile(event,${i})">Retry</button>`;
         }
-
         const showProgress = status === 'uploading';
-
-        return `<div class="media-tile" id="tile_${i}"
-            draggable="true"
-            ondragstart="onTileDragStart(event,${i})"
-            ondragover="onTileDragOver(event,${i})"
-            ondragleave="onTileDragLeave(event,${i})"
-            ondrop="onTileDrop(event,${i})">
+        return `<div class="media-tile" id="tile_${i}" draggable="true" ondragstart="onTileDragStart(event,${i})" ondragover="onTileDragOver(event,${i})" ondragleave="onTileDragLeave(event,${i})" ondrop="onTileDrop(event,${i})">
           ${isVid ? `<video src="${m.url}" muted playsinline></video>` : `<img src="${m.url}">`}
           <div class="num">${i+1}</div>
           <div class="tbadge">${isVid?'VID':'IMG'}</div>
-          <button class="del" onclick="rmFile(event,${i})">
-            <svg width="8" height="8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
+          <button class="del" onclick="rmFile(event,${i})"><svg width="8" height="8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
           ${confirmHtml}
           <div class="pw ${!showProgress?'done':''}" id="pw_${i}">
-            <svg class="pr" viewBox="0 0 32 32">
-              <circle class="t" cx="16" cy="16" r="13"/>
-              <circle class="f" id="ring_${i}" cx="16" cy="16" r="13" stroke-dasharray="${C}" stroke-dashoffset="${C}"/>
-            </svg>
+            <svg class="pr" viewBox="0 0 32 32"><circle class="t" cx="16" cy="16" r="13"/><circle class="f" id="ring_${i}" cx="16" cy="16" r="13" stroke-dasharray="${C}" stroke-dashoffset="${C}"/></svg>
             <div class="pp" id="pct_${i}">0%</div>
           </div>
         </div>`;
@@ -783,54 +874,29 @@
       const r = document.getElementById('ring_'+i), p = document.getElementById('pct_'+i);
       if (r) r.style.strokeDashoffset = C - (pct/100)*C;
       if (p) p.textContent = pct + '%';
-      if (pct >= 100) {
-        setTimeout(() => { const w = document.getElementById('pw_'+i); if(w) w.classList.add('done'); }, 300);
-      }
+      if (pct >= 100) { setTimeout(() => { const w = document.getElementById('pw_'+i); if(w) w.classList.add('done'); }, 300); }
     }
 
-    // ─── CONFIRM BUTTON → UPLOAD ──────────────────────────────────────────────
-    // User clicks "Confirm" on a tile → requestUpload() → PUT to Supabase → store requestId
     async function confirmFile(event, i) {
       event.stopPropagation();
       const m = files[i];
       if (m.status === 'uploading' || m.status === 'confirmed') return;
-
-      m.status = 'uploading';
-      m.requestId = null;
-      renderGrid();
-      setRing(i, 0);
-      setFS(1, 'active');
-
+      m.status = 'uploading'; m.requestId = null;
+      renderGrid(); setRing(i, 0); setFS(1, 'active');
       try {
-        // Step 1: POST /api/v1/upload → get signedUrl + requestId
         const { signedUrl, requestId } = await apiFetch('/api/v1/upload', {
           method: 'POST',
-          body: JSON.stringify({
-            uploadType: 'POST',
-            fileMimeType: m.file.type,
-            fileSize: m.file.size,
-            duration: m.file.type.startsWith('video/') ? 15 : 1
-          })
+          body: JSON.stringify({ uploadType: 'POST', fileMimeType: m.file.type, fileSize: m.file.size, duration: m.file.type.startsWith('video/') ? 15 : 1 })
         });
-
         m.requestId = requestId;
         setFS(1, 'done'); setFS(2, 'active');
-
-        // Step 2: PUT directly to Supabase using signedUrl
         await uploadDirect(signedUrl, m.file, pct => setRing(i, pct));
-
         m.status = 'confirmed';
-        setRing(i, 100);
-        setFS(2, 'done');
-        renderGrid();
-        syncPreview();
-        updatePublishBtn();
-
+        setRing(i, 100); setFS(2, 'done');
+        renderGrid(); syncPreview(); updateCreateBtn();
       } catch(err) {
-        console.error(err);
-        m.status = 'failed';
-        renderGrid();
-        toast('Upload failed — click Retry', 'err');
+        console.error(err); m.status = 'failed';
+        renderGrid(); toast('Upload failed — click Retry', 'err');
       }
     }
 
@@ -846,197 +912,76 @@
       });
     }
 
-    // ─── DRAG-TO-REORDER ──────────────────────────────────────────────────────
-    // Pure drag-and-drop between tiles. Reorders files[] in place and re-renders.
     function onTileDragStart(event, i) {
-      dragSrcIndex = i;
-      event.dataTransfer.effectAllowed = 'move';
-      setTimeout(() => {
-        const tile = document.getElementById('tile_'+i);
-        if (tile) tile.classList.add('dragging');
-      }, 0);
+      dragSrcIndex = i; event.dataTransfer.effectAllowed = 'move';
+      setTimeout(() => { const tile = document.getElementById('tile_'+i); if (tile) tile.classList.add('dragging'); }, 0);
     }
-
     function onTileDragOver(event, i) {
-      event.preventDefault();
-      event.dataTransfer.dropEffect = 'move';
+      event.preventDefault(); event.dataTransfer.dropEffect = 'move';
       if (i === dragSrcIndex) return;
       document.querySelectorAll('.media-tile').forEach(t => t.classList.remove('drag-over-tile'));
-      const tile = document.getElementById('tile_'+i);
-      if (tile) tile.classList.add('drag-over-tile');
+      const tile = document.getElementById('tile_'+i); if (tile) tile.classList.add('drag-over-tile');
     }
-
-    function onTileDragLeave(event, i) {
-      const tile = document.getElementById('tile_'+i);
-      if (tile) tile.classList.remove('drag-over-tile');
-    }
-
+    function onTileDragLeave(event, i) { const tile = document.getElementById('tile_'+i); if (tile) tile.classList.remove('drag-over-tile'); }
     function onTileDrop(event, i) {
-      event.preventDefault();
-      event.stopPropagation();
-      document.querySelectorAll('.media-tile').forEach(t => {
-        t.classList.remove('drag-over-tile');
-        t.classList.remove('dragging');
-      });
+      event.preventDefault(); event.stopPropagation();
+      document.querySelectorAll('.media-tile').forEach(t => { t.classList.remove('drag-over-tile'); t.classList.remove('dragging'); });
       if (dragSrcIndex === null || dragSrcIndex === i) return;
-
-      // Reorder files array
       const moved = files.splice(dragSrcIndex, 1)[0];
       files.splice(i, 0, moved);
-      dragSrcIndex = null;
-
-      // Update preview index
-      pidx = 0;
-      renderGrid();
-      syncPreview();
+      dragSrcIndex = null; pidx = 0;
+      renderGrid(); syncPreview();
     }
 
-    // ─── REMOVE FILE ──────────────────────────────────────────────────────────
-   async function rmFile(event, i) {
-  event.stopPropagation();
-  const m = files[i];
-  if (m.requestId) {
-    try {
-      await apiFetch(`/api/v1/upload?requestId=${m.requestId}`, { method: 'DELETE' });
-    } catch(err) {
-      console.warn('Discard failed silently', err);
-    }
-  }
-  URL.revokeObjectURL(m.url);
-  files.splice(i, 1);
-  if (pidx >= files.length) pidx = Math.max(0, files.length - 1);
-  renderGrid();
-  syncPreview();
-  updatePublishBtn();
-}
-    // ─── PUBLISH ──────────────────────────────────────────────────────────────
-    // Requires every file to be individually confirmed first.
-    // Sends requestIds in the exact order files[] is currently in (user-defined order).
-    async function publishPost() {
-      const unconfirmed = files.filter(f => f.status !== 'confirmed');
-      if (unconfirmed.length > 0) {
-        toast(`${unconfirmed.length} file(s) not yet confirmed`, 'err');
-        return;
+    async function rmFile(event, i) {
+      event.stopPropagation();
+      const m = files[i];
+      if (m.requestId) {
+        try { await apiFetch(`/api/v1/upload?requestId=${m.requestId}`, { method: 'DELETE' }); } catch(err) { console.warn('Discard failed silently', err); }
       }
-      if (!files.length) { toast('Add at least one file', 'err'); return; }
-
-      document.getElementById('publishBtn').disabled = true;
-
-      // requestIds in current display order (user may have reordered)
-      const orderedIds = files.map(f => f.requestId);
-
-      try {
-        setFS(3, 'active');
-        toast('Creating post…', 'loading', 0);
-
-        const body = {
-          caption: document.getElementById('caption').value.trim() || null,
-          uploadRequestsIds: orderedIds,   // ← ordered as user arranged tiles
-          tags: tags.length ? tags : null,
-          postSettings: {
-            commentsDisabled: document.getElementById('noComments').checked,
-            hideLikes: document.getElementById('hideLikes').checked,
-            hideComments: document.getElementById('hideComments').checked
-          },
-          location: document.getElementById('locName').value.trim()
-            ? { locationName: document.getElementById('locName').value.trim(), latitude: null, longitude: null }
-            : null
-        };
-
-        // Try once; if 422 + failedUploadIds → silent retry of those specific files
-        let post;
-        for (let attempt = 0; attempt < 2; attempt++) {
-          try {
-            post = await apiFetch('/api/v1/content/post', { method: 'POST', body: JSON.stringify(body) });
-            break;
-          } catch(e) {
-            const isUploadFailure = e.status === 422 && e.body && e.body.failedUploadIds && e.body.failedUploadIds.length;
-            if (isUploadFailure && attempt === 0) {
-              setFS(3, ''); setFS(1, 'active'); setFS(2, 'active');
-              toast(`Re-uploading ${e.body.failedUploadIds.length} expired file(s)…`, 'loading', 0);
-              await retryFailedUploads(e.body.failedUploadIds, body.uploadRequestsIds);
-              setFS(1, 'done'); setFS(2, 'done'); setFS(3, 'active');
-              toast('Retrying…', 'loading', 0);
-            } else {
-              throw e;
-            }
-          }
-        }
-
-        postId = post.id;
-        setFS(3, 'done');
-        applyPostRepresentation(post);
-
-        setFS(4, 'active');
-        toast('Publishing…', 'loading', 0);
-        await apiFetch(`/api/v1/content/post/${postId}/publish`, { method: 'PATCH' });
-        setFS(4, 'done');
-        toast('Published!', 'ok');
-
-        const publishedAt = post.publishedAt ? new Date(post.publishedAt) : new Date();
-        document.getElementById('successTime').textContent =
-          publishedAt.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
-
-        setTimeout(() => document.getElementById('successScreen').classList.add('show'), 500);
-
-      } catch(e) {
-        toast('Error: ' + (e.message || 'Something went wrong'), 'err', 5000);
-        document.getElementById('publishBtn').disabled = false;
-      }
+      URL.revokeObjectURL(m.url);
+      files.splice(i, 1);
+      if (pidx >= files.length) pidx = Math.max(0, files.length - 1);
+      renderGrid(); syncPreview(); updateCreateBtn();
     }
 
-    // Retry only the specific failed uploads (422 case), re-upload and patch orderedIds
     async function retryFailedUploads(failedIds, orderedIds) {
       for (const failedId of failedIds) {
         const i = files.findIndex(f => f.requestId === failedId);
         if (i === -1) continue;
         const m = files[i];
-
-        m.status = 'uploading';
-        m.requestId = null;
+        m.status = 'uploading'; m.requestId = null;
         renderGrid(); setRing(i, 0);
-
         const { signedUrl, requestId } = await apiFetch('/api/v1/upload', {
           method: 'POST',
           body: JSON.stringify({ uploadType:'POST', fileMimeType:m.file.type, fileSize:m.file.size, duration: m.file.type.startsWith('video/') ? 15 : 1 })
         });
         m.requestId = requestId;
         await uploadDirect(signedUrl, m.file, pct => setRing(i, pct));
-        m.status = 'confirmed';
-        setRing(i, 100);
-        renderGrid();
-
-        // Update the reference in the ordered ids array
+        m.status = 'confirmed'; setRing(i, 100); renderGrid();
         const idx = orderedIds.indexOf(failedId);
         if (idx !== -1) orderedIds[idx] = requestId;
       }
     }
 
-    // ─── PUBLISH BUTTON GUARD ─────────────────────────────────────────────────
-    function updatePublishBtn() {
+    function updateCreateBtn() {
       const hasFiles = files.length > 0;
       const allConfirmed = files.every(f => f.status === 'confirmed');
-      document.getElementById('publishBtn').disabled = !(hasFiles && allConfirmed);
+      document.getElementById('createBtn').disabled = !(hasFiles && allConfirmed);
     }
 
-    // ─── PREVIEW SYNC ─────────────────────────────────────────────────────────
     function syncPreview() {
       const cap = document.getElementById('caption').value.trim();
       const ct = document.getElementById('pCapText');
-      ct.textContent = cap || 'Your caption…';
-      ct.className = cap ? '' : 'p-placeholder';
+      ct.textContent = cap || 'Your caption…'; ct.className = cap ? '' : 'p-placeholder';
       document.getElementById('pTags').innerHTML = tags.map(t => `<span class="p-tag">#${t}</span>`).join('');
       const loc = document.getElementById('locName').value.trim();
       document.getElementById('pLoc').style.display = loc ? 'flex' : 'none';
       document.getElementById('pLocText').textContent = loc;
-
       const pm = document.getElementById('pMedia'), pd = document.getElementById('pDots');
       if (files.length) {
-        const m = files[pidx] || files[0];
-        const v = m.file.type.startsWith('video/');
-        pm.innerHTML = v
-          ? `<video src="${m.url}" muted autoplay loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>`
-          : `<img src="${m.url}" style="width:100%;height:100%;object-fit:cover;">`;
+        const m = files[pidx] || files[0]; const v = m.file.type.startsWith('video/');
+        pm.innerHTML = v ? `<video src="${m.url}" muted autoplay loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>` : `<img src="${m.url}" style="width:100%;height:100%;object-fit:cover;">`;
         if (files.length > 1) {
           pd.style.display = 'flex';
           pd.innerHTML = files.map((_,i) => `<div class="p-dot ${i===pidx?'on':''}" onclick="pidx=${i};syncPreview()"></div>`).join('');
@@ -1049,8 +994,7 @@
 
     function applyPostRepresentation(post) {
       if (post.AuthorProfile) {
-        const av = document.getElementById('pAv');
-        const p = post.AuthorProfile;
+        const av = document.getElementById('pAv'); const p = post.AuthorProfile;
         if (p.avatarurl) { av.style.backgroundImage='url('+p.avatarurl+')'; av.style.backgroundSize='cover'; av.textContent=''; }
         if (p.username) { document.getElementById('pNm').textContent=p.username; document.getElementById('pNmInline').textContent=p.username; }
       }
@@ -1059,29 +1003,20 @@
         const pm = document.getElementById('pMedia'), pd = document.getElementById('pDots');
         function show(idx) {
           const m = rl[idx]; const v = m.mediaType==='VIDEO';
-          pm.innerHTML = v
-            ? '<video src="'+m.filepath+'" muted autoplay loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>'
-            : '<img src="'+m.filepath+'" style="width:100%;height:100%;object-fit:cover;">';
-          if (rl.length > 1) {
-            pd.style.display='flex';
-            pd.innerHTML = rl.map((_,i) => '<div class="p-dot '+(i===idx?'on':'')+'" onclick="showR('+i+')"></div>').join('');
-          }
+          pm.innerHTML = v ? '<video src="'+m.filepath+'" muted autoplay loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>' : '<img src="'+m.filepath+'" style="width:100%;height:100%;object-fit:cover;">';
+          if (rl.length > 1) { pd.style.display='flex'; pd.innerHTML = rl.map((_,i) => '<div class="p-dot '+(i===idx?'on':'')+'" onclick="showR('+i+')"></div>').join(''); }
         }
-        window.showR = show;
-        show(0);
+        window.showR = show; show(0);
       }
     }
 
-    // ─── TAGS ─────────────────────────────────────────────────────────────────
     function onTagKey(e) {
       if ((e.key==='Enter'||e.key===',') && e.target.value.trim()) {
         e.preventDefault();
         const v = e.target.value.replace(/[^a-zA-Z0-9_]/g,'').trim();
         if (v && !tags.includes(v) && tags.length < 30) { tags.push(v); renderTags(); syncPreview(); }
         e.target.value = '';
-      } else if (e.key==='Backspace' && !e.target.value && tags.length) {
-        tags.pop(); renderTags(); syncPreview();
-      }
+      } else if (e.key==='Backspace' && !e.target.value && tags.length) { tags.pop(); renderTags(); syncPreview(); }
     }
     function renderTags() {
       const box = document.getElementById('tagsBox'), inp = document.getElementById('tagIn');
@@ -1095,18 +1030,15 @@
     }
     function rmTag(i) { tags.splice(i,1); renderTags(); syncPreview(); }
 
-    // ─── UTILS ────────────────────────────────────────────────────────────────
     function updateCC(el, max, id) {
       const l = el.value.length, c = document.getElementById(id);
       c.textContent = `${l} / ${max}`; c.classList.toggle('warn', l > max*.9);
     }
-
     function setFS(n, s) {
       const el = document.getElementById('fs'+n);
       el.className = 'fn' + (s==='active' ? ' active' : s==='done' ? ' done' : '');
       el.textContent = s==='done' ? '✓' : n;
     }
-
     let sbT;
     function toast(msg, type='', dur=3500) {
       const el = document.getElementById('sb');
@@ -1115,7 +1047,6 @@
       clearTimeout(sbT);
       if (dur) sbT = setTimeout(() => el.classList.remove('show'), dur);
     }
-
     async function apiFetch(path, opts={}) {
       const h = { 'Content-Type': 'application/json' };
       if (JWT) h['Authorization'] = 'Bearer ' + JWT;
@@ -1123,13 +1054,11 @@
       if (!r.ok) {
         const errBody = await r.json().catch(() => ({}));
         const err = new Error(`HTTP ${r.status}`);
-        err.status = r.status;
-        err.body = errBody;
+        err.status = r.status; err.body = errBody;
         throw err;
       }
       return r.json().catch(() => ({}));
     }
-
     function resetPage() {
       files.forEach(m => URL.revokeObjectURL(m.url));
       files = []; tags = []; postId = null; pidx = 0;
@@ -1141,7 +1070,7 @@
       document.getElementById('cc').textContent = '0 / 2200';
       renderTags(); renderGrid(); syncPreview();
       [1,2,3,4].forEach(n => setFS(n,''));
-      document.getElementById('publishBtn').disabled = true;
+      document.getElementById('createBtn').disabled = true;
       document.getElementById('successScreen').classList.remove('show');
     }
 </script>
