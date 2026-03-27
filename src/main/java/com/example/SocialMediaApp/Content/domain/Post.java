@@ -49,6 +49,8 @@ public class Post {
 
     private Instant unPublishedAt;
 
+    private Instant scheduledAt;
+
     private String caption;
 
     @Builder.Default

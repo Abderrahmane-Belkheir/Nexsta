@@ -2,6 +2,7 @@ package com.example.SocialMediaApp.Shared.ExceptionsHandling;
 
 import com.example.SocialMediaApp.Content.Exceptions.ContentNotAvailableException;
 import com.example.SocialMediaApp.Content.Exceptions.ContentNotFoundException;
+import com.example.SocialMediaApp.Shared.Exceptions.ActionNotAllowedException;
 import com.example.SocialMediaApp.User.Exceptions.UserNotFoundException;
 import jdk.jfr.Experimental;
 import org.springframework.http.HttpStatus;
@@ -25,5 +26,9 @@ public class FollowExceptionHandler {
     @ExceptionHandler(ContentNotFoundException.class)
     public ResponseEntity<Map<String,String>> handleContentNotFound(ContentNotFoundException e){
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message:",e.getMessage()));
+    }
+    @ExceptionHandler(ActionNotAllowedException.class)
+    public ResponseEntity<Map<String,String>> handleActionNotAllowed(ActionNotAllowedException e){
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message",e.getMessage()));
     }
 }

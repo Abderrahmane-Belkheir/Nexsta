@@ -59,8 +59,10 @@ public class PostLifecycleService {
                 orElseThrow(()-> new ActionNotAllowedException("Action could not be completed"));
         if(postPublish.getScheduledAt()!=null) {
             draftPost.setPostStatus(Post.PostStatus.SCHEDULED);
+            draftPost.setScheduledAt(postPublish.getScheduledAt());
+            log.info("updating post : "+draftPost.getId());
             postRepo.save(draftPost);
-            contentSchedulingService.schedulePostPublishing(currentUserId,postPublish);
+            contentSchedulingService.schedulePostPublishing(postPublish);
             return;
         }
         draftPost.setPublishedAt(Instant.now());
@@ -81,7 +83,7 @@ public class PostLifecycleService {
             post.setPostStatus(Post.PostStatus.PUBLISHED);
             return new PostVisibilityToggleResponse(PostVisibilityToggleResponse.PostStatus.PUBLISHED);
         }
-        throw new ActionNotAllowedException("");
+        throw new ActionNotAllowedException(String.format("Post with Status %s Cannot be Toggled",post.getPostStatus()));
     }
 
     public DeletePostResponse deletePost(String postId){

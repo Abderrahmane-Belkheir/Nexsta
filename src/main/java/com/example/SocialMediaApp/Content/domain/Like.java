@@ -25,6 +25,7 @@ public class Like {
     // this could be (story,comment)
     private String targetId;
 
+
     @ManyToOne
     @JoinColumn(name= "user_id")
     private User user;

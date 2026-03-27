@@ -10,9 +10,5 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ContentSchedulingConfig {
 
-    @Bean
-    JobDetail jobDetail(){
-        return JobBuilder.newJob(PublishPostJob.class).withIdentity("publish-post").withDescription("Publishing Scheduled Posts").storeDurably().build();
-    }
 
 }

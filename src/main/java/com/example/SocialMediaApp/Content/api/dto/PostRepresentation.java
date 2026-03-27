@@ -31,6 +31,8 @@ public class PostRepresentation {
     private Boolean restored;
     // only when fetching deleted post so user can know the post status if he wants to restore it
     private Post.PostStatus preDeletionPostStatus;
+    // only if post is scheduled
+    private Instant scheduledAt;
     @Builder.Default
     private List<MediaRepresentation> mediaList=new ArrayList<>();
     private Location location;

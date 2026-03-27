@@ -24,7 +24,7 @@ public class User {
     private String id;
 
     @CreatedDate
-    private Instant createddate;
+    private Instant createdDate;
 
     @LastModifiedDate
     private Instant lastModifiedDate;

@@ -9,6 +9,7 @@ public enum StorageDir {
     TEMPORARY("temporary"),
     DELETED("deleted");
 
+
     private final String dirName;
 
     StorageDir(String dirName) {

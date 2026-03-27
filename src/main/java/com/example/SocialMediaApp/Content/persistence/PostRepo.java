@@ -50,5 +50,9 @@ public interface PostRepo extends JpaRepository<Post,String> {
     void deleteByOldPostsWithStatus(@Param("status") Post.PostStatus status,@Param("date") Instant date);
 
     Optional<Post> findByIdAndUserId(String userId,String postId);
+    @Modifying
+    @Transactional
+    @Query("UPDATE Post p SET p.postStatus='PUBLISHED',p.publishedAt=:date,p.scheduledAt=null WHERE p.id=:postId AND p.postStatus='SCHEDULED' ")
+    void updateScheduledPost(@Param("postId") String postId,@Param("date") Instant date);
 
 }

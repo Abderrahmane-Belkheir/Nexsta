@@ -113,6 +113,7 @@ public class PostQueryService {
                     // here the intent is clear we want to restrict the media access on deleted posts that's the cost of deletion
                     postRepresentation.getMediaList().addAll(mediaRepresentations);
                 }
+
             }
 
                 postRepresentation.setCommentsDisabled(postSettings.isCommentsDisabled());
@@ -125,9 +126,8 @@ public class PostQueryService {
         String sortBy = switch (postStatus) {
             case PUBLISHED -> "publishedAt";
             case DELETED -> "deletedAt";
-            case DRAFT -> "createdAt";
+            case DRAFT,SCHEDULED -> "createdAt";
             case UNPUBLISHED -> "unPublishedAt";
-            case SCHEDULED -> "";
         };
         return PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, sortBy));
     }

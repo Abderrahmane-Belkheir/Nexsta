@@ -57,7 +57,7 @@ public class Comment {
     @Column(name = "user_id",updatable = false,insertable = false)
     private String userId;
 
-    @OneToMany(mappedBy = "parentComment",fetch = FetchType.LAZY,orphanRemoval = true)
+    @OneToMany(mappedBy = "parentComment",fetch = FetchType.LAZY,orphanRemoval = true,cascade = CascadeType.ALL)
     private List<Comment> replies;
 
     @ManyToOne(fetch = FetchType.LAZY)
