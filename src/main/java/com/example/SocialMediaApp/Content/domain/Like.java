@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.util.UUID;
 
@@ -22,12 +24,19 @@ public class Like {
     @Enumerated(EnumType.STRING)
     private LikeType type;
 
-    // this could be (story,comment)
-    private String targetId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="comment_id")
+    @OnDelete(action=OnDeleteAction.CASCADE)
+    private Comment comment;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="story_id")
+    @OnDelete(action=OnDeleteAction.CASCADE)
+    private Story story;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name= "user_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
 
@@ -40,7 +49,15 @@ public class Like {
     public Like(String userId,String targetId,LikeType type){
         this(userId);
         this.type=type;
-        this.targetId=targetId;
+        defineTarget(targetId);
+    }
+
+    private void defineTarget(String targetId){
+        if(type==LikeType.STORY){
+            this.story=new Story(targetId);
+        }else if(type==LikeType.COMMENT){
+            this.comment=new Comment(targetId);
+        }
     }
 
 }

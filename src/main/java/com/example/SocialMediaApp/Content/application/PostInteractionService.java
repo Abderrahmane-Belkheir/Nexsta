@@ -1,5 +1,6 @@
 package com.example.SocialMediaApp.Content.application;
 
+import com.example.SocialMediaApp.Content.Exceptions.ContentNotAvailableException;
 import com.example.SocialMediaApp.Content.Exceptions.ContentNotFoundException;
 import com.example.SocialMediaApp.Content.api.dto.CommentCreationRequest;
 import com.example.SocialMediaApp.Content.api.dto.CommentRepresentation;
@@ -14,6 +15,8 @@ import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -31,40 +34,54 @@ public class PostInteractionService {
     public LikeResponse addPostLike(String postId){
         String currentUserId=authenticatedUserService.getCurrentUser();
 
-        Post post=postRepo.findByIdAndPostStatus(postId, Post.PostStatus.PUBLISHED).orElseThrow(()-> new ContentNotFoundException("Post Not Found"));
+        Post post=postRepo.findById(postId).orElseThrow(()-> new ContentNotFoundException("Post Not Found"));
 
-        boolean isAllowed=visibilityPolicy.isAllowed(currentUserId,post.getUserId());
+        boolean isOwner=post.getUserId().equals(currentUserId);
 
-        if(!isAllowed) throw new ActionNotAllowedException("Action could not be completed");
+        if(!isOwner){
+            boolean isAllowed=visibilityPolicy.isAllowed(currentUserId,post.getUserId());
 
-        boolean liked=postLikeRepo.existsByPostIdAndUserId(postId,currentUserId);
+            if(!isAllowed) throw new ActionNotAllowedException("Post Not Found");
 
-        if(liked){
-            postLikeRepo.deleteByPostIdAndUserId(postId,currentUserId);
+            if(post.getPostStatus()!= Post.PostStatus.PUBLISHED) throw new ContentNotAvailableException("Post Not Found");
+        }
+
+        Optional<PostLike> postLike=postLikeRepo.findByUserIdAndPostId(currentUserId,postId);
+
+        if(postLike.isPresent()){
+            postLikeRepo.delete(postLike.get());
             postRepo.updatePostLikes(postId,-1);
         }else{
             postLikeRepo.save(new PostLike(currentUserId,postId));
             postRepo.updatePostLikes(postId,1);
             // handling notifications later
         }
-        return new LikeResponse(!liked);
+        return new LikeResponse(postLike.isEmpty());
     }
 
 
     public CommentRepresentation addPostComment(String postId, CommentCreationRequest commentRequest){
         String currentUserId=authenticatedUserService.getCurrentUser();
 
-        Post post=postRepo.findByIdAndPostStatus(postId, Post.PostStatus.PUBLISHED).orElseThrow(()-> new ContentNotFoundException("Post Not Found"));
+        Post post=postRepo.findById(postId).orElseThrow(()-> new ContentNotFoundException("Post Not Found"));
 
         String postOwnerId=post.getUserId();
 
-        boolean isAllowed=visibilityPolicy.isAllowed(currentUserId,postOwnerId);
+        boolean isOwner=postOwnerId.equals(currentUserId);
 
-        if(!isAllowed) throw new ActionNotAllowedException("Action could not be completed");
+        if(!isOwner){
+            boolean isAllowed=visibilityPolicy.isAllowed(currentUserId,post.getUserId());
 
-        PostSettings postSettings=post.getPostSettings();
+            if(!isAllowed) throw new ActionNotAllowedException("Post Not Found");
 
-        if(postSettings.isCommentsDisabled()) throw new ActionNotAllowedException("Comments Are Disabled On This Post");
+            if(post.getPostStatus()!= Post.PostStatus.PUBLISHED) throw new ContentNotAvailableException("Post Not Found");
+
+            PostSettings postSettings=post.getPostSettings();
+
+            if(postSettings.isCommentsDisabled()) throw new ActionNotAllowedException("Comments Are Disabled On This Post");
+        }
+
+
 
         Comment comment=commentRepo.save(new Comment(null,commentRequest.getContent(),currentUserId,postId,postOwnerId));
 
@@ -78,7 +95,7 @@ public class PostInteractionService {
         String currentUserId=authenticatedUserService.getCurrentUser();
         Comment comment=commentRepo.findWithDetailsById(commentId).orElseThrow(()->new ContentNotFoundException("Comment Not Found"));
         boolean isAllowed=comment.getUserId().equals(currentUserId)||comment.getPostOwnerId().equals(currentUserId);
-        if(!isAllowed) throw new UnauthorizedResourceAccessException("Action could not be completed");
+        if(!isAllowed) throw new UnauthorizedResourceAccessException("Comment Not Found");
         Comment parentComment=comment.getParentComment();
         String postId=comment.getPostId();
         // here i am handling the case where the comment is a reply so i will just decrement the comment count on both post and the comment
@@ -89,7 +106,6 @@ public class PostInteractionService {
             int count= commentRepo.countByParentComment(comment);
             postRepo.updatePostComments(postId,-(count+1));
         }
-        likeRepo.deleteByTargetId(commentId);
         commentRepo.delete(comment);
     }
 

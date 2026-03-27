@@ -7,12 +7,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 public interface PostLikeRepo extends JpaRepository<PostLike,String> {
-    boolean existsByPostIdAndUserId(String postId,String userId);
-    void deleteByPostIdAndUserId(String postId,String userId);
+    Optional<PostLike> findByUserIdAndPostId(String userId,String postId);
     @Query("SELECT pl.post.id FROM PostLike pl WHERE pl.user.id = :userId AND pl.post.id IN :postIds")
     Set<String> getLikesPostIds(@Param("userId") String userId,@Param("postIds") List<String> postIds);
 

@@ -87,12 +87,14 @@ public class CommentQueryService {
 
         String postOwnerId=post.getUserId();
 
-        if(postOwnerId.equals(viewerId)) return;
+        boolean isOwner=postOwnerId.equals(viewerId);
 
-        boolean isAllowed=visibilityPolicy.isAllowed(viewerId,postOwnerId);
-        if(!isAllowed) throw new ContentNotAvailableException("This content is not available");
-        PostSettings postSettings=post.getPostSettings();
-        if(postSettings.isHideComments()) throw new ContentNotAvailableException("Comments Are Hidden On This Post");
+        if(!isOwner){
+            boolean isAllowed=visibilityPolicy.isAllowed(viewerId,postOwnerId);
+            if(!isAllowed||post.getPostStatus()!= Post.PostStatus.PUBLISHED) throw new ContentNotAvailableException("Post Not Found");
+            PostSettings postSettings=post.getPostSettings();
+            if(postSettings.isHideComments()) throw new ContentNotAvailableException("Comments Are Hidden On This Post");
+        }
 
     }
 

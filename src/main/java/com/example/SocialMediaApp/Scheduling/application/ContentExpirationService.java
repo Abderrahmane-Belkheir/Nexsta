@@ -23,7 +23,6 @@ public class ContentExpirationService {
     public void deleteExpiredPosts(){
         Instant thirtyDaysAgo= Instant.now().minus(30, ChronoUnit.DAYS);
         Post.PostStatus postStatus= Post.PostStatus.DELETED;
-        mediaRepo.deleteMediaBelongingToDeletedPosts(postStatus,thirtyDaysAgo);
         postRepo.deleteByOldPostsWithStatus(postStatus,thirtyDaysAgo);
 }
 
@@ -31,7 +30,6 @@ public class ContentExpirationService {
     public void deleteAbandonedPosts(){
         Instant nintyDaysAgo = Instant.now().minus(90, ChronoUnit.DAYS);
         Post.PostStatus postStatus= Post.PostStatus.DRAFT;
-        mediaRepo.deleteMediaBelongingToDeletedPosts(postStatus, nintyDaysAgo);
         postRepo.deleteByOldPostsWithStatus(postStatus, nintyDaysAgo);
     }
 

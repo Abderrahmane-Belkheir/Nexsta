@@ -79,10 +79,6 @@ public class Post {
     @Builder.Default
     private List<Media> mediaList=new ArrayList<>();
 
-    @OneToMany(mappedBy = "post",fetch = FetchType.LAZY,orphanRemoval = true,cascade=CascadeType.ALL)
-    @Builder.Default
-    private List<PostLike> postLikesList=new ArrayList<>();
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
