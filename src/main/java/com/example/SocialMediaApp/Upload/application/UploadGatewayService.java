@@ -129,7 +129,7 @@ UploadGatewayService {
 
         if(!failedUploadIds.isEmpty()) throw new UploadFailedException(failedUploadIds);
 
-        storageService.moveFiles(filesPaths,storageTransferManager.getStorageTransfer(StorageDir.TEMPORARY,StorageDir.DRAFT));
+        storageService.moveFiles(filesPaths,new StorageTransfer(StorageDir.TEMPORARY,StorageDir.DRAFT));
 
         objectRedisTemplate.delete(uploadRequestsIds);
 

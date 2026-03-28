@@ -23,7 +23,7 @@ public class StorageService {
 
     private final WebClient webClient;
     private final StorageProperties storageEnv;
-
+    private final StorageTransferManager storageTransferManager;
 
     // profile avatar uploading is done directly via the server
     public void uploadFile(MultipartFile file,String filepath) throws IOException {
@@ -49,16 +49,20 @@ public class StorageService {
        filePaths.forEach(this::deleteFile);
     }
 
+
     @Async
-    public CompletableFuture<Void>  moveFiles(List<String> filePaths, StorageTransferManager.MoveFilesRequest request) {
-        for (String sourcePath:filePaths){
-           // String destinationPath = sourcePath.replace(storageTransfer.getSource(),storageTransfer.getDestination());
+    public CompletableFuture<Void> moveFiles(List<String> filePaths,StorageTransfer storageTransfer) {
+        StorageTransferManager.BucketTransfer bucketTransfer=storageTransferManager.resolveBucketTransfer(storageTransfer);
+        Map<String,String> sourceToDestinationPaths=storageTransferManager.resolveDestinationPaths(filePaths,storageTransfer);
+        for (Map.Entry<String,String> entry: sourceToDestinationPaths.entrySet()){
+            String sourceKey=entry.getValue();
+            String destinationKey=entry.getValue();
             webClient.post().uri("/storage/v1/object/move").contentType(MediaType.APPLICATION_JSON).
-                    bodyValue(request).retrieve().toBodilessEntity().block();
-        }
+                    bodyValue(new MoveFileRequest(bucketTransfer.getBucketId(),sourceKey,bucketTransfer.getDestinationBucket(),destinationKey)).retrieve().toBodilessEntity().block();
+
+    }
         return CompletableFuture.completedFuture(null);
     }
-
 
     /*
      used to generate a temporary signed url that the client can use to upload files

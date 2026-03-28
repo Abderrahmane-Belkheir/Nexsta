@@ -1,22 +1,21 @@
 package com.example.SocialMediaApp.Storage;
 
 import lombok.AllArgsConstructor;
-import org.springframework.stereotype.Component;
+
 
 @AllArgsConstructor
-@Component
 public class StorageTransfer {
 
 
-    private final StorageDir source;
-    private final StorageDir destination;
+    private final StorageDir sourceDir;
+    private final StorageDir destinationDir;
 
-    public String getSource(){
-        return source.getDirName();
+    public StorageDir getSource(){
+        return sourceDir;
     }
 
-    public String getDestination(){
-        return destination.getDirName();
+    public StorageDir getDestination(){
+        return destinationDir;
     }
 
 }

@@ -6,6 +6,7 @@ import com.example.SocialMediaApp.Content.domain.Post;
 import com.example.SocialMediaApp.Content.persistence.PostRepo;
 import com.example.SocialMediaApp.Storage.StorageDir;
 import com.example.SocialMediaApp.Storage.StorageService;
+import com.example.SocialMediaApp.Storage.StorageTransfer;
 import com.example.SocialMediaApp.Storage.StorageTransferManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +39,7 @@ public class PublishPostJob implements Job {
         }
         Post post=optionalPost.get();
         List<String> filePaths=post.getMediaList().stream().map(Media::getFilepath).toList();
-        storageService.moveFiles(filePaths,storageTransferManager.getStorageTransfer(StorageDir.DRAFT,StorageDir.PERMANENT));
+        storageService.moveFiles(filePaths,new StorageTransfer(StorageDir.DRAFT,StorageDir.PERMANENT));
     }
 
 }

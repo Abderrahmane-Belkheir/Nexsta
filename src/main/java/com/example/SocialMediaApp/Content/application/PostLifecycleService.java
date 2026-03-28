@@ -66,13 +66,15 @@ public class PostLifecycleService {
         if(postPublish.getScheduledAt()!=null) {
             draftPost.setPostStatus(Post.PostStatus.SCHEDULED);
             draftPost.setScheduledAt(postPublish.getScheduledAt());
-            log.info("updating post : "+draftPost.getId());
             postRepo.save(draftPost);
             contentSchedulingService.schedulePostPublishing(postPublish);
             return;
         }
-        List<String> filePaths=draftPost.getMediaList().stream().map(Media::getFilepath).toList();
-        storageService.moveFiles(filePaths,storageTransferManager.getStorageTransfer(StorageDir.DRAFT,StorageDir.PERMANENT));
+        StorageTransfer storageTransfer=new StorageTransfer(StorageDir.DRAFT,StorageDir.PERMANENT);
+        List<Media> mediaList=draftPost.getMediaList();
+        List<String> filePaths=mediaList.stream().map(Media::getFilepath).toList();
+        storageService.moveFiles(filePaths,storageTransfer);
+        mediaList.forEach(media -> media.transformFilePath(storageTransfer));
         draftPost.setPublishedAt(Instant.now());
         draftPost.setPostStatus(Post.PostStatus.PUBLISHED);
         postRepo.save(draftPost);
@@ -111,9 +113,9 @@ public class PostLifecycleService {
             postRepo.delete(post);
             return new DeletePostResponse(false);
         }else{
-            StorageTransfer storageTransfer=new StorageTransfer(StorageDir.PERMANENT,StorageDir.DELETED);
             StorageDir sourceDir=storageTransferManager.resolveSourceDir(post.getPostStatus());
-            storageService.moveFiles(filePaths, storageTransferManager.getStorageTransfer(sourceDir,StorageDir.DELETED));
+            StorageTransfer storageTransfer=new StorageTransfer(sourceDir,StorageDir.DELETED);
+            storageService.moveFiles(filePaths, storageTransfer);
             post.setPreDeletionStatus(post.getPostStatus());
             post.setPostStatus(Post.PostStatus.DELETED);
             post.setDeletedAt(Instant.now());
@@ -133,9 +135,9 @@ public class PostLifecycleService {
         post.setPreDeletionStatus(null);
         List<Media> mediaList=post.getMediaList();
         List<String> filePaths=mediaList.stream().map(Media::getFilepath).toList();
-        StorageTransfer storageTransfer=new StorageTransfer(StorageDir.DELETED,StorageDir.PERMANENT);
         StorageDir destinationDir=storageTransferManager.resolveSourceDir(post.getPostStatus());
-        storageService.moveFiles(filePaths,storageTransferManager.getStorageTransfer(StorageDir.DELETED,destinationDir));
+        StorageTransfer storageTransfer=new StorageTransfer(StorageDir.DELETED,destinationDir);
+        storageService.moveFiles(filePaths,storageTransfer);
         mediaList.forEach(media -> media.transformFilePath(storageTransfer));
         // will save the media also thanks to cascading
         postRepo.save(post);

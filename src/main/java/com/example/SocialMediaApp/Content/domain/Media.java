@@ -45,7 +45,7 @@ public class Media {
     private String storyId;
 
     public void transformFilePath(StorageTransfer storageTransfer){
-        this.filepath=filepath.replace(storageTransfer.getSource(),storageTransfer.getDestination());
+        this.filepath=filepath.replace(storageTransfer.getSource().getDirName(),storageTransfer.getDestination().getDirName());
     }
 
 
