@@ -15,5 +15,6 @@ public class StorageProperties {
     private String url;
     private String apiKey;
     private String endpoint;
-    private String MediaBucket;
+    private String PublicMediaBucket;
+    private String PrivateMediaBucket;
 }

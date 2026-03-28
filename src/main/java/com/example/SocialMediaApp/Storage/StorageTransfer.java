@@ -1,9 +1,12 @@
 package com.example.SocialMediaApp.Storage;
 
 import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Component;
 
 @AllArgsConstructor
+@Component
 public class StorageTransfer {
+
 
     private final StorageDir source;
     private final StorageDir destination;

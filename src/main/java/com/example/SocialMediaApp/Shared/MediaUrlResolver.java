@@ -15,7 +15,7 @@ public class MediaUrlResolver {
 
     @Named("resolveUrl")
     public String resolveUrl(String filepath) {
-        return storageProperties.getUrl() + "/storage/v1/object/public/" + storageProperties.getMediaBucket() + "/" + filepath;
+        return storageProperties.getUrl() + "/storage/v1/object/public/" + storageProperties.getPublicMediaBucket() + "/" + filepath;
     }
 
     public String resolveSignedUrl(String filepath, Duration expiry) {

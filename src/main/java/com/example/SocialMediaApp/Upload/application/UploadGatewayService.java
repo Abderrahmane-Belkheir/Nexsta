@@ -3,6 +3,7 @@ package com.example.SocialMediaApp.Upload.application;
 import com.example.SocialMediaApp.Storage.StorageDir;
 import com.example.SocialMediaApp.Storage.StorageService;
 import com.example.SocialMediaApp.Storage.StorageTransfer;
+import com.example.SocialMediaApp.Storage.StorageTransferManager;
 import com.example.SocialMediaApp.Upload.Exceptions.*;
 import com.example.SocialMediaApp.Upload.api.dto.*;
 import com.example.SocialMediaApp.Upload.domain.*;
@@ -30,6 +31,7 @@ UploadGatewayService {
     private final UploadUtil uploadUtil;
     private final UploadValidationService uploadValidationService;
     private final WebhookVerification webhookVerification;
+    private final StorageTransferManager storageTransferManager;
     private static final int UPLOAD_WAIT_DURATION_MINUTES = 5;
     private static final int UPLOAD_CONFIRM_DURATION_MINUTES = 5;
 
@@ -127,7 +129,7 @@ UploadGatewayService {
 
         if(!failedUploadIds.isEmpty()) throw new UploadFailedException(failedUploadIds);
 
-        storageService.moveFiles(filesPaths,new StorageTransfer(StorageDir.TEMPORARY,StorageDir.PERMANENT));
+        storageService.moveFiles(filesPaths,storageTransferManager.getStorageTransfer(StorageDir.TEMPORARY,StorageDir.DRAFT));
 
         objectRedisTemplate.delete(uploadRequestsIds);
 

@@ -10,6 +10,7 @@ import com.example.SocialMediaApp.Shared.Mappers.Contentmapper;
 import com.example.SocialMediaApp.Storage.StorageDir;
 import com.example.SocialMediaApp.Storage.StorageService;
 import com.example.SocialMediaApp.Storage.StorageTransfer;
+import com.example.SocialMediaApp.Storage.StorageTransferManager;
 import com.example.SocialMediaApp.Upload.domain.MediaUpload;
 import com.example.SocialMediaApp.Upload.domain.UploadType;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
@@ -36,6 +37,7 @@ public class PostLifecycleService {
     private final Contentmapper contentmapper;
     private final StorageService storageService;
     private final ContentSchedulingService contentSchedulingService;
+    private final StorageTransferManager storageTransferManager;
 
     public PostRepresentation createPost(PostCreationRequest postCreation){
         String currentUserId=authenticatedUserService.getCurrentUser();
@@ -55,8 +57,12 @@ public class PostLifecycleService {
     // publishing post for first time draft -> published / scheduled
     public void publishPost(PostPublish postPublish) throws SchedulerException {
         String currentUserId=authenticatedUserService.getCurrentUser();
-        Post draftPost=postRepo.findByIdAndUserIdAndPostStatus(postPublish.getPostId(),currentUserId, Post.PostStatus.DRAFT).
-                orElseThrow(()-> new ActionNotAllowedException("Action could not be completed"));
+
+        Post draftPost=postRepo.findByIdAndUserIdAndPostStatusWithMediaList(postPublish.getPostId(),currentUserId).
+                orElseThrow(()-> new ContentNotFoundException("Post Not Found"));
+
+        if(draftPost.getPostStatus()!= Post.PostStatus.DRAFT) throw new ContentNotFoundException("Post Not Found");
+
         if(postPublish.getScheduledAt()!=null) {
             draftPost.setPostStatus(Post.PostStatus.SCHEDULED);
             draftPost.setScheduledAt(postPublish.getScheduledAt());
@@ -65,6 +71,8 @@ public class PostLifecycleService {
             contentSchedulingService.schedulePostPublishing(postPublish);
             return;
         }
+        List<String> filePaths=draftPost.getMediaList().stream().map(Media::getFilepath).toList();
+        storageService.moveFiles(filePaths,storageTransferManager.getStorageTransfer(StorageDir.DRAFT,StorageDir.PERMANENT));
         draftPost.setPublishedAt(Instant.now());
         draftPost.setPostStatus(Post.PostStatus.PUBLISHED);
         postRepo.save(draftPost);
@@ -104,7 +112,8 @@ public class PostLifecycleService {
             return new DeletePostResponse(false);
         }else{
             StorageTransfer storageTransfer=new StorageTransfer(StorageDir.PERMANENT,StorageDir.DELETED);
-            storageService.moveFiles(filePaths, storageTransfer);
+            StorageDir sourceDir=storageTransferManager.resolveSourceDir(post.getPostStatus());
+            storageService.moveFiles(filePaths, storageTransferManager.getStorageTransfer(sourceDir,StorageDir.DELETED));
             post.setPreDeletionStatus(post.getPostStatus());
             post.setPostStatus(Post.PostStatus.DELETED);
             post.setDeletedAt(Instant.now());
@@ -125,7 +134,8 @@ public class PostLifecycleService {
         List<Media> mediaList=post.getMediaList();
         List<String> filePaths=mediaList.stream().map(Media::getFilepath).toList();
         StorageTransfer storageTransfer=new StorageTransfer(StorageDir.DELETED,StorageDir.PERMANENT);
-        storageService.moveFiles(filePaths,storageTransfer);
+        StorageDir destinationDir=storageTransferManager.resolveSourceDir(post.getPostStatus());
+        storageService.moveFiles(filePaths,storageTransferManager.getStorageTransfer(StorageDir.DELETED,destinationDir));
         mediaList.forEach(media -> media.transformFilePath(storageTransfer));
         // will save the media also thanks to cascading
         postRepo.save(post);

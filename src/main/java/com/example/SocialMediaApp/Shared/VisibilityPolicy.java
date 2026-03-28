@@ -25,12 +25,12 @@ public class VisibilityPolicy {
             return true;
         }
 
-            boolean isblocked=blocksRepo.existsByBlockerIdAndBlockedId(currentUserId,requestedUserId);
-            if(isblocked){
+            boolean isBlocked=blocksRepo.existsByBlockerIdAndBlockedId(currentUserId,requestedUserId);
+            if(isBlocked){
              return false;
             }
-            boolean hasblocked= blocksRepo.existsByBlockerIdAndBlockedId(requestedUserId,currentUserId);
-            if (hasblocked) {
+            boolean hasBlocked= blocksRepo.existsByBlockerIdAndBlockedId(requestedUserId,currentUserId);
+            if (hasBlocked) {
               return false;
             }
 

@@ -75,7 +75,6 @@ public class CommentInteractionService {
 
         if(!isOwner){
             boolean isAllowed=visibilityPolicy.isAllowed(currentUserId,postOwnerId);
-
             if(!isAllowed) throw new ActionNotAllowedException("Post Not Found");
             Post post= parentComment.getPost();
             if(post.getPostStatus()!= Post.PostStatus.PUBLISHED) throw new ContentNotAvailableException("Post Not Found");

@@ -14,7 +14,7 @@ public class StorageWebClient {
 
     @Bean
     public WebClient webClient(){
-        return webClientBuilder.baseUrl(storageEnv.getUrl()).defaultHeaders(headers -> {
+        return webClientBuilder.baseUrl(storageEnv.getUrl()+storageEnv.getEndpoint()).defaultHeaders(headers -> {
             headers.set("Authorization", "Bearer " + storageEnv.getApiKey());
             headers.set("apikey", storageEnv.getApiKey());
             headers.set("x-upsert", "true");

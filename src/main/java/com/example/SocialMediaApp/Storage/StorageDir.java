@@ -7,7 +7,8 @@ public enum StorageDir {
 
     PERMANENT("permanent"),
     TEMPORARY("temporary"),
-    DELETED("deleted");
+    DELETED("deleted"),
+    DRAFT("draft");
 
 
     private final String dirName;

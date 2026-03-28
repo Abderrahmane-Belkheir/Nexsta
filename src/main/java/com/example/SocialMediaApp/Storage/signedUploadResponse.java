@@ -1,10 +1,9 @@
 package com.example.SocialMediaApp.Storage;
 
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 @Data
-public class signResponse {
+public class signedUploadResponse {
     private String url;
+    private String signedURL;
 }

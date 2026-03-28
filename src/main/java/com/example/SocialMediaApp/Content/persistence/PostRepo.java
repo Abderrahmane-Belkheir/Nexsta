@@ -22,12 +22,16 @@ public interface PostRepo extends JpaRepository<Post,String> {
     int updatePostStatus(@Param("postId") String postId, @Param("status") Post.PostStatus status,
                          @Param("userId") String userId, @Param("allowedStatuses") List<Post.PostStatus> allowedStatuses);
 
-    Optional<Post> findByIdAndUserIdAndPostStatus(String userId, String postId, Post.PostStatus postStatus);
+
 
     @Query("SELECT p FROM Post p LEFT JOIN FETCH p.mediaList WHERE p.id= :postId AND p.user.id= :userId AND p.postStatus= 'DELETED' ")
     Optional<Post> findPostToRestore(@Param("postId") String postId, @Param("userId") String userId);
+
     @Query("SELECT p FROM Post p LEFT JOIN FETCH p.mediaList WHERE p.id= :postId AND p.user.id= :userId")
     Optional<Post> findByIdAndUserIdAndPostStatusWithMediaList(@Param("postId") String postId ,@Param("userId") String userId);
+
+    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.mediaList WHERE p.id= :postId AND p.postStatus=:status")
+    Optional<Post> findByIdAndPostStatusWithMediaList(@Param("postId") String postId ,@Param("status") Post.PostStatus status);
 
     @Modifying
     @Transactional
@@ -42,7 +46,6 @@ public interface PostRepo extends JpaRepository<Post,String> {
 
     Page<Post> findByUserIdAndPostStatus(String userId, Post.PostStatus postStatus, Pageable pageable);
 
-    Optional<Post> findByIdAndPostStatus(String postId,Post.PostStatus postStatus);
 
     @Modifying
     @Transactional

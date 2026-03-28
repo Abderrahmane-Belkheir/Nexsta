@@ -1,14 +1,18 @@
 package com.example.SocialMediaApp.Storage;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data
+import java.util.List;
+
 @NoArgsConstructor
-public class SignRequest {
+@Data
+public class SignedFetchRequest {
+    private List<String> paths;
     private int expiresIn;
-    public SignRequest(int expiresIn){
+    public SignedFetchRequest(List<String> paths,int expiresIn){
+        this.paths=paths;
         this.expiresIn=60*expiresIn;
     }
+
 }
