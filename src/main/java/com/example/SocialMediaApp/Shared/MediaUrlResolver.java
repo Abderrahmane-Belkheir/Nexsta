@@ -1,25 +1,30 @@
 package com.example.SocialMediaApp.Shared;
 
 import com.example.SocialMediaApp.Storage.StorageProperties;
+import com.example.SocialMediaApp.Storage.StorageService;
+import com.example.SocialMediaApp.Upload.domain.SupabaseWebhookPayload;
 import lombok.RequiredArgsConstructor;
 import org.mapstruct.Named;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
 public class MediaUrlResolver {
 
     private final StorageProperties storageProperties;
+    private final StorageService storageService;
 
-    @Named("resolveUrl")
+
     public String resolveUrl(String filepath) {
-        return storageProperties.getUrl() + "/storage/v1/object/public/" + storageProperties.getPublicMediaBucket() + "/" + filepath;
+        return storageProperties.getUrl() + storageProperties.getEndpoint()+"/public/" + storageProperties.getPublicMediaBucket() + "/" + filepath;
     }
 
-    public String resolveSignedUrl(String filepath, Duration expiry) {
-        // if signed URLs for private buckets is needed.
-        return "";
+    public void  convertToSignedUrls(List<String> filePaths,Duration expiry) {
+        Map<String,String> signedUrlsMap=storageService.generateBatchFetchSignedUrls(filePaths);
+        filePaths.replaceAll(filePath->signedUrlsMap.getOrDefault(filePath,"URL_EXPIRED_OR_MISSING"));
     }
 }

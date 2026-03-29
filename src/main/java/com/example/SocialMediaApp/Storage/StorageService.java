@@ -51,13 +51,13 @@ public class StorageService {
 
 
     @Async
-    public CompletableFuture<Void> moveFiles(List<String> filePaths,StorageTransfer storageTransfer) {
+    public CompletableFuture<Void> moveFiles(List<String> filePaths, StorageTransferManager.StorageTransfer storageTransfer) {
         StorageTransferManager.BucketTransfer bucketTransfer=storageTransferManager.resolveBucketTransfer(storageTransfer);
         Map<String,String> sourceToDestinationPaths=storageTransferManager.resolveDestinationPaths(filePaths,storageTransfer);
         for (Map.Entry<String,String> entry: sourceToDestinationPaths.entrySet()){
             String sourceKey=entry.getValue();
             String destinationKey=entry.getValue();
-            webClient.post().uri("/storage/v1/object/move").contentType(MediaType.APPLICATION_JSON).
+            webClient.post().uri("/move").contentType(MediaType.APPLICATION_JSON).
                     bodyValue(new MoveFileRequest(bucketTransfer.getBucketId(),sourceKey,bucketTransfer.getDestinationBucket(),destinationKey)).retrieve().toBodilessEntity().block();
 
     }

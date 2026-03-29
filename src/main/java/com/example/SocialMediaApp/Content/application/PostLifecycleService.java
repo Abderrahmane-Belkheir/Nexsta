@@ -7,9 +7,7 @@ import com.example.SocialMediaApp.Content.persistence.PostRepo;
 import com.example.SocialMediaApp.Scheduling.application.ContentSchedulingService;
 import com.example.SocialMediaApp.Shared.Exceptions.ActionNotAllowedException;
 import com.example.SocialMediaApp.Shared.Mappers.Contentmapper;
-import com.example.SocialMediaApp.Storage.StorageDir;
 import com.example.SocialMediaApp.Storage.StorageService;
-import com.example.SocialMediaApp.Storage.StorageTransfer;
 import com.example.SocialMediaApp.Storage.StorageTransferManager;
 import com.example.SocialMediaApp.Upload.domain.MediaUpload;
 import com.example.SocialMediaApp.Upload.domain.UploadType;
@@ -70,7 +68,7 @@ public class PostLifecycleService {
             contentSchedulingService.schedulePostPublishing(postPublish);
             return;
         }
-        StorageTransfer storageTransfer=new StorageTransfer(StorageDir.DRAFT,StorageDir.PERMANENT);
+        StorageTransferManager.StorageTransfer storageTransfer=storageTransferManager.resolveStorageTransfer(Post.PostStatus.DRAFT, Post.PostStatus.PUBLISHED);
         List<Media> mediaList=draftPost.getMediaList();
         List<String> filePaths=mediaList.stream().map(Media::getFilepath).toList();
         storageService.moveFiles(filePaths,storageTransfer);
@@ -113,9 +111,8 @@ public class PostLifecycleService {
             postRepo.delete(post);
             return new DeletePostResponse(false);
         }else{
-            StorageDir sourceDir=storageTransferManager.resolveSourceDir(post.getPostStatus());
-            StorageTransfer storageTransfer=new StorageTransfer(sourceDir,StorageDir.DELETED);
-            storageService.moveFiles(filePaths, storageTransfer);
+            StorageTransferManager.StorageTransfer storageTransfer=storageTransferManager.resolveStorageTransfer(post.getPostStatus(),Post.PostStatus.DELETED);
+            storageService.moveFiles(filePaths,storageTransfer);
             post.setPreDeletionStatus(post.getPostStatus());
             post.setPostStatus(Post.PostStatus.DELETED);
             post.setDeletedAt(Instant.now());
@@ -135,8 +132,7 @@ public class PostLifecycleService {
         post.setPreDeletionStatus(null);
         List<Media> mediaList=post.getMediaList();
         List<String> filePaths=mediaList.stream().map(Media::getFilepath).toList();
-        StorageDir destinationDir=storageTransferManager.resolveSourceDir(post.getPostStatus());
-        StorageTransfer storageTransfer=new StorageTransfer(StorageDir.DELETED,destinationDir);
+        StorageTransferManager.StorageTransfer storageTransfer=storageTransferManager.resolveStorageTransfer(Post.PostStatus.DELETED,post.getPostStatus());
         storageService.moveFiles(filePaths,storageTransfer);
         mediaList.forEach(media -> media.transformFilePath(storageTransfer));
         // will save the media also thanks to cascading

@@ -1,8 +1,7 @@
 package com.example.SocialMediaApp.Upload.application;
 
-import com.example.SocialMediaApp.Storage.StorageDir;
+import com.example.SocialMediaApp.Content.domain.Post;
 import com.example.SocialMediaApp.Storage.StorageService;
-import com.example.SocialMediaApp.Storage.StorageTransfer;
 import com.example.SocialMediaApp.Storage.StorageTransferManager;
 import com.example.SocialMediaApp.Upload.Exceptions.*;
 import com.example.SocialMediaApp.Upload.api.dto.*;
@@ -129,7 +128,8 @@ UploadGatewayService {
 
         if(!failedUploadIds.isEmpty()) throw new UploadFailedException(failedUploadIds);
 
-        storageService.moveFiles(filesPaths,new StorageTransfer(StorageDir.TEMPORARY,StorageDir.DRAFT));
+        StorageTransferManager.StorageTransfer storageTransfer=storageTransferManager.resolveStorageTransfer(null, Post.PostStatus.DRAFT);
+        storageService.moveFiles(filesPaths,storageTransfer);
 
         objectRedisTemplate.delete(uploadRequestsIds);
 

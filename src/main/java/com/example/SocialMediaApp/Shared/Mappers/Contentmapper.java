@@ -6,7 +6,7 @@ import com.example.SocialMediaApp.Shared.MediaUrlResolver;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring",uses = {MediaUrlResolver.class})
+@Mapper(componentModel = "spring")
 public interface Contentmapper {
 
     PostSettings toPostSettings(PostCreationRequest postCreation);
@@ -19,7 +19,7 @@ public interface Contentmapper {
     PostRepresentation toPostRepresentation(Post post);
 
     CommentRepresentation toCommentRepresentation(Comment comment);
-    @Mapping(target = "filepath",qualifiedByName = "resolveUrl")
+
     MediaRepresentation toMediaRepresentation(Media media);
     @Mapping(target = "storyStatus",ignore = true)
     StoryRepresentation toStoryRepresentation(Story story);
