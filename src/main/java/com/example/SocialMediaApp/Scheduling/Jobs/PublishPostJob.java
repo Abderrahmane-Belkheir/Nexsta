@@ -4,7 +4,6 @@ package com.example.SocialMediaApp.Scheduling.Jobs;
 import com.example.SocialMediaApp.Content.domain.Media;
 import com.example.SocialMediaApp.Content.domain.Post;
 import com.example.SocialMediaApp.Content.persistence.PostRepo;
-import com.example.SocialMediaApp.Storage.StorageDir;
 import com.example.SocialMediaApp.Storage.StorageService;
 import com.example.SocialMediaApp.Storage.StorageTransferManager;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +13,6 @@ import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,7 +36,7 @@ public class PublishPostJob implements Job {
         }
         Post post=optionalPost.get();
         List<String> filePaths=post.getMediaList().stream().map(Media::getFilepath).toList();
-        storageService.moveFiles(filePaths, storageTransferManager.resolveStorageTransfer(Post.PostStatus.SCHEDULED, Post.PostStatus.PUBLISHED));
+        storageService.transferBetweenBuckets(post.getPostFolderPath(), storageTransferManager.resolveStorageTransfer(Post.PostStatus.SCHEDULED, Post.PostStatus.PUBLISHED));
     }
 
 }

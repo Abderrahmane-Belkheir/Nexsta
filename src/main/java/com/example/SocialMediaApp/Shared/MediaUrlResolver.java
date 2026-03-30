@@ -8,6 +8,7 @@ import org.mapstruct.Named;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -23,8 +24,15 @@ public class MediaUrlResolver {
         return storageProperties.getUrl() + storageProperties.getEndpoint()+"/public/" + storageProperties.getPublicMediaBucket() + "/" + filepath;
     }
 
-    public void  convertToSignedUrls(List<String> filePaths,Duration expiry) {
-        Map<String,String> signedUrlsMap=storageService.generateBatchFetchSignedUrls(filePaths);
-        filePaths.replaceAll(filePath->signedUrlsMap.getOrDefault(filePath,"URL_EXPIRED_OR_MISSING"));
+    public void convertToSignedUrls(Map<String,List<String>> map){
+        List<String> filePaths= map.values().stream().flatMap(Collection::stream).toList();
+        Map<String,String> signedUrlsMap=storageService.generateBatchFetchSignedUrls(filePaths,5);
+
+        for(Map.Entry<String,List<String>> mapEntry:map.entrySet()){
+            mapEntry.getValue().replaceAll(filePath->signedUrlsMap.getOrDefault(filePath,"URL_EXPIRED_OR_MISSING"));
+        }
+
     }
+
+
 }

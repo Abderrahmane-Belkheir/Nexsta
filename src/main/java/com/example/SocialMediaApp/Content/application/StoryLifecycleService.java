@@ -9,6 +9,7 @@ import com.example.SocialMediaApp.Content.persistence.StoryRepo;
 import com.example.SocialMediaApp.Shared.Exceptions.ActionNotAllowedException;
 import com.example.SocialMediaApp.Shared.Mappers.Contentmapper;
 import com.example.SocialMediaApp.Upload.domain.MediaUpload;
+import com.example.SocialMediaApp.Upload.domain.UploadFinalization;
 import com.example.SocialMediaApp.Upload.domain.UploadType;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
 import com.example.SocialMediaApp.User.domain.User;
@@ -32,10 +33,10 @@ public class StoryLifecycleService {
     public StoryRepresentation createStory(StoryCreationRequest storyCreationRequest){
         String currentUserId=authenticatedUserService.getCurrentUser();
         List<String> uploadRequestsIds=storyCreationRequest.getUploadRequestsIds();
-        List<MediaUpload> mediaUploads= mediaLifecycleService.extractMediaUploads(currentUserId,uploadRequestsIds, UploadType.STORY);
+        UploadFinalization uploadFinalization= mediaLifecycleService.extractMediaUploads(currentUserId,uploadRequestsIds, UploadType.STORY);
         Story story= storyRepo.save(Story.builder().user(new User(currentUserId))
                 .storySettings(storyCreationRequest.getStorySettings()).build());
-        List<Media> mediaList=mediaLifecycleService.persistMedia(mediaUploads,story);
+        List<Media> mediaList=mediaLifecycleService.persistMedia(uploadFinalization.getMediaUploads(),story);
         StoryRepresentation storyRepresentation=contentmapper.toStoryRepresentation(story);
         storyRepresentation.setStoryStatus(Story.StoryStatus.DRAFT);
         List<MediaRepresentation> mediaRepresentationList=mediaList.stream().map(contentmapper::toMediaRepresentation).toList();

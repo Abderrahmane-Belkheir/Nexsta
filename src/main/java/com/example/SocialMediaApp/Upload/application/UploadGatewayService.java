@@ -1,6 +1,7 @@
 package com.example.SocialMediaApp.Upload.application;
 
-import com.example.SocialMediaApp.Content.domain.Post;
+
+import com.example.SocialMediaApp.Storage.StorageDir;
 import com.example.SocialMediaApp.Storage.StorageService;
 import com.example.SocialMediaApp.Storage.StorageTransferManager;
 import com.example.SocialMediaApp.Upload.Exceptions.*;
@@ -103,7 +104,7 @@ UploadGatewayService {
         redisTemplate.delete(uploadSession.getUploadRequestId());
     }
 
-    public List<MediaUpload> finalizeUploads(String userId, List<String> uploadRequestsIds,UploadType uploadType){
+    public UploadFinalization finalizeUploads(String userId, List<String> uploadRequestsIds,UploadType uploadType){
 
         List<String> filesPaths =new ArrayList<>();
         List<MediaUpload> mediaList=new ArrayList<>();
@@ -116,7 +117,7 @@ UploadGatewayService {
                 if(actualUploadType!=uploadType) throw new UploadTypeMismatch("Upload Type Mismatch");
                 String filepath=uploadSession.getFilePath();
                 filesPaths.add(filepath);
-                mediaList.add(new MediaUpload(filepath.replace("temporary","permanent"), uploadSession.getMediaType()));
+                mediaList.add(new MediaUpload(filepath.replace(StorageDir.TEMPORARY.getDirName(),StorageDir.DRAFT.getDirName()), uploadSession.getMediaType()));
                 // upload session expired which mean the key is not found in redis is the only recoverable case
             }catch (UploadSessionExpiredException e){
                 failedUploadIds.add(uploadRequestId);
@@ -128,12 +129,9 @@ UploadGatewayService {
 
         if(!failedUploadIds.isEmpty()) throw new UploadFailedException(failedUploadIds);
 
-        StorageTransferManager.StorageTransfer storageTransfer=storageTransferManager.resolveStorageTransfer(null, Post.PostStatus.DRAFT);
-        storageService.moveFiles(filesPaths,storageTransfer);
-
         objectRedisTemplate.delete(uploadRequestsIds);
 
-        return mediaList;
+        return new UploadFinalization(mediaList,filesPaths);
     }
 
 

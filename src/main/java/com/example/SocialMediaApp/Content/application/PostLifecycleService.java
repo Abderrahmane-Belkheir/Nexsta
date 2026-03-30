@@ -9,7 +9,7 @@ import com.example.SocialMediaApp.Shared.Exceptions.ActionNotAllowedException;
 import com.example.SocialMediaApp.Shared.Mappers.Contentmapper;
 import com.example.SocialMediaApp.Storage.StorageService;
 import com.example.SocialMediaApp.Storage.StorageTransferManager;
-import com.example.SocialMediaApp.Upload.domain.MediaUpload;
+import com.example.SocialMediaApp.Upload.domain.UploadFinalization;
 import com.example.SocialMediaApp.Upload.domain.UploadType;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
 import com.example.SocialMediaApp.User.domain.User;
@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 
 @Service
@@ -40,11 +41,15 @@ public class PostLifecycleService {
     public PostRepresentation createPost(PostCreationRequest postCreation){
         String currentUserId=authenticatedUserService.getCurrentUser();
         List<String> uploadRequestsIds=postCreation.getUploadRequestsIds();
-        List<MediaUpload> mediaUploads=mediaLifecycleService.extractMediaUploads(currentUserId,uploadRequestsIds,UploadType.POST);
-        Post post= postRepo.save(Post.builder().user(new User(currentUserId))
+        UploadFinalization uploadFinalization=mediaLifecycleService.extractMediaUploads(currentUserId,uploadRequestsIds,UploadType.POST);
+        String postId= UUID.randomUUID().toString();
+        Post post= postRepo.save(Post.builder().id(postId).user(new User(currentUserId))
                 .caption(postCreation.getCaption())
                 .postSettings(postCreation.getPostSettings()).location(postCreation.getLocation()).build());
-        List<Media> mediaList=mediaLifecycleService.persistMedia(mediaUploads,post);
+        List<Media> mediaList=mediaLifecycleService.persistMedia(uploadFinalization.getMediaUploads(),post);
+        String destinationFolder=mediaLifecycleService.buildFolderPath(currentUserId,postId,UploadType.POST);
+        post.setPostFolderPath(destinationFolder);
+        storageService.transferTemporaryContent(destinationFolder,uploadFinalization.getFilePaths());
         PostRepresentation postRepresentation=contentmapper.toPostRepresentation(post);
         postRepresentation.setPostStatus(Post.PostStatus.DRAFT);
         List<MediaRepresentation> mediaRepresentationList= mediaList.stream().map(contentmapper::toMediaRepresentation).toList();
@@ -69,9 +74,10 @@ public class PostLifecycleService {
             return;
         }
         StorageTransferManager.StorageTransfer storageTransfer=storageTransferManager.resolveStorageTransfer(Post.PostStatus.DRAFT, Post.PostStatus.PUBLISHED);
+        String postFolder=draftPost.getPostFolderPath();
+        log.info("transferring :"+postFolder);
+        storageService.transferBetweenBuckets(postFolder,storageTransfer);
         List<Media> mediaList=draftPost.getMediaList();
-        List<String> filePaths=mediaList.stream().map(Media::getFilepath).toList();
-        storageService.moveFiles(filePaths,storageTransfer);
         mediaList.forEach(media -> media.transformFilePath(storageTransfer));
         draftPost.setPublishedAt(Instant.now());
         draftPost.setPostStatus(Post.PostStatus.PUBLISHED);
@@ -112,7 +118,7 @@ public class PostLifecycleService {
             return new DeletePostResponse(false);
         }else{
             StorageTransferManager.StorageTransfer storageTransfer=storageTransferManager.resolveStorageTransfer(post.getPostStatus(),Post.PostStatus.DELETED);
-            storageService.moveFiles(filePaths,storageTransfer);
+            storageService.renameFolder(post.getPostFolderPath(),storageTransfer);
             post.setPreDeletionStatus(post.getPostStatus());
             post.setPostStatus(Post.PostStatus.DELETED);
             post.setDeletedAt(Instant.now());
@@ -133,7 +139,7 @@ public class PostLifecycleService {
         List<Media> mediaList=post.getMediaList();
         List<String> filePaths=mediaList.stream().map(Media::getFilepath).toList();
         StorageTransferManager.StorageTransfer storageTransfer=storageTransferManager.resolveStorageTransfer(Post.PostStatus.DELETED,post.getPostStatus());
-        storageService.moveFiles(filePaths,storageTransfer);
+        storageService.renameFolder(post.getPostFolderPath(),storageTransfer);
         mediaList.forEach(media -> media.transformFilePath(storageTransfer));
         // will save the media also thanks to cascading
         postRepo.save(post);

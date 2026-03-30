@@ -17,4 +17,7 @@ public class StorageProperties {
     private String endpoint;
     private String PublicMediaBucket;
     private String PrivateMediaBucket;
+    private String MoveBetweenBucketsEndpoint;
+    private String MoveInSameBucketsEndpoint;
+    private String MoveBatchTempFilesEndpoint;
 }

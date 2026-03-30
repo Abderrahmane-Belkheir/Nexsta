@@ -34,7 +34,6 @@ import java.util.UUID;
 public class Post {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     @CreatedDate
@@ -73,6 +72,8 @@ public class Post {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private PostSettings postSettings;
+
+    private String postFolderPath;
 
 
     @OneToMany(mappedBy = "post",fetch = FetchType.LAZY,orphanRemoval = true,cascade =CascadeType.ALL)

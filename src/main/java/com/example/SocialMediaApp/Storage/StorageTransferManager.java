@@ -13,25 +13,18 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class StorageTransferManager {
 
-    private  final StorageProperties storageProperties;
-    private  BucketTransfer privateToPublic;
-    private  BucketTransfer publicToPrivate;
-    private  BucketTransfer privateToPrivate;
-
+    private final StorageProperties storageProperties;
+    private BucketTransfer publicToPrivate;
+    private BucketTransfer privateToPublic;
 
     @PostConstruct
     public void init(){
-        this.privateToPublic =new BucketTransfer(storageProperties.getPrivateMediaBucket(),storageProperties.getPublicMediaBucket());
-        this.publicToPrivate =new BucketTransfer(storageProperties.getPublicMediaBucket(),storageProperties.getPrivateMediaBucket());
-        this.privateToPrivate=new BucketTransfer(storageProperties.getPrivateMediaBucket(),storageProperties.getPrivateMediaBucket());
+        this.publicToPrivate=new BucketTransfer(storageProperties.getPublicMediaBucket(),storageProperties.getPrivateMediaBucket());
+        this.privateToPublic=new BucketTransfer(storageProperties.getPrivateMediaBucket(),storageProperties.getPublicMediaBucket()) ;
     }
-
-     BucketTransfer resolveBucketTransfer(StorageTransfer storageTransfer){
-        StorageDir sourceDir=storageTransfer.getSourceDir();
-        StorageDir destinationDir=storageTransfer.getDestinationDir();
-        if(sourceDir==StorageDir.PERMANENT) return publicToPrivate;
-        if(destinationDir==StorageDir.PERMANENT) return privateToPublic;
-        return privateToPrivate;
+    public BucketTransfer resolveBucketTransfer(StorageTransfer storageTransfer){
+        if(storageTransfer.sourceDir==StorageDir.PERMANENT) return publicToPrivate;
+        return privateToPublic;
     }
 
     public StorageTransfer resolveStorageTransfer(Post.PostStatus currentPostStatus, Post.PostStatus targetPostStatus){
@@ -39,6 +32,7 @@ public class StorageTransferManager {
         StorageDir destinationDir= resolveStorageDir(targetPostStatus);
         return new StorageTransfer(sourceDir,destinationDir);
     }
+
     private StorageDir resolveStorageDir(Post.PostStatus status){
         if(status==null) return StorageDir.TEMPORARY;
         return switch (status){
@@ -48,25 +42,10 @@ public class StorageTransferManager {
         };
     }
 
-    public Map<String,String> resolveDestinationPaths(List<String> filePaths, StorageTransfer storageTransfer){
-        return filePaths.stream().collect(
-                Collectors.toMap(filePath-> filePath,
-                        filePath->filePath.replace(storageTransfer.getSourceDir().getDirName(),storageTransfer.getDestinationDir().getDirName())));
+    public String resolveDestinationFolder(String sourceFolder,StorageTransfer storageTransfer){
+        return sourceFolder.replace(storageTransfer.sourceDir.getDirName(),storageTransfer.destinationDir.getDirName());
     }
-
     //those are meant for internal use only inside the storage transfer manager you cannot create them outside
-    @Getter
-    public static class BucketTransfer {
-        private final String bucketId;
-        private final String destinationBucket;
-
-        private BucketTransfer(String bucketId,String destinationBucket){
-            this.bucketId=bucketId;
-            this.destinationBucket=destinationBucket;
-        }
-    }
-
-
     @Getter
     public static class StorageTransfer {
 
@@ -79,6 +58,16 @@ public class StorageTransferManager {
             this.destinationDir=destinationDir;
         }
 
+    }
+
+    @Getter
+    public static  class BucketTransfer{
+        private final String bucketId;
+        private final String destinationBucket;
+        private BucketTransfer(String bucketId,String destinationBucket){
+            this.bucketId=bucketId;
+            this.destinationBucket=destinationBucket;
+        }
     }
 
 
