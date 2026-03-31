@@ -7,6 +7,6 @@ import lombok.Data;
 @AllArgsConstructor
 @Data
 public class MediaUpload {
-    private String filePath;
+    private String id;
     private Media.MediaType mediaType;
 }

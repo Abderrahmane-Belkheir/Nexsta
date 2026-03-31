@@ -16,15 +16,18 @@ public class StorageTransferManager {
     private final StorageProperties storageProperties;
     private BucketTransfer publicToPrivate;
     private BucketTransfer privateToPublic;
+    private BucketTransfer privateToPrivate;
 
     @PostConstruct
     public void init(){
         this.publicToPrivate=new BucketTransfer(storageProperties.getPublicMediaBucket(),storageProperties.getPrivateMediaBucket());
-        this.privateToPublic=new BucketTransfer(storageProperties.getPrivateMediaBucket(),storageProperties.getPublicMediaBucket()) ;
+        this.privateToPublic=new BucketTransfer(storageProperties.getPrivateMediaBucket(),storageProperties.getPublicMediaBucket());
+        this.privateToPrivate=new BucketTransfer(storageProperties.getPrivateMediaBucket(),storageProperties.getPrivateMediaBucket());
     }
     public BucketTransfer resolveBucketTransfer(StorageTransfer storageTransfer){
         if(storageTransfer.sourceDir==StorageDir.PERMANENT) return publicToPrivate;
-        return privateToPublic;
+        if(storageTransfer.destinationDir==StorageDir.PERMANENT) return privateToPublic;
+        return privateToPrivate;
     }
 
     public StorageTransfer resolveStorageTransfer(Post.PostStatus currentPostStatus, Post.PostStatus targetPostStatus){

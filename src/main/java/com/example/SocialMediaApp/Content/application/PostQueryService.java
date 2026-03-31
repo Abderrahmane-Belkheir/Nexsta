@@ -24,9 +24,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -41,7 +39,7 @@ public class PostQueryService {
     private final ProfileQueryService profileQueryService;
     private final Contentmapper contentmapper;
     private final PostLikeRepo postLikeRepo;
-    private final MediaRepo mediaRepo;
+    private final MediaLifecycleService mediaLifecycleService;
     private final static int pageSize=6;
 
 
@@ -78,17 +76,19 @@ public class PostQueryService {
 
         Page<Post> postList=postRepo.findByUserIdAndPostStatus(userId,postStatus,pageable);
         List<String> postIds=postList.stream().map(Post::getId).toList();
-        Map<String,List<MediaRepresentation>> mediaRepresentationMap= mediaRepo.findByPostIdIn(postIds).stream().collect(Collectors.groupingBy(
-                Media::getPostId,
-                Collectors.mapping(contentmapper::toMediaRepresentation,Collectors.toList())
-        ));
-
+        Map<String,List<MediaRepresentation>> mediaRepresentationMap;
+        if(postStatus!= Post.PostStatus.DELETED) {
+            mediaRepresentationMap= mediaLifecycleService.getPostsMedia(postIds,postStatus);
+        }else{
+            mediaRepresentationMap=new HashMap<>();
+        }
         return  postList.map(post->{
             String postId=post.getId();
-            List<MediaRepresentation> mediaRepresentations=mediaRepresentationMap.get(postId);
+            List<MediaRepresentation> mediaRepresentations=mediaRepresentationMap.getOrDefault(postId,new ArrayList<>());
             PostRepresentation postRepresentation=contentmapper.toPostRepresentation(post);
             postRepresentation.setPostStatus(postStatus);
             postRepresentation.setProfileInfo(profileInfo);
+            postRepresentation.getMediaList().addAll(mediaRepresentations);
             PostSettings postSettings=post.getPostSettings();
             if(viewerType==ViewerType.VIEWER){
 
@@ -109,11 +109,7 @@ public class PostQueryService {
 
                 if(postStatus== Post.PostStatus.DELETED){
                     postRepresentation.setPreDeletionPostStatus(post.getPreDeletionStatus());
-                }else {
-                    // here the intent is clear we want to restrict the media access on deleted posts that's the cost of deletion
-                    postRepresentation.getMediaList().addAll(mediaRepresentations);
                 }
-
             }
 
                 postRepresentation.setCommentsDisabled(postSettings.isCommentsDisabled());

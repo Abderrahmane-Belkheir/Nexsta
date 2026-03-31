@@ -3,7 +3,6 @@ package com.example.SocialMediaApp.Storage;
 import com.example.SocialMediaApp.Storage.Dto.MoveFolderRequest;
 import com.example.SocialMediaApp.Storage.Dto.MoveFolderResponse;
 import com.example.SocialMediaApp.Storage.Dto.MoveTemporaryContentRequest;
-import com.example.SocialMediaApp.Storage.Dto.test;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -32,7 +31,7 @@ public class StorageService {
 
         String bucket= storageProperties.getPublicMediaBucket();
 
-        ResponseEntity<String> response= webClient.put().uri("/storage/v1/object/{bucket}/{filename}", bucket, filepath).
+        ResponseEntity<String> response= webClient.put().uri(storageProperties.getEndpoint()+"/{bucket}/{filename}", bucket, filepath).
                 header(HttpHeaders.CONTENT_TYPE, file.getContentType()).
                 bodyValue(file.getBytes()).retrieve().toEntity(String.class).block();
 
@@ -53,11 +52,19 @@ public class StorageService {
 
 
     // this method move files between the the same bucket which the private one
-    public void renameFolder(String sourceFolder, StorageTransferManager.StorageTransfer storageTransfer) {
+    public void moveBatchFiles(String sourceFolder, StorageTransferManager.StorageTransfer storageTransfer) {
+
+            StorageTransferManager.BucketTransfer bucketTransfer=storageTransferManager.resolveBucketTransfer(storageTransfer);
+
             String destinationFolder=storageTransferManager.resolveDestinationFolder(sourceFolder,storageTransfer);
-            MoveFolderRequest request=MoveFolderRequest.builder().sourceFolder(sourceFolder).destinationFolder(destinationFolder).build();
+
+            MoveFolderRequest request=MoveFolderRequest.builder().sourceFolder(sourceFolder)
+                    .bucketId(bucketTransfer.getBucketId()).destinationFolder(destinationFolder).
+                    destinationBucket(bucketTransfer.getDestinationBucket()).build();
+            log.info(request.toString());
+
             try {
-                ResponseEntity<MoveFolderResponse> response=webClient.post().uri(storageProperties.getMoveInSameBucketsEndpoint()).contentType(MediaType.APPLICATION_JSON).
+                ResponseEntity<MoveFolderResponse> response=webClient.post().uri(storageProperties.getBatchFileMoveEndpoint()).contentType(MediaType.APPLICATION_JSON).
                         bodyValue(request).retrieve().toEntity(MoveFolderResponse.class).block();
 
 
@@ -66,32 +73,16 @@ public class StorageService {
             }
     }
 
-    //
-    public void transferTemporaryContent( String destinationFolder,List<String> filePaths){
+
+    public void transferTemporaryContent(String destinationFolder, List<String> filePaths){
         MoveTemporaryContentRequest request=new MoveTemporaryContentRequest(destinationFolder,filePaths);
         try{
-          ResponseEntity<Void> response= webClient.post().uri(storageProperties.getMoveBatchTempFilesEndpoint()).contentType(MediaType.APPLICATION_JSON).
+          ResponseEntity<Void> response= webClient.post().uri(storageProperties.getBatchTempFileMoveEndpoint()).contentType(MediaType.APPLICATION_JSON).
                     bodyValue(request).retrieve().toBodilessEntity().block();
 
         }catch (Exception e){
 
         }
-    }
-
-    public void transferBetweenBuckets(String sourceFolder, StorageTransferManager.StorageTransfer storageTransfer){
-       StorageTransferManager.BucketTransfer bucketTransfer= storageTransferManager.resolveBucketTransfer(storageTransfer);
-       String destinationFolder=storageTransferManager.resolveDestinationFolder(sourceFolder,storageTransfer);
-       MoveFolderRequest request=MoveFolderRequest.builder().bucketId(bucketTransfer.getBucketId()).sourceFolder(sourceFolder).destinationFolder(destinationFolder).destinationBucket(bucketTransfer.getDestinationBucket()).build();
-       log.info(request.toString());
-       try{
-           ResponseEntity<test> response=webClient.post().uri(storageProperties.getMoveBetweenBucketsEndpoint()).contentType(MediaType.APPLICATION_JSON).
-                   bodyValue(request).retrieve().toEntity(test.class).block();
-           log.info(" response status "+response.getStatusCode());
-           log.info("files moved = "+response.getBody().getFileMoved());
-
-       }catch (Exception e){
-           log.info(e.getMessage());
-       }
     }
 
     /*
@@ -123,7 +114,7 @@ public class StorageService {
            return null;
        }
 
-        return response.stream().collect(Collectors.toMap(SignedFetchResponse::getPath,signedFetchResponse -> fullUrlBuilder(signedFetchResponse.getSignedURL())));
+        return response.stream().collect(Collectors.toMap(SignedFetchResponse::getPath, SignedFetchResponse::getSignedUrl));
     }
 
     private String fullUrlBuilder(String url){

@@ -1,5 +1,6 @@
 package com.example.SocialMediaApp.Shared;
 
+import com.example.SocialMediaApp.Content.api.dto.MediaRepresentation;
 import com.example.SocialMediaApp.Storage.StorageProperties;
 import com.example.SocialMediaApp.Storage.StorageService;
 import com.example.SocialMediaApp.Upload.domain.SupabaseWebhookPayload;
@@ -24,12 +25,14 @@ public class MediaUrlResolver {
         return storageProperties.getUrl() + storageProperties.getEndpoint()+"/public/" + storageProperties.getPublicMediaBucket() + "/" + filepath;
     }
 
-    public void convertToSignedUrls(Map<String,List<String>> map){
-        List<String> filePaths= map.values().stream().flatMap(Collection::stream).toList();
+    public void convertToSignedUrls(Map<String,List<MediaRepresentation>> map){
+        List<String> filePaths= map.values().stream().flatMap(Collection::stream).map(MediaRepresentation::getFilepath).toList();
         Map<String,String> signedUrlsMap=storageService.generateBatchFetchSignedUrls(filePaths,5);
 
-        for(Map.Entry<String,List<String>> mapEntry:map.entrySet()){
-            mapEntry.getValue().replaceAll(filePath->signedUrlsMap.getOrDefault(filePath,"URL_EXPIRED_OR_MISSING"));
+        for(Map.Entry<String,List<MediaRepresentation>> mapEntry:map.entrySet()){
+            mapEntry.getValue().
+                    forEach(mediaRepresentation->
+                            mediaRepresentation.setFilepath(signedUrlsMap.getOrDefault(mediaRepresentation.getFilepath(),"URL_EXPIRED_OR_MISSING")));
         }
 
     }

@@ -20,6 +20,7 @@ public interface Contentmapper {
 
     CommentRepresentation toCommentRepresentation(Comment comment);
 
+    @Mapping(target = "filepath",ignore = true)
     MediaRepresentation toMediaRepresentation(Media media);
     @Mapping(target = "storyStatus",ignore = true)
     StoryRepresentation toStoryRepresentation(Story story);

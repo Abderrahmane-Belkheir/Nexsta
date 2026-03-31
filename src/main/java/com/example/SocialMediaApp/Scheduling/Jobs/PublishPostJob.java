@@ -35,8 +35,11 @@ public class PublishPostJob implements Job {
             return;
         }
         Post post=optionalPost.get();
-        List<String> filePaths=post.getMediaList().stream().map(Media::getFilepath).toList();
-        storageService.transferBetweenBuckets(post.getPostFolderPath(), storageTransferManager.resolveStorageTransfer(Post.PostStatus.SCHEDULED, Post.PostStatus.PUBLISHED));
+        StorageTransferManager.StorageTransfer storageTransfer=storageTransferManager.resolveStorageTransfer(Post.PostStatus.SCHEDULED, Post.PostStatus.PUBLISHED);
+        storageService.moveBatchFiles(post.getPostFolderPath(),storageTransfer);
+        List<Media> mediaList= post.getMediaList();
+        mediaList.forEach(media -> media.transformFilePath(storageTransfer));
+        postRepo.save(post);
     }
 
 }

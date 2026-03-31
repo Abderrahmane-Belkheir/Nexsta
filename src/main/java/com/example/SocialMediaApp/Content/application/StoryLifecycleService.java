@@ -36,7 +36,7 @@ public class StoryLifecycleService {
         UploadFinalization uploadFinalization= mediaLifecycleService.extractMediaUploads(currentUserId,uploadRequestsIds, UploadType.STORY);
         Story story= storyRepo.save(Story.builder().user(new User(currentUserId))
                 .storySettings(storyCreationRequest.getStorySettings()).build());
-        List<Media> mediaList=mediaLifecycleService.persistMedia(uploadFinalization.getMediaUploads(),story);
+        List<Media> mediaList=mediaLifecycleService.persistMedia(null,uploadFinalization.getMediaUploads(),story);
         StoryRepresentation storyRepresentation=contentmapper.toStoryRepresentation(story);
         storyRepresentation.setStoryStatus(Story.StoryStatus.DRAFT);
         List<MediaRepresentation> mediaRepresentationList=mediaList.stream().map(contentmapper::toMediaRepresentation).toList();

@@ -117,7 +117,7 @@ UploadGatewayService {
                 if(actualUploadType!=uploadType) throw new UploadTypeMismatch("Upload Type Mismatch");
                 String filepath=uploadSession.getFilePath();
                 filesPaths.add(filepath);
-                mediaList.add(new MediaUpload(filepath.replace(StorageDir.TEMPORARY.getDirName(),StorageDir.DRAFT.getDirName()), uploadSession.getMediaType()));
+                mediaList.add(new MediaUpload(uploadRequestId, uploadSession.getMediaType()));
                 // upload session expired which mean the key is not found in redis is the only recoverable case
             }catch (UploadSessionExpiredException e){
                 failedUploadIds.add(uploadRequestId);
