@@ -21,6 +21,7 @@ public class PostRepresentation {
     @JsonProperty("AuthorProfile")
     private ProfileInfo profileInfo;
     private String id;
+    private Instant createdAt;
     private Instant publishedAt;
     private String caption;
     private Post.PostStatus postStatus;

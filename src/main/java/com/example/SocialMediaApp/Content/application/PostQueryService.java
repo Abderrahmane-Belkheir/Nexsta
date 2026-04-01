@@ -75,13 +75,7 @@ public class PostQueryService {
     private Page<PostRepresentation> getPostsRepresentation(String userId, Post.PostStatus postStatus, Pageable pageable, ViewerType viewerType, Function<String,Boolean> likesFunction,ProfileInfo profileInfo){
 
         Page<Post> postList=postRepo.findByUserIdAndPostStatus(userId,postStatus,pageable);
-        List<String> postIds=postList.stream().map(Post::getId).toList();
-        Map<String,List<MediaRepresentation>> mediaRepresentationMap;
-        if(postStatus!= Post.PostStatus.DELETED) {
-            mediaRepresentationMap= mediaLifecycleService.getPostsMedia(postIds,postStatus);
-        }else{
-            mediaRepresentationMap=new HashMap<>();
-        }
+        Map<String,List<MediaRepresentation>> mediaRepresentationMap=mediaLifecycleService.getPostsMedia(postList.getContent(),postStatus);
         return  postList.map(post->{
             String postId=post.getId();
             List<MediaRepresentation> mediaRepresentations=mediaRepresentationMap.getOrDefault(postId,new ArrayList<>());
@@ -99,7 +93,9 @@ public class PostQueryService {
                 if(!postSettings.isHideComments()){
                     postRepresentation.setComments(post.getCommentCount());
                 }
+
                 postRepresentation.setLikedByMe(likesFunction.apply(postId));
+
             }else{
                 // likes and comments count can be seen by the owner directly.
                 postRepresentation.setLikes(post.getLikeCount());
@@ -107,9 +103,11 @@ public class PostQueryService {
                 // restored should be seen by the owner.
                 postRepresentation.setRestored(post.isRestored());
 
+                postRepresentation.setCreatedAt(post.getCreatedAt());
                 if(postStatus== Post.PostStatus.DELETED){
                     postRepresentation.setPreDeletionPostStatus(post.getPreDeletionStatus());
                 }
+
             }
 
                 postRepresentation.setCommentsDisabled(postSettings.isCommentsDisabled());

@@ -24,9 +24,10 @@ public class StorageTransferManager {
         this.privateToPublic=new BucketTransfer(storageProperties.getPrivateMediaBucket(),storageProperties.getPublicMediaBucket());
         this.privateToPrivate=new BucketTransfer(storageProperties.getPrivateMediaBucket(),storageProperties.getPrivateMediaBucket());
     }
+
     public BucketTransfer resolveBucketTransfer(StorageTransfer storageTransfer){
-        if(storageTransfer.sourceDir==StorageDir.PERMANENT) return publicToPrivate;
-        if(storageTransfer.destinationDir==StorageDir.PERMANENT) return privateToPublic;
+        if(storageTransfer.sourceDir==StorageDir.PERMANENT_PUBLIC) return publicToPrivate;
+        if(storageTransfer.destinationDir==StorageDir.PERMANENT_PUBLIC) return privateToPublic;
         return privateToPrivate;
     }
 
@@ -36,11 +37,16 @@ public class StorageTransferManager {
         return new StorageTransfer(sourceDir,destinationDir);
     }
 
+    public Bucket resolveBucket(Post.PostStatus postStatus){
+        if(postStatus== Post.PostStatus.PUBLISHED) return Bucket.PUBLIC;
+        return Bucket.PRIVATE;
+    }
     private StorageDir resolveStorageDir(Post.PostStatus status){
         if(status==null) return StorageDir.TEMPORARY;
         return switch (status){
             case DELETED -> StorageDir.DELETED;
-            case PUBLISHED,UNPUBLISHED -> StorageDir.PERMANENT ;
+            case PUBLISHED -> StorageDir.PERMANENT_PUBLIC ;
+            case UNPUBLISHED -> StorageDir.PERMANENT;
             case DRAFT,SCHEDULED -> StorageDir.DRAFT;
         };
     }
@@ -73,5 +79,6 @@ public class StorageTransferManager {
         }
     }
 
+    public enum Bucket{PRIVATE,PUBLIC}
 
 }

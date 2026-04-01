@@ -4,6 +4,7 @@ import com.example.SocialMediaApp.Profile.api.dto.ProfileSettingsDto;
 import com.example.SocialMediaApp.Shared.Mappers.Profilemapper;
 import com.example.SocialMediaApp.SocialGraph.domain.Follow;
 import com.example.SocialMediaApp.SocialGraph.persistence.FollowRepo;
+import com.example.SocialMediaApp.Storage.StorageProperties;
 import com.example.SocialMediaApp.Storage.StorageService;
 import com.example.SocialMediaApp.Upload.application.UploadGatewayService;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
@@ -62,7 +63,7 @@ public class ProfileUpdatingService {
         String profileAvatarUri=uploadGatewayService.Upload(file,currentUserId);
 
         if(oldAvatarUri!=null){
-                storageService.deleteFile(oldAvatarUri);
+                //storageService.deleteFile(oldAvatarUri);
         }
 
         currentprofile.setAvatarPath(profileAvatarUri);

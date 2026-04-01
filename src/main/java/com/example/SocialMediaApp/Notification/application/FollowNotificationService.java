@@ -45,7 +45,7 @@ public class FollowNotificationService {
             case FOLLOWING_REJECTED -> message.append(" Rejected Your follow");
         }
         log.info("publishing "+message +" to "+recipientId);
-        NotificationResponse notification=new NotificationResponse(message.toString(),mediaUrlResolver.resolveUrl(profileInfo.getAvatarPath()),profileInfo.getUserId());
+        NotificationResponse notification=new NotificationResponse(message.toString(),mediaUrlResolver.resolveFullUrl(profileInfo.getAvatarPath()),profileInfo.getUserId());
         MessagingTemplate.convertAndSendToUser(recipientId,"/queue/notifications",notification);
     }
 

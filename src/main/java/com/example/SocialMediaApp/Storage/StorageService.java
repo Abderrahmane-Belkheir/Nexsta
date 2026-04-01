@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -41,17 +42,18 @@ public class StorageService {
 
     }
 
-    public void deleteFile(String filePath){
-        String bucket= storageProperties.getPublicMediaBucket();
-        webClient.delete().uri(storageProperties.getEndpoint()+"/{bucket}/{filename}", bucket, filePath).retrieve().toBodilessEntity().block();
+    public void deleteFile(String filePath, StorageTransferManager.Bucket bucket){
+        webClient.delete().
+                uri(storageProperties.getEndpoint()+"/{bucket}/{filename}",
+                        bucket== StorageTransferManager.Bucket.PUBLIC?storageProperties.getPublicMediaBucket():storageProperties.getPrivateMediaBucket(), filePath).retrieve().toBodilessEntity().block();
     }
 
-    public void deleteFiles(List<String> filePaths){
-       filePaths.forEach(this::deleteFile);
+    public void deleteFiles(List<String> filePaths, StorageTransferManager.Bucket bucket){
+       filePaths.forEach(filePath->deleteFile(filePath,bucket));
     }
 
 
-    // this method move files between the the same bucket which the private one
+
     public void moveBatchFiles(String sourceFolder, StorageTransferManager.StorageTransfer storageTransfer) {
 
             StorageTransferManager.BucketTransfer bucketTransfer=storageTransferManager.resolveBucketTransfer(storageTransfer);
@@ -111,10 +113,11 @@ public class StorageService {
                retrieve().bodyToFlux(SignedFetchResponse.class).collectList().block();
 
        if(response==null||response.isEmpty()){
-           return null;
+           log.error("batch fetch signed Urls is empty or null");
+           return new HashMap<>();
        }
 
-        return response.stream().collect(Collectors.toMap(SignedFetchResponse::getPath, SignedFetchResponse::getSignedUrl));
+        return response.stream().collect(Collectors.toMap(SignedFetchResponse::getPath, SignedFetchResponse::getSignedURL));
     }
 
     private String fullUrlBuilder(String url){

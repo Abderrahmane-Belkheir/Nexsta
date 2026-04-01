@@ -1,6 +1,7 @@
 package com.example.SocialMediaApp.Upload.application;
 
 
+import com.example.SocialMediaApp.Content.domain.Post;
 import com.example.SocialMediaApp.Storage.StorageDir;
 import com.example.SocialMediaApp.Storage.StorageService;
 import com.example.SocialMediaApp.Storage.StorageTransferManager;
@@ -86,7 +87,7 @@ UploadGatewayService {
 
         }catch (UploadSessionExpiredException | UnsupportedMediaTypeException | FileTooLargeException e){
 
-            storageService.deleteFile(filePath);
+            storageService.deleteFile(filePath,storageTransferManager.resolveBucket(Post.PostStatus.DRAFT));
 
             if(e instanceof  UnsupportedMediaTypeException || e instanceof FileTooLargeException ){
                 // might block user later for bypassing the request phase filter
@@ -100,7 +101,7 @@ UploadGatewayService {
 
         // upload state must confirmed to delete the file
         UploadSession uploadSession =uploadStateService.validateUploadSession(userId,uploadRequestId, UploadPhase.CONFIRMED);
-        storageService.deleteFile(uploadSession.getFilePath());
+        storageService.deleteFile(uploadSession.getFilePath(),storageTransferManager.resolveBucket(Post.PostStatus.DRAFT));
         redisTemplate.delete(uploadSession.getUploadRequestId());
     }
 

@@ -16,12 +16,11 @@ public interface Contentmapper {
     @Mapping(target = "postStatus" ,ignore = true)
     @Mapping(target = "mediaList",ignore = true)
     @Mapping(target = "restored" ,ignore = true)
+    @Mapping(target = "createdAt",ignore = true)
     PostRepresentation toPostRepresentation(Post post);
 
     CommentRepresentation toCommentRepresentation(Comment comment);
 
-    @Mapping(target = "filepath",ignore = true)
-    MediaRepresentation toMediaRepresentation(Media media);
     @Mapping(target = "storyStatus",ignore = true)
     StoryRepresentation toStoryRepresentation(Story story);
 }

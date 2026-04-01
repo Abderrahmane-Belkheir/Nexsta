@@ -6,6 +6,6 @@ import lombok.NoArgsConstructor;
 @Data
 public class SignedFetchResponse {
     private String path;
-    private String signedUrl;
+    private String signedURL;
     private String error;
 }

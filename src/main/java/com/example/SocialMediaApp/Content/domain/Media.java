@@ -19,10 +19,7 @@ public class Media {
 
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
-
-    private String filepath;
 
     private int displayOrder;
 
@@ -43,10 +40,6 @@ public class Media {
 
     @Column(name = "story_id",insertable = false,updatable = false)
     private String storyId;
-
-    public void transformFilePath(StorageTransferManager.StorageTransfer storageTransfer){
-        this.filepath=filepath.replace(storageTransfer.getSourceDir().getDirName(),storageTransfer.getDestinationDir().getDirName());
-    }
 
 
     public enum MediaType {

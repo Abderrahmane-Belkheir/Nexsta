@@ -34,7 +34,7 @@ public class ProfileSummaryBuilder {
             if(profileInfo.isPresent()){
                 ProfileSummary profileSummary=summaryMap.get(userId);
                 ProfileInfo profileInfo1 = profileInfo.get();
-                profileSummary.setAvatarurl(mediaUrlResolver.resolveUrl(profileInfo1.getAvatarPath()));
+                profileSummary.setAvatarurl(mediaUrlResolver.resolveFullUrl(profileInfo1.getAvatarPath()));
                 profileSummary.setUsername(profileInfo1.getUsername());
             }
         });
@@ -45,7 +45,7 @@ public class ProfileSummaryBuilder {
         for(Profile profile:profiles){
             ProfileSummary profileSummary=summaryMap.get(profile.getUserId());
             profileSummary.setUsername(profile.getUsername());
-            profileSummary.setAvatarurl(mediaUrlResolver.resolveUrl(profile.getAvatarPath()));
+            profileSummary.setAvatarurl(mediaUrlResolver.resolveFullUrl(profile.getAvatarPath()));
             profileCacheManager.cacheProfileInfo(profile);
         }
 

@@ -6,6 +6,7 @@ import lombok.Getter;
 public enum StorageDir {
 
     PERMANENT("permanent"),
+    PERMANENT_PUBLIC("public"),
     TEMPORARY("temporary"),
     DELETED("deleted"),
     DRAFT("draft");

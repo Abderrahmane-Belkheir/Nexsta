@@ -7,7 +7,7 @@ import com.example.SocialMediaApp.Content.persistence.PostRepo;
 import com.example.SocialMediaApp.Scheduling.application.ContentSchedulingService;
 import com.example.SocialMediaApp.Shared.Exceptions.ActionNotAllowedException;
 import com.example.SocialMediaApp.Shared.Mappers.Contentmapper;
-import com.example.SocialMediaApp.Storage.StorageDir;
+import com.example.SocialMediaApp.Shared.MediaUrlResolver;
 import com.example.SocialMediaApp.Storage.StorageService;
 import com.example.SocialMediaApp.Storage.StorageTransferManager;
 import com.example.SocialMediaApp.Upload.domain.UploadFinalization;
@@ -38,6 +38,7 @@ public class PostLifecycleService {
     private final StorageService storageService;
     private final ContentSchedulingService contentSchedulingService;
     private final StorageTransferManager storageTransferManager;
+    private final MediaUrlResolver mediaUrlResolver;
 
     public PostRepresentation createPost(PostCreationRequest postCreation){
         String currentUserId=authenticatedUserService.getCurrentUser();
@@ -49,11 +50,11 @@ public class PostLifecycleService {
                 .postSettings(postCreation.getPostSettings()).location(postCreation.getLocation()).build());
         String destinationFolder=mediaLifecycleService.buildFolderPath(currentUserId,postId,UploadType.POST);
         post.setPostFolderPath(destinationFolder);
-        List<Media> mediaList=mediaLifecycleService.persistMedia(destinationFolder,uploadFinalization.getMediaUploads(),post);
+        List<Media> mediaList=mediaLifecycleService.persistMedia(uploadFinalization.getMediaUploads(),post);
         storageService.transferTemporaryContent(destinationFolder,uploadFinalization.getFilePaths());
         PostRepresentation postRepresentation=contentmapper.toPostRepresentation(post);
         postRepresentation.setPostStatus(Post.PostStatus.DRAFT);
-        List<MediaRepresentation> mediaRepresentationList= mediaList.stream().map(contentmapper::toMediaRepresentation).toList();
+        List<MediaRepresentation> mediaRepresentationList= mediaList.stream().map(media -> new MediaRepresentation(media.getId(),media.getMediaType())).toList();
         postRepresentation.getMediaList().addAll(mediaRepresentationList);
         return postRepresentation;
     }
@@ -77,8 +78,6 @@ public class PostLifecycleService {
         StorageTransferManager.StorageTransfer storageTransfer=storageTransferManager.resolveStorageTransfer(Post.PostStatus.DRAFT, Post.PostStatus.PUBLISHED);
         String postFolder=draftPost.getPostFolderPath();
         storageService.moveBatchFiles(postFolder,storageTransfer);
-        List<Media> mediaList=draftPost.getMediaList();
-        mediaList.forEach(media -> media.transformFilePath(storageTransfer));
         draftPost.setPublishedAt(Instant.now());
         draftPost.setPostStatus(Post.PostStatus.PUBLISHED);
         draftPost.setPostFolderPath(draftPost.getPostFolderPath().replace(storageTransfer.getSourceDir().getDirName(),storageTransfer.getDestinationDir().getDirName()));
@@ -90,15 +89,23 @@ public class PostLifecycleService {
     public PostVisibilityToggleResponse togglePostVisibility(String postId){
         String currentUserId=authenticatedUserService.getCurrentUser();
         Post post=postRepo.findByIdAndUserId(postId,currentUserId).orElseThrow(()->new ContentNotFoundException("Post to Toggle Visibility Not Found"));
-
+        StorageTransferManager.StorageTransfer storageTransfer;
+        PostVisibilityToggleResponse.PostStatus responseStatus;
         if(post.getPostStatus()== Post.PostStatus.PUBLISHED){
             post.setPostStatus(Post.PostStatus.UNPUBLISHED);
-            return new PostVisibilityToggleResponse(PostVisibilityToggleResponse.PostStatus.UNPUBLISHED);
+            responseStatus= PostVisibilityToggleResponse.PostStatus.UNPUBLISHED;
+            storageTransfer=storageTransferManager.resolveStorageTransfer(Post.PostStatus.PUBLISHED, Post.PostStatus.UNPUBLISHED);
         }else if (post.getPostStatus()== Post.PostStatus.UNPUBLISHED){
             post.setPostStatus(Post.PostStatus.PUBLISHED);
-            return new PostVisibilityToggleResponse(PostVisibilityToggleResponse.PostStatus.PUBLISHED);
+            responseStatus= PostVisibilityToggleResponse.PostStatus.PUBLISHED;
+            storageTransfer=storageTransferManager.resolveStorageTransfer(Post.PostStatus.UNPUBLISHED, Post.PostStatus.PUBLISHED);
+        }else {
+            throw new ActionNotAllowedException(String.format("Post with Status %s Cannot be Toggled",post.getPostStatus()));
         }
-        throw new ActionNotAllowedException(String.format("Post with Status %s Cannot be Toggled",post.getPostStatus()));
+        storageService.moveBatchFiles(post.getPostFolderPath(),storageTransfer);
+        post.setPostFolderPath(post.getPostFolderPath().replace(storageTransfer.getSourceDir().getDirName(),storageTransfer.getDestinationDir().getDirName()));
+        postRepo.save(post);
+        return new PostVisibilityToggleResponse(responseStatus);
     }
 
     public DeletePostResponse deletePost(String postId){
@@ -106,10 +113,10 @@ public class PostLifecycleService {
         Post post=postRepo.findByIdAndUserIdAndPostStatusWithMediaList(postId,currentUserId).orElseThrow(()->new ContentNotFoundException("Post to Delete Not Found"));
         if(post.getPostStatus()== Post.PostStatus.DELETED) throw new ActionNotAllowedException("Post Already Deleted");
         List<Media> mediaList=post.getMediaList();
-        List<String> filePaths=mediaList.stream().map(Media::getFilepath).toList();
+        List<String> filePaths=mediaList.stream().map(media -> mediaUrlResolver.resolvePath(post.getPostFolderPath(),media.getId())).toList();
         if(post.isRestored()){
             try {
-                storageService.deleteFiles(filePaths);
+                storageService.deleteFiles(filePaths,storageTransferManager.resolveBucket(post.getPostStatus()));
             } catch (Exception e) {
                 log.error("Failed to delete files from storage for post {}: {}",
                         postId, e.getMessage());
@@ -123,7 +130,6 @@ public class PostLifecycleService {
             post.setPreDeletionStatus(post.getPostStatus());
             post.setPostStatus(Post.PostStatus.DELETED);
             post.setDeletedAt(Instant.now());
-            mediaList.forEach(media -> media.transformFilePath(storageTransfer));
             post.setPostFolderPath(post.getPostFolderPath().replace(storageTransfer.getSourceDir().getDirName(),storageTransfer.getDestinationDir().getDirName()));
             postRepo.save(post);
            return new DeletePostResponse(true);
@@ -139,15 +145,12 @@ public class PostLifecycleService {
         // not needed because post can only be restored if deleted once
         post.setPreDeletionStatus(null);
         List<Media> mediaList=post.getMediaList();
-        List<String> filePaths=mediaList.stream().map(Media::getFilepath).toList();
         StorageTransferManager.StorageTransfer storageTransfer=storageTransferManager.resolveStorageTransfer(Post.PostStatus.DELETED,post.getPostStatus());
         storageService.moveBatchFiles(post.getPostFolderPath(),storageTransfer);
-        mediaList.forEach(media -> media.transformFilePath(storageTransfer));
         post.setPostFolderPath(post.getPostFolderPath().replace(storageTransfer.getSourceDir().getDirName(),storageTransfer.getDestinationDir().getDirName()));
-        // will save the media also thanks to cascading
         postRepo.save(post);
         PostRepresentation postRepresentation=contentmapper.toPostRepresentation(post);
-        postRepresentation.getMediaList().addAll(mediaList.stream().map(contentmapper::toMediaRepresentation).toList());
+        postRepresentation.getMediaList().addAll(mediaList.stream().map(media -> new MediaRepresentation(media.getId(),media.getMediaType())).toList());
         postRepresentation.setLikes(post.getLikeCount());
         postRepresentation.setComments(post.getCommentCount());
         postRepresentation.setRestored(true);

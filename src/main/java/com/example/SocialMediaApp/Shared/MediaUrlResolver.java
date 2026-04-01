@@ -3,12 +3,9 @@ package com.example.SocialMediaApp.Shared;
 import com.example.SocialMediaApp.Content.api.dto.MediaRepresentation;
 import com.example.SocialMediaApp.Storage.StorageProperties;
 import com.example.SocialMediaApp.Storage.StorageService;
-import com.example.SocialMediaApp.Upload.domain.SupabaseWebhookPayload;
 import lombok.RequiredArgsConstructor;
-import org.mapstruct.Named;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -21,8 +18,12 @@ public class MediaUrlResolver {
     private final StorageService storageService;
 
 
-    public String resolveUrl(String filepath) {
-        return storageProperties.getUrl() + storageProperties.getEndpoint()+"/public/" + storageProperties.getPublicMediaBucket() + "/" + filepath;
+    public  String resolvePath(String folder, String mediaId) {
+        return String.format("%s/%s",folder,mediaId);
+    }
+
+    public String resolveFullUrl(String path){
+        return String.format("%s%s/%s/%s/%s",storageProperties.getUrl(),storageProperties.getEndpoint(),"public",storageProperties.getPublicMediaBucket(),path);
     }
 
     public void convertToSignedUrls(Map<String,List<MediaRepresentation>> map){
@@ -32,7 +33,7 @@ public class MediaUrlResolver {
         for(Map.Entry<String,List<MediaRepresentation>> mapEntry:map.entrySet()){
             mapEntry.getValue().
                     forEach(mediaRepresentation->
-                            mediaRepresentation.setFilepath(signedUrlsMap.getOrDefault(mediaRepresentation.getFilepath(),"URL_EXPIRED_OR_MISSING")));
+                            mediaRepresentation.setFilepath(String.format("%s%s%s",storageProperties.getUrl(),storageProperties.getEndpoint().replace("/object",""),signedUrlsMap.getOrDefault(mediaRepresentation.getFilepath(),"URL_EXPIRED_OR_MISSING"))));
         }
 
     }
