@@ -32,8 +32,8 @@ public class UploadGatewayController {
 
     //
     @PostMapping("/confirm")
-    public ResponseEntity<Void> confirmUpload(@RequestBody SupabaseWebhookPayload webhookPayload){
-        uploadGatewayService.confirmUpload(webhookPayload);
+    public ResponseEntity<Void> confirmUpload(@RequestHeader("X-Webhook-Secret") String signature,@RequestBody SupabaseWebhookPayload webhookPayload){
+        uploadGatewayService.confirmUpload(signature,webhookPayload);
         return ResponseEntity.noContent().build();
     }
 

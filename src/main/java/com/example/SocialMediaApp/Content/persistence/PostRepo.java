@@ -23,7 +23,7 @@ public interface PostRepo extends JpaRepository<Post,String> {
                          @Param("userId") String userId, @Param("allowedStatuses") List<Post.PostStatus> allowedStatuses);
 
 
-
+    Optional<Post> findByIdAndUserIdAndPostStatus(String postId,String userId,Post.PostStatus status);
     @Query("SELECT p FROM Post p LEFT JOIN FETCH p.mediaList WHERE p.id= :postId AND p.user.id= :userId AND p.postStatus= 'DELETED' ")
     Optional<Post> findPostToRestore(@Param("postId") String postId, @Param("userId") String userId);
 

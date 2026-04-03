@@ -61,7 +61,7 @@ import java.util.stream.Collectors;
 
     public Map<String,List<MediaRepresentation>> getPostsMedia(List<Post> posts,Post.PostStatus postStatus){
         Map<String,List<MediaRepresentation>> mediaReprentationMap=new HashMap<>();
-        if(postStatus== Post.PostStatus.DELETED) return mediaReprentationMap;
+        if(posts==null || posts.isEmpty()||postStatus== Post.PostStatus.DELETED) return mediaReprentationMap;
         posts.forEach(post -> {
           List<Media> mediaList=post.getMediaList();
           List<MediaRepresentation> mediaRepresentationList=mediaList.stream().map(media -> {

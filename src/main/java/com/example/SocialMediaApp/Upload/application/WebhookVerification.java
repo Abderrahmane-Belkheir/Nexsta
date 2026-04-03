@@ -7,12 +7,14 @@ import com.example.SocialMediaApp.Upload.domain.SupabaseWebhookPayload;
 import com.example.SocialMediaApp.Upload.domain.UploadSession;
 import com.example.SocialMediaApp.Upload.domain.UploadType;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class WebhookVerification {
@@ -24,9 +26,9 @@ public class WebhookVerification {
 
     public void verifySignature(String signature) {
         if (signature == null || !signature.equals(webhookSecret)) {
-
             throw new WebhookSignatureException("Invalid webhook signature");
         }
+        log.error("webhook validation passed");
     }
 
     public void verifyFileUploaded(UploadSession uploadSession, SupabaseWebhookPayload.StorageRecord storageRecord){

@@ -44,9 +44,11 @@ public class ContentSchedulingService {
         log.info("Scheduling done");
     }
 
-    public void unSchedulePostPublishing(){
-
-
+    public void unSchedulePostPublishing(String postId) throws SchedulerException {
+        JobKey jobKey=JobKey.jobKey("schedule-publish-post"+postId);
+        if(scheduler.deleteJob(jobKey)) log.info("unScheduling post : "+postId);
+        else log.warn("failed unScheduling post : "+postId);
     }
+
 
 }

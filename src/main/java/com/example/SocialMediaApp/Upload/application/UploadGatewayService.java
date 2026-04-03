@@ -66,10 +66,10 @@ UploadGatewayService {
         return new UploadResponse(signedUrl,uploadRequestId);
     }
 
-    public void confirmUpload( SupabaseWebhookPayload webhookPayload){
+    public void confirmUpload(String signature,SupabaseWebhookPayload webhookPayload){
 
         String filePath=null;
-     //   webhookVerification.verifySignature(signature);
+        webhookVerification.verifySignature(signature);
 
         try{
 

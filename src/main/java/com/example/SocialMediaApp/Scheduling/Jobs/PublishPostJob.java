@@ -37,6 +37,9 @@ public class PublishPostJob implements Job {
         Post post=optionalPost.get();
         StorageTransferManager.StorageTransfer storageTransfer=storageTransferManager.resolveStorageTransfer(Post.PostStatus.SCHEDULED, Post.PostStatus.PUBLISHED);
         storageService.moveBatchFiles(post.getPostFolderPath(),storageTransfer);
+        post.setPostStatus(Post.PostStatus.PUBLISHED);
+        post.setPublishedAt(context.getFireTime().toInstant());
+        post.setScheduledAt(null);
         post.setPostFolderPath(post.getPostFolderPath().replace(storageTransfer.getSourceDir().getDirName(),storageTransfer.getDestinationDir().getDirName()));
         postRepo.save(post);
     }

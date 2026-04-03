@@ -41,7 +41,7 @@ public class PostLifeCycleController {
     }
 
     @DeleteMapping("/{postId}")
-    public ResponseEntity<DeletePostResponse>  deletePost(@PathVariable  String postId){
+    public ResponseEntity<DeletePostResponse>  deletePost(@PathVariable  String postId) throws SchedulerException {
        return ResponseEntity.ok(postLifecycleService.deletePost(postId));
     }
 
@@ -53,6 +53,12 @@ public class PostLifeCycleController {
     @PatchMapping("/{postId}/publish")
     public ResponseEntity<Void> publishPost(@RequestBody @Valid PostPublish postPublish) throws SchedulerException {
         postLifecycleService.publishPost(postPublish);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{postId}/unSchedule")
+    public ResponseEntity<Void> unSchedulePost(@PathVariable String postId) throws SchedulerException {
+        postLifecycleService.unSchedulePost(postId);
         return ResponseEntity.noContent().build();
     }
 

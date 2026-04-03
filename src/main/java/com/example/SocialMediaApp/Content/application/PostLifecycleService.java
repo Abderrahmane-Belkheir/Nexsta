@@ -59,6 +59,15 @@ public class PostLifecycleService {
         return postRepresentation;
     }
 
+    public void unSchedulePost(String postId) throws SchedulerException {
+        String currentUserId=authenticatedUserService.getCurrentUser();
+        Post post=postRepo.findByIdAndUserIdAndPostStatus(postId,currentUserId, Post.PostStatus.SCHEDULED).orElseThrow(()->new ContentNotFoundException("Post to unSchedule Not Found"));
+        post.setScheduledAt(null);
+        post.setPostStatus(Post.PostStatus.DRAFT);
+        contentSchedulingService.unSchedulePostPublishing(postId);
+        postRepo.save(post);
+    }
+
     // publishing post for first time draft -> published / scheduled
     public void publishPost(PostPublish postPublish) throws SchedulerException {
         String currentUserId=authenticatedUserService.getCurrentUser();
@@ -69,6 +78,7 @@ public class PostLifecycleService {
         if(draftPost.getPostStatus()!= Post.PostStatus.DRAFT) throw new ContentNotFoundException("Post Not Found");
 
         if(postPublish.getScheduledAt()!=null) {
+            log.info("publishing : "+postPublish.getPostId()+" at : "+postPublish.getScheduledAt());
             draftPost.setPostStatus(Post.PostStatus.SCHEDULED);
             draftPost.setScheduledAt(postPublish.getScheduledAt());
             postRepo.save(draftPost);
@@ -108,13 +118,17 @@ public class PostLifecycleService {
         return new PostVisibilityToggleResponse(responseStatus);
     }
 
-    public DeletePostResponse deletePost(String postId){
+    public DeletePostResponse deletePost(String postId) throws SchedulerException{
         String currentUserId=authenticatedUserService.getCurrentUser();
         Post post=postRepo.findByIdAndUserIdAndPostStatusWithMediaList(postId,currentUserId).orElseThrow(()->new ContentNotFoundException("Post to Delete Not Found"));
         if(post.getPostStatus()== Post.PostStatus.DELETED) throw new ActionNotAllowedException("Post Already Deleted");
-        List<Media> mediaList=post.getMediaList();
-        List<String> filePaths=mediaList.stream().map(media -> mediaUrlResolver.resolvePath(post.getPostFolderPath(),media.getId())).toList();
+        if(post.getPostStatus()== Post.PostStatus.SCHEDULED){
+            post.setScheduledAt(null);
+            contentSchedulingService.unSchedulePostPublishing(postId);
+        }
         if(post.isRestored()){
+            List<Media> mediaList=post.getMediaList();
+            List<String> filePaths=mediaList.stream().map(media -> mediaUrlResolver.resolvePath(post.getPostFolderPath(),media.getId())).toList();
             try {
                 storageService.deleteFiles(filePaths,storageTransferManager.resolveBucket(post.getPostStatus()));
             } catch (Exception e) {
@@ -127,7 +141,8 @@ public class PostLifecycleService {
         }else{
             StorageTransferManager.StorageTransfer storageTransfer=storageTransferManager.resolveStorageTransfer(post.getPostStatus(),Post.PostStatus.DELETED);
             storageService.moveBatchFiles(post.getPostFolderPath(),storageTransfer);
-            post.setPreDeletionStatus(post.getPostStatus());
+            Post.PostStatus preDeletionStatus=post.getPostStatus()== Post.PostStatus.SCHEDULED? Post.PostStatus.DRAFT:post.getPostStatus();
+            post.setPreDeletionStatus(preDeletionStatus);
             post.setPostStatus(Post.PostStatus.DELETED);
             post.setDeletedAt(Instant.now());
             post.setPostFolderPath(post.getPostFolderPath().replace(storageTransfer.getSourceDir().getDirName(),storageTransfer.getDestinationDir().getDirName()));
