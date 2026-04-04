@@ -90,7 +90,7 @@ public class PostLifecycleService {
         storageService.moveBatchFiles(postFolder,storageTransfer);
         draftPost.setPublishedAt(Instant.now());
         draftPost.setPostStatus(Post.PostStatus.PUBLISHED);
-        draftPost.setPostFolderPath(draftPost.getPostFolderPath().replace(storageTransfer.getSourceDir().getDirName(),storageTransfer.getDestinationDir().getDirName()));
+        draftPost.setPostFolderPath(postFolder.replace(storageTransfer.getSourceDir().getDirName(),storageTransfer.getDestinationDir().getDirName()));
         postRepo.save(draftPost);
     }
 
