@@ -39,29 +39,28 @@ public class Post {
     @CreatedDate
     private Instant createdAt;
 
-    @LastModifiedDate
-    private Instant modifiedAt;
+    private Instant scheduledAt;
 
     private Instant publishedAt;
 
-    private Instant deletedAt;
-
     private Instant unPublishedAt;
 
-    private Instant scheduledAt;
+    private Instant deletedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private PostStatus postStatus=PostStatus.DRAFT;
 
     private String caption;
+
+    @Embedded
+    private PostPreview postPreview;
 
     @Builder.Default
     private Long likeCount=0L;
 
     @Builder.Default
     private Long commentCount=0L;
-
-
-    @Enumerated(EnumType.STRING)
-    @Builder.Default
-    private PostStatus postStatus=PostStatus.DRAFT;
 
     @Column(name = "restored", nullable = false, columnDefinition = "boolean default false")
     private boolean restored = false;

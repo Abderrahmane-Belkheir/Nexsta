@@ -19,6 +19,10 @@ public interface Contentmapper {
     @Mapping(target = "createdAt",ignore = true)
     PostRepresentation toPostRepresentation(Post post);
 
+    @Mapping(target = "likes",ignore = true)
+    @Mapping(target = "comments",ignore = true)
+    PostPreviewRepresentation toPostPreview(Post post);
+
     CommentRepresentation toCommentRepresentation(Comment comment);
 
     @Mapping(target = "storyStatus",ignore = true)

@@ -39,6 +39,7 @@ public class PostLifecycleService {
     private final ContentSchedulingService contentSchedulingService;
     private final StorageTransferManager storageTransferManager;
     private final MediaUrlResolver mediaUrlResolver;
+    private final ThumbnailGenerator thumbnailGenerator;
 
     public PostRepresentation createPost(PostCreationRequest postCreation){
         String currentUserId=authenticatedUserService.getCurrentUser();
@@ -90,6 +91,7 @@ public class PostLifecycleService {
         storageService.moveBatchFiles(postFolder,storageTransfer);
         draftPost.setPublishedAt(Instant.now());
         draftPost.setPostStatus(Post.PostStatus.PUBLISHED);
+        draftPost.setPostPreview(null);
         draftPost.setPostFolderPath(postFolder.replace(storageTransfer.getSourceDir().getDirName(),storageTransfer.getDestinationDir().getDirName()));
         postRepo.save(draftPost);
     }
@@ -103,6 +105,7 @@ public class PostLifecycleService {
         PostVisibilityToggleResponse.PostStatus responseStatus;
         if(post.getPostStatus()== Post.PostStatus.PUBLISHED){
             post.setPostStatus(Post.PostStatus.UNPUBLISHED);
+            post.setPostPreview(null);
             responseStatus= PostVisibilityToggleResponse.PostStatus.UNPUBLISHED;
             storageTransfer=storageTransferManager.resolveStorageTransfer(Post.PostStatus.PUBLISHED, Post.PostStatus.UNPUBLISHED);
         }else if (post.getPostStatus()== Post.PostStatus.UNPUBLISHED){
@@ -144,6 +147,7 @@ public class PostLifecycleService {
             Post.PostStatus preDeletionStatus=post.getPostStatus()== Post.PostStatus.SCHEDULED? Post.PostStatus.DRAFT:post.getPostStatus();
             post.setPreDeletionStatus(preDeletionStatus);
             post.setPostStatus(Post.PostStatus.DELETED);
+            post.setPostPreview(null);
             post.setDeletedAt(Instant.now());
             post.setPostFolderPath(post.getPostFolderPath().replace(storageTransfer.getSourceDir().getDirName(),storageTransfer.getDestinationDir().getDirName()));
             postRepo.save(post);

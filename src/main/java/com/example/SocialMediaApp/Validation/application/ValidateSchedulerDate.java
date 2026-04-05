@@ -3,10 +3,11 @@ package com.example.SocialMediaApp.Validation.application;
 import com.example.SocialMediaApp.Validation.Annotations.ValidScheduled;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-
+@Slf4j
 public class ValidateSchedulerDate implements ConstraintValidator<ValidScheduled, Instant> {
 
     @Override
@@ -14,7 +15,7 @@ public class ValidateSchedulerDate implements ConstraintValidator<ValidScheduled
         if(instant==null) return true;
         Instant now=Instant.now();
         Instant min=now.plus(2, ChronoUnit.HOURS);
-        Instant max=now.plus(90,ChronoUnit.HOURS);
+        Instant max=now.plus(90,ChronoUnit.DAYS);
         constraintValidatorContext.disableDefaultConstraintViolation();
         if(instant.isBefore(min)){
             constraintValidatorContext.
@@ -29,7 +30,6 @@ public class ValidateSchedulerDate implements ConstraintValidator<ValidScheduled
                     addConstraintViolation();
             return false;
         }
-
         return true;
     }
 

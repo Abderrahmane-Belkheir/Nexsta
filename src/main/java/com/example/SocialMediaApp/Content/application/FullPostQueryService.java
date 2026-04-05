@@ -3,15 +3,15 @@ package com.example.SocialMediaApp.Content.application;
 import com.example.SocialMediaApp.Content.Exceptions.ContentNotAvailableException;
 import com.example.SocialMediaApp.Content.api.dto.MediaRepresentation;
 import com.example.SocialMediaApp.Content.api.dto.PostRepresentation;
-import com.example.SocialMediaApp.Content.domain.Media;
+import com.example.SocialMediaApp.Content.domain.FetchDirection;
 import com.example.SocialMediaApp.Content.domain.Post;
 import com.example.SocialMediaApp.Content.domain.PostSettings;
-import com.example.SocialMediaApp.Content.persistence.MediaRepo;
 import com.example.SocialMediaApp.Content.persistence.PostLikeRepo;
 import com.example.SocialMediaApp.Content.persistence.PostRepo;
 import com.example.SocialMediaApp.Profile.application.ProfileQueryService;
 import com.example.SocialMediaApp.Profile.domain.cache.ProfileInfo;
 import com.example.SocialMediaApp.Shared.CheckUserExistence;
+import com.example.SocialMediaApp.Shared.Exceptions.ActionNotAllowedException;
 import com.example.SocialMediaApp.Shared.Mappers.Contentmapper;
 import com.example.SocialMediaApp.Shared.ViewerType;
 import com.example.SocialMediaApp.Shared.VisibilityPolicy;
@@ -26,12 +26,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class PostQueryService {
+public class FullPostQueryService {
 
     private final PostRepo postRepo;
     private final AuthenticatedUserService authenticatedUserService;
@@ -72,10 +71,31 @@ public class PostQueryService {
         return getPostsRepresentation(targetId, Post.PostStatus.PUBLISHED,pageable,ViewerType.VIEWER,likedPostIds::contains,profileInfo);
     }
 
-    private Page<PostRepresentation> getPostsRepresentation(String userId, Post.PostStatus postStatus, Pageable pageable, ViewerType viewerType, Function<String,Boolean> likesFunction,ProfileInfo profileInfo){
 
-        Page<Post> postList=postRepo.findByUserIdAndPostStatus(userId,postStatus,pageable);
+
+    public Page<PostRepresentation> getPostNeighbors(String postId, FetchDirection direction){
+        String currentUserId=authenticatedUserService.getCurrentUser();
+
+        Post post=postRepo.findById(postId).orElseThrow(()->new ContentNotAvailableException("Post Not Found"));
+
+        boolean isOwner=currentUserId.equals(post.getUserId());
+        if(!isOwner){
+            boolean isAllowed=visibilityPolicy.isAllowed(currentUserId,post.getUserId());
+
+            if(!isAllowed) throw new ActionNotAllowedException("Post Not Found");
+
+            if(post.getPostStatus()!= Post.PostStatus.PUBLISHED) throw new ContentNotAvailableException("Post Not Found");
+        }
+
+        return null;
+    }
+
+    private Page<PostRepresentation> getPostNeighborsHelper(String postId, Post.PostStatus postStatus, ViewerType viewerType,ProfileInfo profileInfo){
+
+        Page<Post> postList=null;
+                //postRepo.findByUserIdAndPostStatus(userId,postStatus,pageable);
         Map<String,List<MediaRepresentation>> mediaRepresentationMap=mediaLifecycleService.getPostsMedia(postList.getContent(),postStatus);
+
         return  postList.map(post->{
             String postId=post.getId();
             List<MediaRepresentation> mediaRepresentations=mediaRepresentationMap.getOrDefault(postId,new ArrayList<>());
@@ -94,7 +114,7 @@ public class PostQueryService {
                     postRepresentation.setComments(post.getCommentCount());
                 }
 
-                postRepresentation.setLikedByMe(likesFunction.apply(postId));
+                postRepresentation.setLikedByMe(null);
 
             }else{
                 // likes and comments count can be seen by the owner directly.
@@ -115,6 +135,7 @@ public class PostQueryService {
             return postRepresentation;
         });
     }
+
 
     private Pageable getPageable(int page,int size, Post.PostStatus postStatus) {
         String sortBy = switch (postStatus) {
