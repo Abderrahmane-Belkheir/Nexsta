@@ -3,6 +3,7 @@ import com.example.SocialMediaApp.Content.Exceptions.ContentNotFoundException;
 import com.example.SocialMediaApp.Content.api.dto.*;
 import com.example.SocialMediaApp.Content.domain.Media;
 import com.example.SocialMediaApp.Content.domain.Post;
+import com.example.SocialMediaApp.Content.domain.PostPreview;
 import com.example.SocialMediaApp.Content.persistence.PostRepo;
 import com.example.SocialMediaApp.Scheduling.application.ContentSchedulingService;
 import com.example.SocialMediaApp.Shared.Exceptions.ActionNotAllowedException;
@@ -53,6 +54,8 @@ public class PostLifecycleService {
         post.setPostFolderPath(destinationFolder);
         List<Media> mediaList=mediaLifecycleService.persistMedia(uploadFinalization.getMediaUploads(),post);
         storageService.transferTemporaryContent(destinationFolder,uploadFinalization.getFilePaths());
+        PostPreview postPreview=thumbnailGenerator.generatePostThumbnail(mediaList.get(0));
+        post.setPostPreview(postPreview);
         PostRepresentation postRepresentation=contentmapper.toPostRepresentation(post);
         postRepresentation.setPostStatus(Post.PostStatus.DRAFT);
         List<MediaRepresentation> mediaRepresentationList= mediaList.stream().map(media -> new MediaRepresentation(media.getId(),media.getMediaType())).toList();
@@ -91,7 +94,6 @@ public class PostLifecycleService {
         storageService.moveBatchFiles(postFolder,storageTransfer);
         draftPost.setPublishedAt(Instant.now());
         draftPost.setPostStatus(Post.PostStatus.PUBLISHED);
-        draftPost.setPostPreview(null);
         draftPost.setPostFolderPath(postFolder.replace(storageTransfer.getSourceDir().getDirName(),storageTransfer.getDestinationDir().getDirName()));
         postRepo.save(draftPost);
     }

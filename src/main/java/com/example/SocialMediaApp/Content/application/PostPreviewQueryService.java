@@ -1,32 +1,27 @@
 package com.example.SocialMediaApp.Content.application;
 
 import com.example.SocialMediaApp.Content.Exceptions.ContentNotAvailableException;
-import com.example.SocialMediaApp.Content.api.dto.MediaRepresentation;
 import com.example.SocialMediaApp.Content.api.dto.PostPreviewRepresentation;
-import com.example.SocialMediaApp.Content.api.dto.PostRepresentation;
+import com.example.SocialMediaApp.Content.api.dto.PostPreviewRequest;
+import com.example.SocialMediaApp.Content.api.dto.PostPreviewResponse;
 import com.example.SocialMediaApp.Content.domain.Post;
+import com.example.SocialMediaApp.Content.domain.PostPreview;
 import com.example.SocialMediaApp.Content.domain.PostSettings;
-import com.example.SocialMediaApp.Content.persistence.PostLikeRepo;
 import com.example.SocialMediaApp.Content.persistence.PostRepo;
-import com.example.SocialMediaApp.Profile.application.ProfileQueryService;
-import com.example.SocialMediaApp.Profile.domain.cache.ProfileInfo;
 import com.example.SocialMediaApp.Shared.CheckUserExistence;
 import com.example.SocialMediaApp.Shared.Mappers.Contentmapper;
+import com.example.SocialMediaApp.Shared.MediaUrlResolver;
 import com.example.SocialMediaApp.Shared.ViewerType;
 import com.example.SocialMediaApp.Shared.VisibilityPolicy;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+import java.time.Instant;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
+
+
 
 @Service
 @RequiredArgsConstructor
@@ -35,33 +30,45 @@ public class PostPreviewQueryService {
     private final AuthenticatedUserService authenticatedUserService;
     private final VisibilityPolicy visibilityPolicy;
     private final Contentmapper contentmapper;
-    private final static int pageSize=6;
+    private final MediaUrlResolver mediaUrlResolver;
 
 
-    public Page<PostPreviewRepresentation> getMyPostsPreview(Post.PostStatus postStatus, int page){
+    public PostPreviewResponse getMyPostsPreview(PostPreviewRequest request){
         String currentUserId=authenticatedUserService.getCurrentUser();
-        Pageable pageable=getPageable(page,pageSize,postStatus);
-        return getPostsPreviewRepresentation(currentUserId,postStatus,pageable, ViewerType.OWNER);
+        return getPostsPreviewRepresentation(currentUserId,request.getStatus(),request.getCursor(),ViewerType.OWNER);
     }
 
     @CheckUserExistence
-    public Page<PostPreviewRepresentation> getUserPostsPreview(String targetId, int page){
+    public PostPreviewResponse getUserPostsPreview(String targetId,PostPreviewRequest request){
         String currentUserId=authenticatedUserService.getCurrentUser();
 
-        if(currentUserId.equals(targetId)) return getMyPostsPreview(Post.PostStatus.PUBLISHED,page);
+        if(currentUserId.equals(targetId)) return getMyPostsPreview(request);
+
         if(!visibilityPolicy.isAllowed(currentUserId,targetId)) throw new ContentNotAvailableException("This content is not available");
 
-        Post.PostStatus postStatus= Post.PostStatus.PUBLISHED;
-        Pageable pageable=getPageable(page,pageSize,postStatus);
-
-        return getPostsPreviewRepresentation(targetId, Post.PostStatus.PUBLISHED,pageable,ViewerType.VIEWER);
+        return getPostsPreviewRepresentation(targetId, Post.PostStatus.PUBLISHED,request.getCursor(),ViewerType.VIEWER);
     }
 
-    private Page<PostPreviewRepresentation> getPostsPreviewRepresentation(String userId, Post.PostStatus postStatus, Pageable pageable, ViewerType viewerType){
+    private PostPreviewResponse getPostsPreviewRepresentation(String userId, Post.PostStatus postStatus, Instant cursor, ViewerType viewerType){
 
-        Page<Post> postList=postRepo.findByUserIdAndPostStatus(userId,postStatus,pageable);
-        return  postList.map(post->{
+        int limit=10;
+        boolean hasMore=false;
+        Instant nextCursor=null;
+
+        List<Post> postList=cursor==null?
+                postRepo.findTop10ByUserIdAndPostStatusOrderByPublishedAtDesc(userId,postStatus):
+                postRepo.findTop10ByUserIdAndPostStatusAndPublishedAtBeforeOrderByPublishedAtDesc(userId,postStatus,cursor);
+
+
+        List<PostPreviewRepresentation> postPreviewRepresentationList= postList.stream().map(post->{
             PostPreviewRepresentation postPreviewRepresentation= contentmapper.toPostPreview(post);
+            if(postStatus== Post.PostStatus.PUBLISHED) {
+                PostPreview postPreview=post.getPostPreview();
+                String thumbnailPath=mediaUrlResolver.resolvePath(post.getPostFolderPath(),postPreview.getThumbnail());
+                String thumbnailFullUrl=mediaUrlResolver.resolveFullUrl(thumbnailPath);
+                postPreview.setThumbnail(thumbnailFullUrl);
+                postPreviewRepresentation.setPostPreview(postPreview);
+            }
             PostSettings postSettings=post.getPostSettings();
             if(viewerType==ViewerType.VIEWER){
 
@@ -80,17 +87,17 @@ public class PostPreviewQueryService {
             }
 
             return postPreviewRepresentation;
-        });
+        }).toList();
+
+        if(postPreviewRepresentationList.size()==limit){
+            Post lastPost=postList.get(postList.size()-1);
+            hasMore=postRepo.existsByUserIdAndPostStatusAndPublishedAtBefore(userId,postStatus,lastPost.getPublishedAt());
+            if(hasMore){
+                nextCursor=lastPost.getPublishedAt();
+            }
+        }
+
+        return new PostPreviewResponse(postPreviewRepresentationList,hasMore,nextCursor);
     }
 
-
-    private Pageable getPageable(int page,int size, Post.PostStatus postStatus) {
-        String sortBy = switch (postStatus) {
-            case PUBLISHED -> "publishedAt";
-            case DELETED -> "deletedAt";
-            case DRAFT,SCHEDULED -> "createdAt";
-            case UNPUBLISHED -> "unPublishedAt";
-        };
-        return PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, sortBy));
-    }
 }

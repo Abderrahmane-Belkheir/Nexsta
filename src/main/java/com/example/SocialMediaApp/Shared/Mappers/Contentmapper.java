@@ -21,6 +21,7 @@ public interface Contentmapper {
 
     @Mapping(target = "likes",ignore = true)
     @Mapping(target = "comments",ignore = true)
+    @Mapping(target = "postPreview",ignore = true)
     PostPreviewRepresentation toPostPreview(Post post);
 
     CommentRepresentation toCommentRepresentation(Comment comment);

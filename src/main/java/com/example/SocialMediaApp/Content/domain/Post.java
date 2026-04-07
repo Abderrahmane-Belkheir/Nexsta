@@ -77,6 +77,7 @@ public class Post {
 
     @OneToMany(mappedBy = "post",fetch = FetchType.LAZY,orphanRemoval = true,cascade =CascadeType.ALL)
     @Builder.Default
+    @OrderBy("displayOrder")
     private List<Media> mediaList=new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)

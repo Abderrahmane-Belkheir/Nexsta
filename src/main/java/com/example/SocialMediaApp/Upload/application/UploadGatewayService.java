@@ -124,6 +124,7 @@ UploadGatewayService {
                 failedUploadIds.add(uploadRequestId);
             }catch (UnauthorizedResourceAccessException e){
                 // logging and blocking user later
+                throw e;
             }
 
         }

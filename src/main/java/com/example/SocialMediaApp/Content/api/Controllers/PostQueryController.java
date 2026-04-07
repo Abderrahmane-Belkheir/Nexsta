@@ -1,16 +1,20 @@
 package com.example.SocialMediaApp.Content.api.Controllers;
 
 import com.example.SocialMediaApp.Content.api.dto.PostPreviewRepresentation;
+import com.example.SocialMediaApp.Content.api.dto.PostPreviewRequest;
+import com.example.SocialMediaApp.Content.api.dto.PostPreviewResponse;
 import com.example.SocialMediaApp.Content.api.dto.PostRepresentation;
 import com.example.SocialMediaApp.Content.application.FullPostQueryService;
 import com.example.SocialMediaApp.Content.application.PostPreviewQueryService;
 import com.example.SocialMediaApp.Content.domain.FetchDirection;
 import com.example.SocialMediaApp.Content.domain.Post;
-import com.example.SocialMediaApp.Content.domain.PostPreview;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -21,18 +25,18 @@ public class PostQueryController {
     private final PostPreviewQueryService postPreviewQueryService;
 
     @GetMapping("/me")
-    public ResponseEntity<Page<PostPreviewRepresentation>> getMyPostsPreview(@RequestParam(defaultValue = "PUBLISHED") Post.PostStatus status,@RequestParam(defaultValue = "0") int page){
-        return ResponseEntity.ok(postPreviewQueryService.getMyPostsPreview(status,page));
+    public ResponseEntity<PostPreviewResponse> getMyPostsPreview(@RequestBody @Valid PostPreviewRequest request){
+        return ResponseEntity.ok(postPreviewQueryService.getMyPostsPreview(request));
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<Page<PostPreviewRepresentation>> getUserPostsPreview(@PathVariable String userId, @RequestParam(defaultValue = "0") int page){
-        return ResponseEntity.ok(postPreviewQueryService.getUserPostsPreview(userId,page));
+    public ResponseEntity<PostPreviewResponse> getUserPostsPreview(@PathVariable String userId,@RequestBody @Valid PostPreviewRequest request){
+        return ResponseEntity.ok(postPreviewQueryService.getUserPostsPreview(userId,request));
     }
 
-    @GetMapping("/{postId}/neighbors")
-    public ResponseEntity<Page<PostRepresentation>> getUserPostsRepresentation(@PathVariable String postId,@RequestParam(defaultValue = "MIXED") FetchDirection direction){
-        return ResponseEntity.ok(fullPostQueryService.getPostNeighbors(postId,direction));
+    @GetMapping("/{cursor}/neighbors")
+    public ResponseEntity<List<PostRepresentation>> getUserPostsRepresentation(@PathVariable String cursor, @RequestParam(defaultValue = "MIXED") FetchDirection direction){
+        return ResponseEntity.ok(fullPostQueryService.getPostNeighbors(cursor,direction));
     }
 
 

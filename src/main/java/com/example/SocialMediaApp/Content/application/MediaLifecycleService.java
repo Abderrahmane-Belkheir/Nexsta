@@ -5,7 +5,6 @@ import com.example.SocialMediaApp.Content.domain.Media;
 import com.example.SocialMediaApp.Content.domain.Post;
 import com.example.SocialMediaApp.Content.domain.Story;
 import com.example.SocialMediaApp.Content.persistence.MediaRepo;
-import com.example.SocialMediaApp.Shared.Mappers.Contentmapper;
 import com.example.SocialMediaApp.Shared.MediaUrlResolver;
 import com.example.SocialMediaApp.Storage.StorageDir;
 import com.example.SocialMediaApp.Upload.application.UploadGatewayService;
@@ -19,7 +18,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -59,7 +57,7 @@ import java.util.stream.Collectors;
         return mediaList;
     }
 
-    public Map<String,List<MediaRepresentation>> getPostsMedia(List<Post> posts,Post.PostStatus postStatus){
+    public Map<String,List<MediaRepresentation>> getPostsMedia(List<Post> posts, Post.PostStatus postStatus){
         Map<String,List<MediaRepresentation>> mediaReprentationMap=new HashMap<>();
         if(posts==null || posts.isEmpty()||postStatus== Post.PostStatus.DELETED) return mediaReprentationMap;
         posts.forEach(post -> {

@@ -2,8 +2,6 @@ package com.example.SocialMediaApp.Content.persistence;
 
 import com.example.SocialMediaApp.Content.domain.Post;
 import jakarta.transaction.Transactional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -44,7 +42,6 @@ public interface PostRepo extends JpaRepository<Post,String> {
     void updatePostComments(@Param("postId") String postId,@Param("delta") int delta);
     
 
-    Page<Post> findByUserIdAndPostStatus(String userId, Post.PostStatus postStatus, Pageable pageable);
 
 
     @Modifying
@@ -53,9 +50,9 @@ public interface PostRepo extends JpaRepository<Post,String> {
     void deleteByOldPostsWithStatus(@Param("status") Post.PostStatus status,@Param("date") Instant date);
 
     Optional<Post> findByIdAndUserId(String userId,String postId);
-    @Modifying
-    @Transactional
-    @Query("UPDATE Post p SET p.postStatus='PUBLISHED',p.publishedAt=:date,p.scheduledAt=null WHERE p.id=:postId AND p.postStatus='SCHEDULED' ")
-    void updateScheduledPost(@Param("postId") String postId,@Param("date") Instant date);
 
+    List<Post> findTop10ByUserIdAndPostStatusAndPublishedAtBeforeOrderByPublishedAtDesc(String userId, Post.PostStatus status, Instant date);
+    List<Post> findTop10ByUserIdAndPostStatusOrderByPublishedAtDesc(String userId,Post.PostStatus status);
+    boolean existsByUserIdAndPostStatusAndPublishedAtBefore(String userId,Post.PostStatus status,Instant date);
 }
+
