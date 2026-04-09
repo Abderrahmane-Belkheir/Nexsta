@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.Type;
@@ -78,6 +79,7 @@ public class Post {
     @OneToMany(mappedBy = "post",fetch = FetchType.LAZY,orphanRemoval = true,cascade =CascadeType.ALL)
     @Builder.Default
     @OrderBy("displayOrder")
+    @BatchSize(size = 30)
     private List<Media> mediaList=new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)

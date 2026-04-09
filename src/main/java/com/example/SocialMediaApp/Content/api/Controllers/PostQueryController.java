@@ -1,9 +1,6 @@
 package com.example.SocialMediaApp.Content.api.Controllers;
 
-import com.example.SocialMediaApp.Content.api.dto.PostPreviewRepresentation;
-import com.example.SocialMediaApp.Content.api.dto.PostPreviewRequest;
-import com.example.SocialMediaApp.Content.api.dto.PostPreviewResponse;
-import com.example.SocialMediaApp.Content.api.dto.PostRepresentation;
+import com.example.SocialMediaApp.Content.api.dto.*;
 import com.example.SocialMediaApp.Content.application.FullPostQueryService;
 import com.example.SocialMediaApp.Content.application.PostPreviewQueryService;
 import com.example.SocialMediaApp.Content.domain.FetchDirection;
@@ -35,7 +32,7 @@ public class PostQueryController {
     }
 
     @GetMapping("/{cursor}/neighbors")
-    public ResponseEntity<List<PostRepresentation>> getUserPostsRepresentation(@PathVariable String cursor, @RequestParam(defaultValue = "MIXED") FetchDirection direction){
+    public ResponseEntity<PostRepresentationResponse> getUserPostsRepresentation(@PathVariable String cursor, @RequestParam(defaultValue = "MIXED") FetchDirection direction){
         return ResponseEntity.ok(fullPostQueryService.getPostNeighbors(cursor,direction));
     }
 
