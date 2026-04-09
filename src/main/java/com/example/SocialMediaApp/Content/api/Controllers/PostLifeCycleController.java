@@ -2,6 +2,7 @@ package com.example.SocialMediaApp.Content.api.Controllers;
 
 import com.example.SocialMediaApp.Content.api.dto.*;
 import com.example.SocialMediaApp.Content.application.PostLifecycleService;
+import com.example.SocialMediaApp.Content.application.PostUpdateService;
 import com.example.SocialMediaApp.Content.domain.Post;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,6 +25,7 @@ import java.io.IOException;
 public class PostLifeCycleController {
 
     private final PostLifecycleService postLifecycleService;
+    private final PostUpdateService postUpdateService;
 
     @GetMapping("/new")
     public void redirectPost(@AuthenticationPrincipal Jwt jwt, HttpServletResponse response) throws IOException {
@@ -67,5 +69,10 @@ public class PostLifeCycleController {
         return ResponseEntity.ok(postLifecycleService.togglePostVisibility(postId));
     }
 
+    @PatchMapping
+    public ResponseEntity<Void> updatePost(@RequestBody @Valid PostUpdateRequest request){
+        postUpdateService.updatePost(request);
+        return ResponseEntity.noContent().build();
+    }
 
 }

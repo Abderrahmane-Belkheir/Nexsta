@@ -15,6 +15,8 @@ import java.util.Optional;
 
 public interface PostRepo extends JpaRepository<Post,String> {
 
+    @Query("SELECT p FROM Post p WHERE p.user.id=:userId AND p.id=:postId LEFT JOIN FETCH p.mediaList")
+    Optional<Post> findByIdAndUserIdWithMediaList(@Param("userId") String userId,@Param("postId") String postId);
     @Modifying
     @Transactional
     @Query("UPDATE Post p SET p.postStatus = :status WHERE " +
