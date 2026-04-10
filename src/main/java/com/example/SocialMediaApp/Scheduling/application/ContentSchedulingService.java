@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.time.Instant;
 import java.util.Date;
 
 @Service
@@ -19,23 +20,23 @@ public class ContentSchedulingService {
     private final Scheduler scheduler;
 
 
-    public void schedulePostPublishing(PostPublish postPublish) throws SchedulerException {
+    public void schedulePostPublishing(String postId, Instant date) throws SchedulerException {
         JobDetail jobDetail=JobBuilder.newJob(PublishPostJob.class).
-                withIdentity("schedule-publish-post"+postPublish.getPostId()).
+                withIdentity("schedule-publish-post"+postId).
                 withDescription("Publishing Scheduled Posts").storeDurably().
-                usingJobData("postId",postPublish.getPostId()).
+                usingJobData("postId",postId).
                 build();
         Trigger trigger=TriggerBuilder.newTrigger().
-                withIdentity("trigger-" + postPublish.getPostId(), "post-triggers")
-                .startAt(Date.from(postPublish.getScheduledAt())).forJob(jobDetail)
+                withIdentity("trigger-" + postId, "post-triggers")
+                .startAt(Date.from(date)).forJob(jobDetail)
                 .build();
-        log.info("Scheduling post publishing for postId : "+postPublish.getPostId()+" At : "+postPublish.getScheduledAt());
+        log.info("Scheduling post publishing for postId : "+postId+" At : "+date);
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
                 try {
                     scheduler.scheduleJob(jobDetail, trigger);
-                    log.info("🚀 Quartz Job scheduled AFTER DB Commit for post: " + postPublish.getPostId());
+                    log.info("🚀 Quartz Job scheduled AFTER DB Commit for post: " + postId);
                 } catch (SchedulerException e) {
                     log.error("Failed to schedule job", e);
                 }

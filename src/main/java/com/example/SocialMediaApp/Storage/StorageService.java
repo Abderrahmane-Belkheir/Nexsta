@@ -76,8 +76,9 @@ public class StorageService {
     }
 
 
-    public void transferTemporaryContent(String destinationFolder, List<String> filePaths){
-        MoveTemporaryContentRequest request=new MoveTemporaryContentRequest(destinationFolder,filePaths);
+    public void transferTemporaryContent(String destinationFolder, List<String> filePaths, StorageTransferManager.StorageTransfer storageTransfer){
+        StorageTransferManager.BucketTransfer bucketTransfer=storageTransferManager.resolveBucketTransfer(storageTransfer);
+        MoveTemporaryContentRequest request=new MoveTemporaryContentRequest(bucketTransfer.getDestinationBucket(),destinationFolder,filePaths);
         try{
           ResponseEntity<Void> response= webClient.post().uri(storageProperties.getBatchTempFileMoveEndpoint()).contentType(MediaType.APPLICATION_JSON).
                     bodyValue(request).retrieve().toBodilessEntity().block();

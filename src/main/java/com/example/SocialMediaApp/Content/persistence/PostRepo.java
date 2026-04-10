@@ -58,5 +58,7 @@ public interface PostRepo extends JpaRepository<Post,String> {
     List<Post> findTop10ByUserIdAndPostStatusAndPublishedAtBeforeOrderByPublishedAtDesc(String userId, Post.PostStatus status, Instant date);
     List<Post> findTop10ByUserIdAndPostStatusOrderByPublishedAtDesc(String userId,Post.PostStatus status);
     boolean existsByUserIdAndPostStatusAndPublishedAtBefore(String userId,Post.PostStatus status,Instant date);
+    @Query("SELECT COUNT(p) >= :limit FROM Post p WHERE p.userId = :userId AND p.status = 'DRAFT'")
+    boolean isDraftLimitReached(@Param("userId") String userId, @Param("limit") int limit);
 }
 

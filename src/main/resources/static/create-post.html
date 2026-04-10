@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+      box.innerHTML = '';
+      tags.forEach((t, i) => {<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1020,8 +1021,7 @@
     }
     function renderTags() {
       const box = document.getElementById('tagsBox'), inp = document.getElementById('tagIn');
-      box.innerHTML = '';
-      tags.forEach((t, i) => {
+
         const c = document.createElement('div'); c.className = 'tag';
         c.innerHTML = `#${t}<button onclick="rmTag(${i})"><svg width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
         box.appendChild(c);

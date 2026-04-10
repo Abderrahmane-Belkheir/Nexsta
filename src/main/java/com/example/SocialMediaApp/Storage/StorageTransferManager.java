@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -31,23 +32,23 @@ public class StorageTransferManager {
         return privateToPrivate;
     }
 
+    public Bucket resolveBucket(Post.PostStatus postStatus){
+        if(postStatus== Post.PostStatus.PUBLISHED) return Bucket.PUBLIC;
+        return Bucket.PRIVATE;
+    }
+
     public StorageTransfer resolveStorageTransfer(Post.PostStatus currentPostStatus, Post.PostStatus targetPostStatus){
         StorageDir sourceDir= resolveStorageDir(currentPostStatus);
         StorageDir destinationDir= resolveStorageDir(targetPostStatus);
         return new StorageTransfer(sourceDir,destinationDir);
     }
 
-    public Bucket resolveBucket(Post.PostStatus postStatus){
-        if(postStatus== Post.PostStatus.PUBLISHED) return Bucket.PUBLIC;
-        return Bucket.PRIVATE;
-    }
-    private StorageDir resolveStorageDir(Post.PostStatus status){
-        if(status==null) return StorageDir.TEMPORARY;
-        return switch (status){
+    public StorageDir resolveStorageDir(Post.PostStatus status){
+        return  switch (status) {
             case DELETED -> StorageDir.DELETED;
-            case PUBLISHED -> StorageDir.PERMANENT_PUBLIC ;
+            case PUBLISHED -> StorageDir.PERMANENT_PUBLIC;
             case UNPUBLISHED -> StorageDir.PERMANENT;
-            case DRAFT,SCHEDULED -> StorageDir.DRAFT;
+            case DRAFT, SCHEDULED -> StorageDir.DRAFT;
         };
     }
 

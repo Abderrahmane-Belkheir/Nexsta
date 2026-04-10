@@ -7,6 +7,7 @@ import com.example.SocialMediaApp.Content.domain.Story;
 import com.example.SocialMediaApp.Content.persistence.MediaRepo;
 import com.example.SocialMediaApp.Shared.MediaUrlResolver;
 import com.example.SocialMediaApp.Storage.StorageDir;
+import com.example.SocialMediaApp.Storage.StorageTransferManager;
 import com.example.SocialMediaApp.Upload.application.UploadGatewayService;
 import com.example.SocialMediaApp.Upload.domain.MediaUpload;
 import com.example.SocialMediaApp.Upload.domain.UploadFinalization;
@@ -34,17 +35,20 @@ import java.util.Map;
     public List<Media> persistMedia(List<MediaUpload> mediaUploads, Post post){
         List<Media> mediaList=persistMediaHelper(mediaUploads);
         mediaList.forEach(media -> media.setPost(post));
-        return mediaRepo.saveAll(mediaList);
+        post.getMediaList().addAll(mediaList);
+        return mediaList;
     }
 
     public List<Media> persistMedia(List<MediaUpload> mediaUploads, Story story){
         List<Media> mediaList=persistMediaHelper(mediaUploads);
         mediaList.forEach(media -> media.setStory(story));
-        return mediaRepo.saveAll(mediaList);
+        story.getMediaList().addAll(mediaList);
+        return mediaList;
     }
 
-    public String buildFolderPath(String useId,String postId,UploadType uploadType){
-        return String.format("%s/%s/%s/%s", StorageDir.DRAFT.getDirName(),uploadType.toString().toLowerCase(),useId,postId);
+    public String buildFolderPath(String userId,String contentId, StorageDir storageDir, UploadType uploadType){
+
+        return String.format("%s/%s/%s/%s", storageDir.getDirName(),uploadType.toString().toLowerCase(), userId,contentId);
     }
 
     private List<Media> persistMediaHelper(List<MediaUpload> mediaUploads){
