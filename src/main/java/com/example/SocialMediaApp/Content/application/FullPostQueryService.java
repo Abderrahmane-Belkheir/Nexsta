@@ -63,11 +63,11 @@ public class FullPostQueryService {
         int pageSize=5;
         Pageable pageable= PageRequest.of(0,pageSize);
         List<Post> postList=switch (direction){
-            case UP -> postRepo.findPostsAboveOrBelowPost(ownerId,post.getPublishedAt(),postStatus,FetchDirection.UP,pageable) ;
-            case DOWN ->  postRepo.findPostsAboveOrBelowPost(ownerId,post.getPublishedAt(),postStatus,FetchDirection.DOWN,pageable);
+            case UP -> postRepo.findPostsAboveOrBelowPost(ownerId,post.getPublishedAt(),postStatus,FetchDirection.UP.name(),pageable) ;
+            case DOWN ->  postRepo.findPostsAboveOrBelowPost(ownerId,post.getPublishedAt(),postStatus,FetchDirection.DOWN.name(),pageable);
             case MIXED -> {
-                List<Post> previousPosts=postRepo.findPostsAboveOrBelowPost(ownerId,post.getPublishedAt(),postStatus,FetchDirection.DOWN,pageable);
-                List<Post> nextPosts=postRepo.findPostsAboveOrBelowPost(ownerId,post.getPublishedAt(),postStatus,FetchDirection.UP,pageable);
+                List<Post> previousPosts=postRepo.findPostsAboveOrBelowPost(ownerId,post.getPublishedAt(),postStatus,FetchDirection.DOWN.name(),pageable);
+                List<Post> nextPosts=postRepo.findPostsAboveOrBelowPost(ownerId,post.getPublishedAt(),postStatus,FetchDirection.UP.name(),pageable);
                 previousPosts.add(post);
                 previousPosts.addAll(nextPosts);
               yield  previousPosts;

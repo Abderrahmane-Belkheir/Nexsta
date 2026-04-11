@@ -43,7 +43,7 @@ public class WebhookVerification {
 
     private Media.MediaType determineMediaType(String mimeType) {
         if (mimeType == null) {
-           // throw new UnsupportedMediaTypeException("Mimetype is missing from storage record");
+           return null;
         }
 
         if (mimeType.startsWith("image/")) {

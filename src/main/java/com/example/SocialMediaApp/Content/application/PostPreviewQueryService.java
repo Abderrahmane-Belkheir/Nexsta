@@ -16,6 +16,7 @@ import com.example.SocialMediaApp.Shared.VisibilityPolicy;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
 import lombok.RequiredArgsConstructor;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -23,6 +24,7 @@ import java.util.List;
 
 
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PostPreviewQueryService {
@@ -54,7 +56,7 @@ public class PostPreviewQueryService {
         int limit=10;
         boolean hasMore=false;
         Instant nextCursor=null;
-
+        log.info("inside the get post previews");
         List<Post> postList=cursor==null?
                 postRepo.findTop10ByUserIdAndPostStatusOrderByPublishedAtDesc(userId,postStatus):
                 postRepo.findTop10ByUserIdAndPostStatusAndPublishedAtBeforeOrderByPublishedAtDesc(userId,postStatus,cursor);

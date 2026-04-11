@@ -15,22 +15,23 @@ import java.util.Optional;
 
 public interface PostRepo extends JpaRepository<Post,String> {
 
-    @Query("SELECT p FROM Post p WHERE p.user.id=:userId AND p.id=:postId LEFT JOIN FETCH p.mediaList")
+    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.mediaList WHERE p.user.id=:userId AND p.id=:postId")
     Optional<Post> findByIdAndUserIdWithMediaList(@Param("userId") String userId,@Param("postId") String postId);
+
     @Modifying
     @Transactional
     @Query("UPDATE Post p SET p.postStatus = :status WHERE " +
             "p.id = :postId AND p.postStatus IN :allowedStatuses AND p.user.id = :userId")
     int updatePostStatus(@Param("postId") String postId, @Param("status") Post.PostStatus status,
                          @Param("userId") String userId, @Param("allowedStatuses") List<Post.PostStatus> allowedStatuses);
-    @Query("SELECT p FROM Post p WHERE p.user.id=:userId AND p.postStatus=:status AND  ((:direction=UP) AND p.PublishedAt>:date) OR ((:direction=DOWN) AND  p.publishedAt<:date) ORDER By p.publishedAt DESC")
-    List<Post> findPostsAboveOrBelowPost(@Param("userId") String userId, @Param("date") Instant date, @Param("status") Post.PostStatus status, @Param("direction") FetchDirection direction, Pageable pageable);
+    @Query("SELECT p FROM Post p WHERE p.user.id=:userId AND p.postStatus=:status AND  ((:direction='UP') AND p.publishedAt>:date) OR ((:direction='DOWN') AND  p.publishedAt<:date) ORDER By p.publishedAt DESC")
+    List<Post> findPostsAboveOrBelowPost(@Param("userId") String userId, @Param("date") Instant date, @Param("status") Post.PostStatus status, @Param("direction") String direction, Pageable pageable);
     Optional<Post> findByIdAndUserIdAndPostStatus(String postId,String userId,Post.PostStatus status);
     @Query("SELECT p FROM Post p LEFT JOIN FETCH p.mediaList WHERE p.id= :postId AND p.user.id= :userId AND p.postStatus= 'DELETED' ")
     Optional<Post> findPostToRestore(@Param("postId") String postId, @Param("userId") String userId);
 
     @Query("SELECT p FROM Post p LEFT JOIN FETCH p.mediaList WHERE p.id= :postId AND p.user.id= :userId")
-    Optional<Post> findByIdAndUserIdAndPostStatusWithMediaList(@Param("postId") String postId ,@Param("userId") String userId);
+    Optional<Post> findByIdAndUserIdAndPostStatusWithMediaList(@Param("userId") String userId,@Param("postId") String postId);
 
     @Query("SELECT p FROM Post p LEFT JOIN FETCH p.mediaList WHERE p.id= :postId AND p.postStatus=:status")
     Optional<Post> findByIdAndPostStatusWithMediaList(@Param("postId") String postId ,@Param("status") Post.PostStatus status);
@@ -58,7 +59,7 @@ public interface PostRepo extends JpaRepository<Post,String> {
     List<Post> findTop10ByUserIdAndPostStatusAndPublishedAtBeforeOrderByPublishedAtDesc(String userId, Post.PostStatus status, Instant date);
     List<Post> findTop10ByUserIdAndPostStatusOrderByPublishedAtDesc(String userId,Post.PostStatus status);
     boolean existsByUserIdAndPostStatusAndPublishedAtBefore(String userId,Post.PostStatus status,Instant date);
-    @Query("SELECT COUNT(p) >= :limit FROM Post p WHERE p.userId = :userId AND p.status = 'DRAFT'")
+    @Query("SELECT COUNT(p) >= :limit FROM Post p WHERE p.user.id = :userId AND p.postStatus = 'DRAFT'")
     boolean isDraftLimitReached(@Param("userId") String userId, @Param("limit") int limit);
 }
 

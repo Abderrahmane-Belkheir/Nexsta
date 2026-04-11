@@ -1,6 +1,5 @@
 package com.example.SocialMediaApp.Scheduling.application;
 
-import com.example.SocialMediaApp.Content.api.dto.PostPublish;
 import com.example.SocialMediaApp.Scheduling.Jobs.PublishPostJob;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

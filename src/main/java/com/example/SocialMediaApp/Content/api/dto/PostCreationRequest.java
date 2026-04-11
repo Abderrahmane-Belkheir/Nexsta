@@ -5,12 +5,13 @@ import com.example.SocialMediaApp.Content.domain.Post;
 import com.example.SocialMediaApp.Content.domain.PostSettings;
 import com.example.SocialMediaApp.Validation.Annotations.ValidScheduled;
 import jakarta.validation.constraints.Size;
+import lombok.Data;
 import lombok.Getter;
 
 import java.time.Instant;
 import java.util.List;
 
-@Getter
+@Data
 @ValidScheduled
 public class PostCreationRequest {
 

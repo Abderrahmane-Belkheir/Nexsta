@@ -44,6 +44,7 @@ public class StorageTransferManager {
     }
 
     public StorageDir resolveStorageDir(Post.PostStatus status){
+        if(status==null) return StorageDir.TEMPORARY;
         return  switch (status) {
             case DELETED -> StorageDir.DELETED;
             case PUBLISHED -> StorageDir.PERMANENT_PUBLIC;

@@ -28,8 +28,11 @@ public class PostSchedulingService {
             Post post=postRepo.findByIdAndUserIdAndPostStatus(postId,currentUserId, Post.PostStatus.SCHEDULED).orElseThrow(()->new ContentNotFoundException("Post to unSchedule Not Found"));
             post.setScheduledAt(null);
             post.setPostStatus(Post.PostStatus.DRAFT);
-            contentSchedulingService.unSchedulePostPublishing(postId);
+            unScheduleJob(postId);
             postRepo.save(post);
+    }
 
+    public void unScheduleJob(String postId) throws SchedulerException {
+        contentSchedulingService.unSchedulePostPublishing(postId);
     }
 }

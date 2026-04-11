@@ -20,28 +20,27 @@ public class PostVisibilityService {
     private final PostRepo postRepo;
     private final StorageTransferManager storageTransferManager;
     private final StorageService storageService;
+    private final PostStorageService postStorageService;
 
 
     // switching between published <-> unpublished
     public PostVisibilityToggleResponse togglePostVisibility(String postId){
         String currentUserId=authenticatedUserService.getCurrentUser();
         Post post=postRepo.findByIdAndUserId(postId,currentUserId).orElseThrow(()->new ContentNotFoundException("Post to Toggle Visibility Not Found"));
-        StorageTransferManager.StorageTransfer storageTransfer;
         PostVisibilityToggleResponse.PostStatus responseStatus;
+        Post.PostStatus sourceStatus;
         if(post.getPostStatus()== Post.PostStatus.PUBLISHED){
             post.setPostStatus(Post.PostStatus.UNPUBLISHED);
-            post.setPostPreview(null);
+            sourceStatus= Post.PostStatus.PUBLISHED;
             responseStatus= PostVisibilityToggleResponse.PostStatus.UNPUBLISHED;
-            storageTransfer=storageTransferManager.resolveStorageTransfer(Post.PostStatus.PUBLISHED, Post.PostStatus.UNPUBLISHED);
         }else if (post.getPostStatus()== Post.PostStatus.UNPUBLISHED){
             post.setPostStatus(Post.PostStatus.PUBLISHED);
+            sourceStatus= Post.PostStatus.UNPUBLISHED;
             responseStatus= PostVisibilityToggleResponse.PostStatus.PUBLISHED;
-            storageTransfer=storageTransferManager.resolveStorageTransfer(Post.PostStatus.UNPUBLISHED, Post.PostStatus.PUBLISHED);
         }else {
             throw new ActionNotAllowedException(String.format("Post with Status %s Cannot be Toggled",post.getPostStatus()));
         }
-        storageService.moveBatchFiles(post.getPostFolderPath(),storageTransfer);
-        post.setPostFolderPath(post.getPostFolderPath().replace(storageTransfer.getSourceDir().getDirName(),storageTransfer.getDestinationDir().getDirName()));
+        post.setPostFolderPath(postStorageService.moveAndResolvePath(post,sourceStatus,post.getPostStatus()));
         postRepo.save(post);
         return new PostVisibilityToggleResponse(responseStatus);
     }

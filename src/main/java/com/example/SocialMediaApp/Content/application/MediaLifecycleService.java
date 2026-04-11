@@ -46,7 +46,7 @@ import java.util.Map;
         return mediaList;
     }
 
-    public String buildFolderPath(String userId,String contentId, StorageDir storageDir, UploadType uploadType){
+    public String buildFolderPath(StorageDir storageDir,UploadType uploadType,String userId,String contentId){
 
         return String.format("%s/%s/%s/%s", storageDir.getDirName(),uploadType.toString().toLowerCase(), userId,contentId);
     }

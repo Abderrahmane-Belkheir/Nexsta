@@ -22,7 +22,7 @@ public class PostQueryController {
     private final PostPreviewQueryService postPreviewQueryService;
 
     @GetMapping("/me")
-    public ResponseEntity<PostPreviewResponse> getMyPostsPreview(@RequestBody @Valid PostPreviewRequest request){
+    public ResponseEntity<PostPreviewResponse> getMyPostsPreview(@ModelAttribute @Valid PostPreviewRequest request){
         return ResponseEntity.ok(postPreviewQueryService.getMyPostsPreview(request));
     }
 
