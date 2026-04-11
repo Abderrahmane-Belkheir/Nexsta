@@ -7,6 +7,7 @@ import com.example.SocialMediaApp.Content.api.dto.PostCreationRequest;
 import com.example.SocialMediaApp.Content.api.dto.PostRepresentation;
 import com.example.SocialMediaApp.Content.domain.Media;
 import com.example.SocialMediaApp.Content.domain.Post;
+import com.example.SocialMediaApp.Content.domain.PostPreview;
 import com.example.SocialMediaApp.Content.persistence.PostRepo;
 import com.example.SocialMediaApp.Shared.Exceptions.ActionNotAllowedException;
 import com.example.SocialMediaApp.Shared.Mappers.Contentmapper;
@@ -35,7 +36,7 @@ public class PostLifecycleService {
     private final MediaLifecycleService mediaLifecycleService;
     private final Contentmapper contentmapper;
     private final PostStorageService postStorageService;
-    private final ThumbnailGenerator thumbnailGenerator;
+    private final ThumbnailService thumbnailGenerator;
     private final PostSchedulingService postSchedulingService;
 
     public PostRepresentation createPost(PostCreationRequest request) throws SchedulerException {
@@ -56,10 +57,13 @@ public class PostLifecycleService {
                 .build();
 
         List<Media> mediaList = mediaLifecycleService.persistMedia(uploadFinalization.getMediaUploads(), post);
-        post.setPostPreview(thumbnailGenerator.generatePostThumbnail(mediaList.get(0)));
+        PostPreview postPreview=thumbnailGenerator.generatePostThumbnail(currentUserId,request.getThumbnailRequestId(),mediaList.get(0));
+        post.setPostPreview(postPreview);
         postRepo.save(post);
+        List<String> filesPath= uploadFinalization.getFilePaths();
+        filesPath.add(postPreview.getThumbnailFilePath());
+        postStorageService.transferTemporaryFiles(destinationFolder,filesPath, status);
 
-        postStorageService.transferFiles(destinationFolder, uploadFinalization.getFilePaths(), status);
         if (status == Post.PostStatus.SCHEDULED) postSchedulingService.schedulePost(postId, request.getScheduleAt());
 
         PostRepresentation rep = contentmapper.toPostRepresentation(post);
@@ -91,7 +95,6 @@ public class PostLifecycleService {
         Post.PostStatus sourceStatus = post.getPostStatus();
         post.setPreDeletionStatus(sourceStatus == Post.PostStatus.SCHEDULED ? Post.PostStatus.DRAFT : sourceStatus);
         post.setPostStatus(Post.PostStatus.DELETED);
-        post.setPostPreview(null);
         post.setDeletedAt(Instant.now());
         post.setPostFolderPath(postStorageService.moveAndResolvePath(post, sourceStatus, Post.PostStatus.DELETED));
         postRepo.save(post);

@@ -1,5 +1,5 @@
 package com.example.SocialMediaApp.Upload.domain;
 
 public enum UploadType {
-    PROFILE,STORY,POST
+    PROFILE,STORY,POST,THUMBNAIL
 }

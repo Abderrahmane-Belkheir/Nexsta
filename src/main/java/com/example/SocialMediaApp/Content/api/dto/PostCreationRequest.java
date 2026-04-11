@@ -18,6 +18,7 @@ public class PostCreationRequest {
     private String caption;
     @Size(min = 1, max = 10)
     private List<String> uploadRequestsIds;
+    private String thumbnailRequestId;
     private List<String> tags;
     private PostSettings postSettings;
     private Location location;

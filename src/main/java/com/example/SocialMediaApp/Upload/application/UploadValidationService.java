@@ -32,8 +32,8 @@ import static com.example.SocialMediaApp.Upload.domain.UploadType.*;
                     "image/webp",
                     "video/mp4",
                     "video/mpeg",
-                    "video/quicktime"
-            )
+                    "video/quicktime"),
+            THUMBNAIL,Arrays.asList("image/jpeg")
             );
 
     public static final long MAX_PROFILE_SIZE = 100 * 1024L;
@@ -43,6 +43,8 @@ import static com.example.SocialMediaApp.Upload.domain.UploadType.*;
     public static final long MAX_POST_IMAGE_SIZE = 1024 * 1024L;
 
     public static final long MAX_VIDEO_SIZE = 30 * 1024 * 1024L;
+
+    public static final long MAX_THUMBNAIL_SIZE = 200 * 1024L;
 
     public void validateFile(UploadRequest request){
         UploadType uploadType=request.getUploadType();
@@ -69,7 +71,10 @@ import static com.example.SocialMediaApp.Upload.domain.UploadType.*;
              case STORY -> isVideo
                      ? MAX_VIDEO_SIZE
                      : MAX_STORY_IMAGE_SIZE;
+
+             case THUMBNAIL -> MAX_THUMBNAIL_SIZE;
          };
+
 
          if(limit<request.getFileSize()){
              throw new FileTooLargeException(limit);

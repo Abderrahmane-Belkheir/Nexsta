@@ -1,6 +1,8 @@
 package com.example.SocialMediaApp.Content.domain;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,7 +11,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class PostPreview {
     private Media.MediaType mediaType;
     private String thumbnail;
+    @Transient
+    private String thumbnailFilePath;
 }

@@ -55,7 +55,7 @@ import java.util.Map;
         List<Media> mediaList=new ArrayList<>();
         for(int i=0;i<mediaUploads.size();i++){
             MediaUpload mediaUpload=mediaUploads.get(i);
-            Media media= Media.builder().id(mediaUpload.getId()).displayOrder(i).build();
+            Media media= Media.builder().id(mediaUpload.getId()).mediaType(mediaUpload.getMediaType()).displayOrder(i).build();
             mediaList.add(media);
         }
         return mediaList;

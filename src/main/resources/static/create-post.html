@@ -483,6 +483,80 @@
     let pidx = 0;
     let dragSrcIndex = null;
     let selectedAction = 'publish';
+    let thumbnailRequestId = null;
+
+    // ─── THUMBNAIL GENERATION ─────────────────────────────────────────────────────
+    function generateImageThumbnail(file) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          const size = 300;
+          const canvas = document.createElement('canvas');
+          canvas.width = size; canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          const s = Math.min(img.width, img.height);
+          const sx = (img.width - s) / 2;
+          const sy = (img.height - s) / 2;
+          ctx.drawImage(img, sx, sy, s, s, 0, 0, size, size);
+          URL.revokeObjectURL(url);
+          canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('toBlob failed')), 'image/jpeg', 0.85);
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image load failed')); };
+        img.src = url;
+      });
+    }
+
+    function generateVideoThumbnail(file) {
+      return new Promise((resolve, reject) => {
+        const video = document.createElement('video');
+        const url = URL.createObjectURL(file);
+        video.muted = true; video.playsInline = true;
+        video.onloadeddata = () => { video.currentTime = 1; };
+        video.onseeked = () => {
+          const size = 300;
+          const canvas = document.createElement('canvas');
+          canvas.width = size; canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          const s = Math.min(video.videoWidth, video.videoHeight);
+          const sx = (video.videoWidth - s) / 2;
+          const sy = (video.videoHeight - s) / 2;
+          ctx.drawImage(video, sx, sy, s, s, 0, 0, size, size);
+          URL.revokeObjectURL(url);
+          canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('toBlob failed')), 'image/jpeg', 0.85);
+        };
+        video.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Video load failed')); };
+        video.src = url;
+      });
+    }
+
+    async function generateAndUploadThumbnail(file) {
+      const isVideo = file.type.startsWith('video/');
+      const thumbBlob = isVideo ? await generateVideoThumbnail(file) : await generateImageThumbnail(file);
+
+      // request signed URL — same structure as confirmFile, just THUMBNAIL type
+      const { signedUrl, requestId } = await apiFetch('/api/v1/upload', {
+        method: 'POST',
+        body: JSON.stringify({
+          uploadType: 'THUMBNAIL',
+          fileMimeType: 'image/jpeg',
+          fileSize: thumbBlob.size,
+          duration: 1
+        })
+      });
+
+      // upload blob — explicitly set Content-Type since Blob.type may be empty
+      await new Promise((res, rej) => {
+        const xhr = new XMLHttpRequest();
+        xhr.onload = () => xhr.status < 300 ? res() : rej(new Error('Thumbnail upload failed: ' + xhr.status));
+        xhr.onerror = () => rej(new Error('Network error'));
+        xhr.open('PUT', signedUrl);
+        xhr.setRequestHeader('Content-Type', 'image/jpeg');
+        xhr.send(thumbBlob);
+      });
+
+      return requestId;
+    }
 
     // ─── ACTION MODAL ─────────────────────────────────────────────────────────────
     function openActionModal() {
@@ -571,11 +645,22 @@
 
       try {
         setFS(3, 'active');
+
+        // generate and upload thumbnail for first file before API call
+        toast('Generating thumbnail…', 'loading', 0);
+        try {
+          thumbnailRequestId = await generateAndUploadThumbnail(files[0].file);
+        } catch (err) {
+          console.warn('Thumbnail generation failed:', err);
+          thumbnailRequestId = null;
+        }
+
         toast('Creating post…', 'loading', 0);
 
         const body = {
           caption: document.getElementById('caption').value.trim() || null,
           uploadRequestsIds: orderedIds,
+          thumbnailRequestId: thumbnailRequestId,
           tags: tags.length ? tags : null,
           postAction: actionMap[selectedAction],
           scheduleAt: scheduleAt,
@@ -895,7 +980,7 @@
 
     function resetPage() {
       files.forEach(m => URL.revokeObjectURL(m.url));
-      files = []; tags = []; postId = null; pidx = 0;
+      files = []; tags = []; postId = null; pidx = 0; thumbnailRequestId = null;
       document.getElementById('caption').value = '';
       document.getElementById('locName').value = '';
       document.getElementById('noComments').checked = false;

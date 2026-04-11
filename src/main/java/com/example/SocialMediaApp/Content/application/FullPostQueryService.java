@@ -62,6 +62,7 @@ public class FullPostQueryService {
         Post post=postSupplier.get();
         int pageSize=5;
         Pageable pageable= PageRequest.of(0,pageSize);
+        int middlePostIndex=0;
         List<Post> postList=switch (direction){
             case UP -> postRepo.findPostsAboveOrBelowPost(ownerId,post.getPublishedAt(),postStatus,FetchDirection.UP.name(),pageable) ;
             case DOWN ->  postRepo.findPostsAboveOrBelowPost(ownerId,post.getPublishedAt(),postStatus,FetchDirection.DOWN.name(),pageable);
@@ -69,6 +70,7 @@ public class FullPostQueryService {
                 List<Post> previousPosts=postRepo.findPostsAboveOrBelowPost(ownerId,post.getPublishedAt(),postStatus,FetchDirection.DOWN.name(),pageable);
                 List<Post> nextPosts=postRepo.findPostsAboveOrBelowPost(ownerId,post.getPublishedAt(),postStatus,FetchDirection.UP.name(),pageable);
                 previousPosts.add(post);
+                middlePostIndex=previousPosts.size()-1;
                 previousPosts.addAll(nextPosts);
               yield  previousPosts;
             }
@@ -115,9 +117,9 @@ public class FullPostQueryService {
         }).toList();
 
         if(direction==FetchDirection.MIXED){
-            List<PostRepresentation> previousPostRepresentations=postRepresentationList.subList(0,pageSize);
-            List<PostRepresentation> nextPostRepresentations=postRepresentationList.subList(pageSize,postList.size());
-            PostRepresentation middlePostRepresentation=postRepresentationList.get(pageSize/2);
+            List<PostRepresentation> previousPostRepresentations=postRepresentationList.subList(0,middlePostIndex);
+            PostRepresentation middlePostRepresentation=postRepresentationList.get(middlePostIndex);
+            List<PostRepresentation> nextPostRepresentations=postRepresentationList.subList(middlePostIndex+1,postList.size());
             return new PostRepresentationResponse(previousPostRepresentations,middlePostRepresentation,nextPostRepresentations);
         }
 

@@ -26,7 +26,7 @@ public class PostStorageService {
     }
 
     // transfer temp files to post destination folder
-    public void transferFiles(String destinationFolder, List<String> filePaths, Post.PostStatus status) {
+    public void transferTemporaryFiles(String destinationFolder, List<String> filePaths, Post.PostStatus status) {
         StorageTransferManager.StorageTransfer transfer = storageTransferManager.resolveStorageTransfer(null, status);
         storageService.transferTemporaryContent(destinationFolder, filePaths, transfer);
     }

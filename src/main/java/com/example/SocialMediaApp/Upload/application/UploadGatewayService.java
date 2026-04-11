@@ -105,6 +105,13 @@ UploadGatewayService {
         redisTemplate.delete(uploadSession.getUploadRequestId());
     }
 
+    public UploadSession finalizeUpload(String userId,String uploadRequestId,UploadType uploadType){
+        UploadSession uploadSession=uploadStateService.validateUploadSession(userId,uploadRequestId, UploadPhase.CONFIRMED);
+        UploadType actualUploadType=uploadSession.getUploadType();
+        if(actualUploadType!=uploadType) throw new UploadTypeMismatch("Upload Type Mismatch");
+        return uploadSession;
+    }
+
     public UploadFinalization finalizeUploads(String userId, List<String> uploadRequestsIds,UploadType uploadType){
 
         List<String> filesPaths =new ArrayList<>();
@@ -113,12 +120,10 @@ UploadGatewayService {
 
         for(String uploadRequestId : uploadRequestsIds){
             try{
-                UploadSession uploadSession=uploadStateService.validateUploadSession(userId,uploadRequestId, UploadPhase.CONFIRMED);
-                UploadType actualUploadType=uploadSession.getUploadType();
-                if(actualUploadType!=uploadType) throw new UploadTypeMismatch("Upload Type Mismatch");
+                UploadSession uploadSession=finalizeUpload(userId,uploadRequestId,uploadType);
                 String filepath=uploadSession.getFilePath();
                 filesPaths.add(filepath);
-                log.info("media type is "+uploadSession.getUploadType());
+                log.info("media type is "+uploadSession.getMediaType());
                 mediaList.add(new MediaUpload(uploadRequestId, uploadSession.getMediaType()));
                 // upload session expired which mean the key is not found in redis is the only recoverable case
             }catch (UploadSessionExpiredException e){
