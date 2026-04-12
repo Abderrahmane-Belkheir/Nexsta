@@ -7,13 +7,15 @@ import com.example.SocialMediaApp.Content.domain.Post;
 import com.example.SocialMediaApp.Content.persistence.PostRepo;
 import com.example.SocialMediaApp.Storage.StorageService;
 import com.example.SocialMediaApp.Storage.StorageTransferManager;
+import com.example.SocialMediaApp.Upload.domain.MediaUpload;
 import com.example.SocialMediaApp.Upload.domain.UploadFinalization;
 import com.example.SocialMediaApp.Upload.domain.UploadType;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,18 +34,41 @@ public class PostUpdateService {
                 orElseThrow(()->new ContentNotAvailableException("Post to Update Not Found"));
         post.setCaption(request.getCaption());
         post.setPostSettings(request.getPostSettings());
+        UploadFinalization uploadFinalization=null;
         if(post.getPostStatus()!= Post.PostStatus.PUBLISHED&&post.getPostStatus()!= Post.PostStatus.UNPUBLISHED){
             // only never published posts are allowed to update media
-            List<Media> mediaList=post.getMediaList();
-            List<String> mediaIds=request.getMediaIds();
-            mediaIds.removeAll(mediaList.stream().map(Media::getId).toList());
-            UploadFinalization uploadFinalization=mediaLifecycleService.extractMediaUploads(currentUserId,mediaIds, UploadType.POST);
-            mediaLifecycleService.persistMedia(uploadFinalization.getMediaUploads(),post);
+            List<Media> existingMedia =post.getMediaList();
+            List<String> newMediaIds =request.getMediaIds();
+            Map<String, Media> existingMap = existingMedia.stream()
+                    .collect(Collectors.toMap(Media::getId, m -> m));
+            existingMedia.clear();
+            List<String> newIds =newMediaIds.stream().filter(id->existingMap.get(id)==null).toList();
+            if(!newIds.isEmpty()){
+                uploadFinalization=mediaLifecycleService.extractMediaUploads(currentUserId, newIds, UploadType.POST);
+                for(MediaUpload mediaUpload:uploadFinalization.getMediaUploads()){
+                    String mediaId=mediaUpload.getId();
+                    Media media=Media.builder().id(mediaId).mediaType(mediaUpload.getMediaType()).
+                            post(post).build();
+                    existingMap.put(mediaId,media);
+                }
+            }
+            for(int i=0;i<request.getMediaIds().size();i++){
+                String id=request.getMediaIds().get(i);
+                Media media=existingMap.get(id);
+                if (media!=null){
+                    media.setDisplayOrder(i);
+                    existingMedia.add(media);
+                }
+            }
+        }
+        postRepo.save(post);
+
+        if(uploadFinalization!=null){
             Post.PostStatus status=post.getPostStatus();
             StorageTransferManager.StorageTransfer storageTransfer=storageTransferManager.resolveStorageTransfer(status,status);
             storageService.transferTemporaryContent(post.getPostFolderPath(),uploadFinalization.getFilePaths(),storageTransfer);
         }
-        postRepo.save(post);
+
     }
 
 }

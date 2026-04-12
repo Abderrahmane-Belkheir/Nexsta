@@ -10,5 +10,6 @@ public class PostUpdateRequest {
     private String id;
     private String caption;
     private List<String> mediaIds;
+    private String thumbnail;
     private PostSettings postSettings;
 }
