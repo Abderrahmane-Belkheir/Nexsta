@@ -26,6 +26,8 @@ public interface Contentmapper {
 
     CommentRepresentation toCommentRepresentation(Comment comment);
 
+    PostUpdateResponse toPostUpdateResponse(Post post);
+
     @Mapping(target = "storyStatus",ignore = true)
     StoryRepresentation toStoryRepresentation(Story story);
 }

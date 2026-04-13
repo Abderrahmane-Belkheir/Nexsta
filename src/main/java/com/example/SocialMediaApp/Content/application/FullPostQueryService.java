@@ -126,6 +126,5 @@ public class FullPostQueryService {
         return new PostRepresentationResponse(postRepresentationList,direction);
     }
 
-
     }
 

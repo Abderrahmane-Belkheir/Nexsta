@@ -30,19 +30,7 @@ public class PostLifeCycleController {
     private final PostUpdateService postUpdateService;
     private final PostVisibilityService postVisibilityService;
     private final PostSchedulingService postSchedulingService;
-
-
-
-    @GetMapping("/new")
-    public void redirectPost(@AuthenticationPrincipal Jwt jwt, HttpServletResponse response) throws IOException {
-        String token = jwt.getTokenValue();
-        String redirectUrl = UriComponentsBuilder.fromUriString("/create-post.html")
-                .queryParam("token", token)
-                .build()
-                .toUriString();
-        response.sendRedirect(redirectUrl);
-    }
-
+    
     @PostMapping
     public ResponseEntity<PostRepresentation> createPost(@RequestBody @Valid PostCreationRequest postCreation) throws SchedulerException {
         return ResponseEntity.ok(postLifecycleService.createPost(postCreation));
@@ -68,6 +56,11 @@ public class PostLifeCycleController {
     @PatchMapping("/{postId}/visibility")
     public ResponseEntity<PostVisibilityToggleResponse> toggleVisibility(@PathVariable String postId) {
         return ResponseEntity.ok(postVisibilityService.togglePostVisibility(postId));
+    }
+
+    @GetMapping("/update/{postId}")
+    private ResponseEntity<PostUpdateResponse> getPostToUpdate(@PathVariable String postId){
+        return ResponseEntity.ok(postUpdateService.getPostToUpdate(postId));
     }
 
     @PatchMapping

@@ -3,8 +3,7 @@ package com.example.SocialMediaApp.UnitTests.SocialGraph;
 import com.example.SocialMediaApp.Notification.domain.events.FollowNotification;
 import com.example.SocialMediaApp.Profile.api.dto.ProfileDetails;
 import com.example.SocialMediaApp.Profile.persistence.ProfileRepo;
-import com.example.SocialMediaApp.Shared.Exceptions.BadFollowRequestException;
-import com.example.SocialMediaApp.Shared.Exceptions.NoRelationShipException;
+
 import com.example.SocialMediaApp.SocialGraph.Exceptions.BadFollowRequestException;
 import com.example.SocialMediaApp.SocialGraph.Exceptions.NoRelationShipException;
 import com.example.SocialMediaApp.SocialGraph.application.FollowQueryHelper;

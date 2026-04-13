@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Post</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;1,400&family=Mulish:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+          --bg: #fafaf8; --white: #ffffff; --border: #e8e6e0; --border2: #f0ede6;
+          --text: #1c1b18; --muted: #8c8880; --dim: #c8c4bc;
+          --accent: #2563eb; --accent-bg: #eff4ff; --accent-border: #bfcffe;
+          --success: #16a34a; --success-bg: #f0fdf4; --success-border: #bbf7d0;
+          --warning: #d97706; --warning-bg: #fffbeb; --warning-border: #fde68a;
+          --error: #dc2626; --error-bg: #fef2f2; --error-border: #fecaca;
+          --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+          --shadow: 0 4px 16px rgba(0,0,0,0.07);
+          --shadow-lg: 0 16px 48px rgba(0,0,0,0.1);
+          --r: 16px; --r-sm: 10px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Mulish', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+        /* NAV */
+        .nav { position: sticky; top: 0; z-index: 50; background: rgba(250,250,248,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); height: 58px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; }
+        .nav-left { display: flex; align-items: center; gap: 14px; }
+        .back-btn { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--border); background: var(--white); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); transition: all 0.15s; box-shadow: var(--shadow-sm); }
+        .back-btn:hover { color: var(--text); border-color: var(--dim); }
+        .nav-title { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 600; color: var(--text); }
+        .nav-right { display: flex; align-items: center; gap: 8px; }
+
+        /* BUTTONS */
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--r-sm); font-family: 'Mulish', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { background: var(--border2); color: var(--text); }
+        .btn-primary { background: var(--accent); color: white; box-shadow: 0 2px 8px rgba(37,99,235,0.25); }
+        .btn-primary:hover { background: #1d4ed8; box-shadow: 0 4px 14px rgba(37,99,235,0.35); transform: translateY(-1px); }
+        .btn-primary:active { transform: none; }
+        .btn-primary:disabled { background: var(--dim); box-shadow: none; cursor: not-allowed; transform: none; }
+        .btn-danger { background: var(--error); color: white; box-shadow: 0 2px 8px rgba(220,38,38,0.2); }
+        .btn-danger:hover { background: #b91c1c; }
+
+        /* LAYOUT */
+        .page { max-width: 860px; margin: 0 auto; padding: 32px 24px 80px; display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; }
+        .left { display: flex; flex-direction: column; gap: 14px; }
+
+        /* CARD */
+        .card { background: var(--white); border: 1px solid var(--border); border-radius: var(--r); box-shadow: var(--shadow-sm); overflow: hidden; animation: up 0.35s ease both; }
+        .card:nth-child(2) { animation-delay: 0.05s; } .card:nth-child(3) { animation-delay: 0.1s; } .card:nth-child(4) { animation-delay: 0.15s; }
+        @keyframes up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .card-head { padding: 14px 18px; border-bottom: 1px solid var(--border2); display: flex; align-items: center; gap: 9px; }
+        .card-icon { width: 28px; height: 28px; border-radius: 8px; background: var(--accent-bg); display: flex; align-items: center; justify-content: center; color: var(--accent); flex-shrink: 0; }
+        .card-head h3 { font-family: 'Fraunces', serif; font-size: 14px; font-weight: 600; color: var(--text); }
+        .card-head-extra { margin-left: auto; font-size: 11px; color: var(--muted); }
+        .card-body { padding: 18px; }
+
+        /* LOADING STATE */
+        .loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; gap: 14px; }
+        .loading-state .spin-lg { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+        .loading-state p { font-size: 14px; color: var(--muted); font-weight: 500; }
+        .error-state { padding: 24px; background: var(--error-bg); border: 1px solid var(--error-border); border-radius: var(--r-sm); text-align: center; }
+        .error-state p { font-size: 13px; color: var(--error); margin-bottom: 12px; }
+
+        /* DROP ZONE */
+        .drop-zone { border: 2px dashed var(--border); border-radius: var(--r-sm); padding: 24px 20px; text-align: center; cursor: pointer; position: relative; transition: all 0.18s; background: var(--bg); }
+        .drop-zone:hover, .drop-zone.over { border-color: var(--accent); background: var(--accent-bg); }
+        .drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+        .drop-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--white); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; color: var(--muted); box-shadow: var(--shadow-sm); }
+        .drop-title { font-weight: 600; font-size: 13px; color: var(--text); margin-bottom: 3px; }
+        .drop-sub { font-size: 11px; color: var(--muted); line-height: 1.5; }
+        .drop-sub b { color: var(--accent); font-weight: 600; }
+
+        /* MEDIA GRID */
+        .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; margin-top: 14px; }
+
+        /* EXISTING TILE */
+        .media-tile { position: relative; aspect-ratio: 1; border-radius: var(--r-sm); overflow: hidden; border: 2px solid var(--border); background: var(--bg); transition: border-color 0.2s, transform 0.15s; cursor: grab; }
+        .media-tile:active { cursor: grabbing; }
+        .media-tile.drag-over-tile { border-color: var(--accent); transform: scale(1.03); }
+        .media-tile.dragging { opacity: 0.4; }
+        .media-tile.deleted-tile { border-color: var(--error); }
+        .media-tile img, .media-tile video { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+        .media-tile .num { position: absolute; top: 5px; left: 5px; width: 18px; height: 18px; background: var(--accent); color: white; font-size: 9px; font-weight: 700; border-radius: 50%; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 3; }
+        .media-tile .tbadge { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.5); color: white; font-size: 8px; font-weight: 700; padding: 1px 5px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.4px; pointer-events: none; z-index: 3; }
+        .media-tile .src-badge { position: absolute; top: 5px; left: 5px; background: rgba(22,163,74,0.85); color: white; font-size: 7px; font-weight: 700; padding: 1px 4px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.3px; pointer-events: none; z-index: 3; }
+        .media-tile .del { position: absolute; top: 5px; right: 5px; width: 22px; height: 22px; border-radius: 50%; background: rgba(0,0,0,0.55); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s; backdrop-filter: blur(4px); z-index: 4; }
+        .media-tile:hover .del { opacity: 1; }
+
+        /* DELETED OVERLAY */
+        .deleted-overlay { position: absolute; inset: 0; background: rgba(220,38,38,0.7); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; z-index: 5; }
+        .deleted-overlay span { color: white; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .restore-btn { background: white; color: var(--error); border: none; border-radius: 20px; padding: 3px 10px; font-family: 'Mulish', sans-serif; font-size: 9px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+        .restore-btn:hover { background: var(--error); color: white; }
+
+        /* CONFIRM BUTTONS (for new files) */
+        .media-tile .confirm-btn { position: absolute; bottom: 5px; right: 5px; height: 22px; padding: 0 8px; border-radius: 20px; border: none; cursor: pointer; font-family: 'Mulish', sans-serif; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px; transition: all 0.2s; white-space: nowrap; z-index: 4; }
+        .confirm-btn.idle { background: var(--accent); color: white; box-shadow: 0 2px 6px rgba(37,99,235,0.4); }
+        .confirm-btn.idle:hover { background: #1d4ed8; transform: scale(1.05); }
+        .confirm-btn.loading { background: rgba(0,0,0,0.6); color: white; backdrop-filter: blur(4px); cursor: not-allowed; }
+        .confirm-btn.done { background: var(--success); color: white; cursor: default; }
+        .confirm-btn.failed { background: var(--error); color: white; }
+        .confirm-btn.failed:hover { opacity: 0.85; }
+        .media-tile .pw { position: absolute; inset: 0; background: rgba(0,0,0,0.45); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; pointer-events: none; transition: opacity 0.3s; z-index: 3; }
+        .media-tile .pw.done { opacity: 0; }
+        .pr { width: 32px; height: 32px; } .pr circle { fill: none; stroke-width: 3; }
+        .pr .t { stroke: rgba(255,255,255,0.2); }
+        .pr .f { stroke: white; stroke-linecap: round; stroke-dasharray: 82; stroke-dashoffset: 82; transition: stroke-dashoffset 0.3s; transform: rotate(-90deg); transform-origin: center; }
+        .pp { font-size: 10px; color: white; font-weight: 700; }
+        .media-count { margin-top: 10px; font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
+        .reorder-hint { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 5px; margin-top: 8px; }
+
+        /* FIELDS */
+        .field { margin-bottom: 16px; } .field:last-child { margin-bottom: 0; }
+        .field label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin-bottom: 6px; }
+        .field textarea, .field input[type="text"] { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--r-sm); padding: 10px 13px; font-family: 'Mulish', sans-serif; font-size: 14px; color: var(--text); outline: none; resize: none; transition: border-color 0.15s, background 0.15s; }
+        .field textarea::placeholder, .field input::placeholder { color: var(--dim); }
+        .field textarea:focus, .field input:focus { border-color: var(--accent); background: var(--white); box-shadow: 0 0 0 3px var(--accent-bg); }
+        .cc { text-align: right; font-size: 11px; color: var(--dim); margin-top: 4px; }
+        .cc.warn { color: var(--error); }
+
+        /* TOGGLES */
+        .tog-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border2); }
+        .tog-item:last-child { border-bottom: none; padding-bottom: 0; } .tog-item:first-child { padding-top: 0; }
+        .tog-text span { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 1px; }
+        .tog-text small { font-size: 11px; color: var(--muted); }
+        .tog { position: relative; width: 38px; height: 21px; flex-shrink: 0; }
+        .tog input { opacity: 0; width: 0; height: 0; }
+        .tog-track { position: absolute; inset: 0; background: var(--border); border-radius: 20px; cursor: pointer; transition: background 0.2s; }
+        .tog-track::after { content: ''; position: absolute; width: 15px; height: 15px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+        .tog input:checked ~ .tog-track { background: var(--accent); }
+        .tog input:checked ~ .tog-track::after { transform: translateX(17px); }
+
+        /* THUMBNAIL SECTION */
+        .thumb-current { width: 100%; aspect-ratio: 16/9; border-radius: var(--r-sm); overflow: hidden; border: 1.5px solid var(--border); background: var(--bg); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; position: relative; }
+        .thumb-current img { width: 100%; height: 100%; object-fit: cover; }
+        .thumb-placeholder { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--dim); }
+        .thumb-placeholder span { font-size: 11px; }
+        .thumb-change-btn { width: 100%; padding: 8px; border: 1.5px dashed var(--border); border-radius: var(--r-sm); background: var(--bg); font-family: 'Mulish', sans-serif; font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.15s; position: relative; }
+        .thumb-change-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+        .thumb-change-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+        .thumb-new-badge { position: absolute; top: 6px; right: 6px; background: var(--accent); color: white; font-size: 8px; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
+        .thumb-reset-btn { position: absolute; top: 6px; left: 6px; width: 22px; height: 22px; border-radius: 50%; background: rgba(0,0,0,0.5); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: opacity 0.15s; }
+
+        /* RIGHT PANEL */
+        .right { position: sticky; top: 74px; display: flex; flex-direction: column; gap: 14px; animation: up 0.35s ease 0.1s both; }
+        .preview-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; box-shadow: var(--shadow-sm); }
+        .p-top { padding: 12px 14px; display: flex; align-items: center; gap: 9px; border-bottom: 1px solid var(--border2); }
+        .p-av { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-size: 12px; font-weight: 600; color: white; flex-shrink: 0; background: #2563eb; }
+        .p-nm { font-size: 13px; font-weight: 600; color: var(--text); }
+        .p-tm { font-size: 11px; color: var(--muted); margin-top: 1px; }
+        .p-media { width: 100%; aspect-ratio: 1; background: var(--bg); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .p-media img, .p-media video { width: 100%; height: 100%; object-fit: cover; }
+        .p-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--dim); }
+        .p-empty span { font-size: 11px; }
+        .p-dots { display: flex; justify-content: center; gap: 4px; padding: 8px 0 2px; }
+        .p-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border); transition: all 0.2s; cursor: pointer; }
+        .p-dot.on { background: var(--accent); width: 14px; border-radius: 3px; }
+        .p-body { padding: 12px 14px 14px; }
+        .p-actions { display: flex; gap: 12px; margin-bottom: 10px; color: var(--muted); }
+        .p-caption { font-size: 13px; color: var(--text); line-height: 1.5; margin-bottom: 6px; word-break: break-word; }
+        .p-caption b { font-weight: 700; margin-right: 5px; }
+        .p-placeholder { color: var(--dim); font-style: italic; }
+
+        /* FLOW CARD */
+        .flow-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 16px; box-shadow: var(--shadow-sm); }
+        .flow-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin-bottom: 12px; }
+        .flow-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border2); }
+        .flow-row:last-child { border-bottom: none; }
+        .fn { width: 20px; height: 20px; border-radius: 50%; background: var(--bg); border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: var(--muted); flex-shrink: 0; transition: all 0.2s; }
+        .fn.active { background: var(--accent); border-color: var(--accent); color: white; }
+        .fn.done { background: var(--success); border-color: var(--success); color: white; }
+        .ft { font-size: 12px; color: var(--muted); }
+        .ft b { display: block; font-size: 12px; font-weight: 600; color: var(--text); }
+
+        /* POST INFO BADGE */
+        .post-info { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--accent-bg); border: 1px solid var(--accent-border); border-radius: var(--r-sm); margin-bottom: 0; }
+        .post-info span { font-size: 12px; color: var(--accent); font-weight: 600; }
+        .status-pill { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+        .status-PUBLISHED { background: var(--success-bg); color: var(--success); border: 1px solid var(--success-border); }
+        .status-UNPUBLISHED { background: #f5f3ff; color: #7c3aed; border: 1px solid #ddd6fe; }
+        .status-DRAFT { background: var(--warning-bg); color: var(--warning); border: 1px solid var(--warning-border); }
+        .status-SCHEDULED { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-border); }
+        .status-DELETED { background: var(--error-bg); color: var(--error); border: 1px solid var(--error-border); }
+
+        /* MEDIA LOCKED BANNER */
+        .media-lock-banner { display: flex; align-items: flex-start; gap: 11px; padding: 13px 15px; background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: var(--r-sm); margin-bottom: 4px; }
+        .media-lock-banner .lock-icon { width: 32px; height: 32px; border-radius: 9px; background: rgba(217,119,6,0.12); display: flex; align-items: center; justify-content: center; color: var(--warning); flex-shrink: 0; margin-top: 1px; }
+        .media-lock-banner .lock-body { flex: 1; }
+        .media-lock-banner .lock-title { font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 3px; }
+        .media-lock-banner .lock-desc { font-size: 12px; color: var(--warning); line-height: 1.5; }
+        .media-lock-banner .lock-desc b { font-weight: 700; }
+
+        /* LOCKED TILE — no grab, no pointer events on interactive elements */
+        .media-tile.locked { cursor: default; }
+        .media-tile.locked .del { display: none !important; }
+        .media-tile.locked .confirm-btn { display: none !important; }
+
+        /* LOCKED DROP ZONE */
+        .drop-zone.locked { opacity: 0.42; pointer-events: none; cursor: not-allowed; filter: grayscale(0.3); }
+        .drop-zone.locked input { pointer-events: none; }
+        .section-divider.locked { opacity: 0.4; }
+
+        /* TOAST */
+        .sb { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(70px); background: var(--text); color: white; padding: 10px 18px; border-radius: 30px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-lg); z-index: 400; white-space: nowrap; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+        .sb.show { transform: translateX(-50%) translateY(0); }
+        .sb.ok { background: var(--success); } .sb.err { background: var(--error); }
+        .spin { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; flex-shrink: 0; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* SUCCESS SCREEN */
+        .success-screen { position: fixed; inset: 0; background: rgba(250,250,248,0.97); backdrop-filter: blur(8px); z-index: 300; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+        .success-screen.show { display: flex; }
+        .success-check { width: 68px; height: 68px; border-radius: 50%; background: var(--success); display: flex; align-items: center; justify-content: center; animation: pop 0.45s cubic-bezier(0.34,1.56,0.64,1); }
+        @keyframes pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .success-screen h2 { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 600; color: var(--text); }
+        .success-screen p { font-size: 14px; color: var(--muted); }
+        .success-screen .btns { display: flex; gap: 10px; margin-top: 6px; }
+
+        /* PAGE LOADING OVERLAY */
+        .page-loader { position: fixed; inset: 0; background: var(--bg); z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; transition: opacity 0.4s; }
+        .page-loader.hidden { opacity: 0; pointer-events: none; }
+        .page-loader .spin-xl { width: 48px; height: 48px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        .page-loader h3 { font-family: 'Fraunces', serif; font-size: 18px; color: var(--text); }
+        .page-loader p { font-size: 13px; color: var(--muted); }
+
+        /* PAGE ERROR */
+        .page-error { position: fixed; inset: 0; background: var(--bg); z-index: 500; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 40px; }
+        .page-error.show { display: flex; }
+        .error-icon { width: 60px; height: 60px; border-radius: 50%; background: var(--error-bg); border: 1px solid var(--error-border); display: flex; align-items: center; justify-content: center; color: var(--error); }
+        .page-error h2 { font-family: 'Fraunces', serif; font-size: 22px; color: var(--text); }
+        .page-error p { font-size: 14px; color: var(--muted); text-align: center; max-width: 340px; }
+
+        /* SECTION DIVIDER */
+        .section-divider { display: flex; align-items: center; gap: 10px; margin: 12px 0 4px; }
+        .section-divider span { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--dim); white-space: nowrap; }
+        .section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--border2); }
+
+        @media (max-width: 700px) {
+          .page { grid-template-columns: 1fr; }
+          .right { position: static; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- PAGE LOADER -->
+<div class="page-loader" id="pageLoader">
+    <div class="spin-xl"></div>
+    <h3>Loading post…</h3>
+    <p id="loaderMsg">Fetching post data</p>
+</div>
+
+<!-- PAGE ERROR -->
+<div class="page-error" id="pageError">
+    <div class="error-icon">
+        <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+    </div>
+    <h2>Failed to load post</h2>
+    <p id="pageErrorMsg">Could not fetch the post. Please check your token and post ID, then try again.</p>
+    <button class="btn btn-primary" onclick="location.reload()">Retry</button>
+</div>
+
+<!-- SUCCESS SCREEN -->
+<div class="success-screen" id="successScreen">
+    <div class="success-check"><svg width="30" height="30" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+    <h2>Post Updated</h2>
+    <p>Your changes have been saved successfully.</p>
+    <div class="btns">
+        <button class="btn btn-ghost" onclick="window.history.back()">Go Back</button>
+        <button class="btn btn-primary" onclick="location.reload()">Edit Again</button>
+    </div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+    <div class="nav-left">
+        <div class="back-btn" onclick="window.history.back()">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        </div>
+        <div class="nav-title">Edit Post</div>
+    </div>
+    <div class="nav-right">
+        <div id="statusBadge" style="display:none;"></div>
+        <button class="btn btn-primary" id="updateBtn" onclick="onUpdateClick()" disabled>
+            Save Changes
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13"/><polyline points="7 3 7 8 15 8"/></svg>
+        </button>
+    </div>
+</nav>
+
+<div class="page" id="mainPage" style="display:none;">
+    <div class="left">
+
+        <!-- MEDIA CARD -->
+        <div class="card">
+            <div class="card-head">
+                <div class="card-icon">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                </div>
+                <h3>Media</h3>
+                <span class="card-head-extra" id="mediaHeadExtra"></span>
+            </div>
+            <div class="card-body">
+                <!-- LOCK BANNER — shown for PUBLISHED / UNPUBLISHED -->
+                <div class="media-lock-banner" id="mediaLockBanner" style="display:none;">
+                    <div class="lock-icon">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    </div>
+                    <div class="lock-body">
+                        <div class="lock-title">Media is locked</div>
+                        <div class="lock-desc">This post is <b id="lockStatusName">published</b> — media cannot be added, removed, or reordered. You can still edit the caption and settings.</div>
+                    </div>
+                </div>
+
+                <!-- existing + new unified grid -->
+                <div class="media-grid" id="mediaGrid"></div>
+
+                <div id="reorderHint" class="reorder-hint" style="display:none;">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+                    Drag tiles to reorder · Deleted items excluded from final order
+                </div>
+                <div class="media-count" id="mediaCount" style="display:none;">
+                    <span id="countVal"></span>
+                    <span id="uploadStatus" style="color:var(--muted);"></span>
+                </div>
+
+                <!-- separator -->
+                <div class="section-divider" id="addMediaDivider" style="margin-top:16px;"><span>Add new media</span></div>
+
+                <div class="drop-zone" id="dropZone" ondragover="onDragOver(event)" ondragleave="onDragLeave()" ondrop="onDrop(event)">
+                    <input type="file" id="fileIn" multiple accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/mpeg" onchange="handleNewFiles(this.files)">
+                    <div class="drop-icon">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    </div>
+                    <div class="drop-title">Drop files or click to browse</div>
+                    <div class="drop-sub"><b>Images:</b> JPEG, PNG, WebP · 100MB &nbsp;·&nbsp; <b>Videos:</b> MP4, MOV · 100MB</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CAPTION -->
+        <div class="card">
+            <div class="card-head">
+                <div class="card-icon">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+                </div>
+                <h3>Caption</h3>
+            </div>
+            <div class="card-body">
+                <div class="field">
+                    <label>Caption <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--dim);">— edit to update</span></label>
+                    <textarea id="caption" rows="4" placeholder="Write something…" maxlength="2200" oninput="syncPreview();updateCC(this,2200,'cc')"></textarea>
+                    <div class="cc" id="cc">0 / 2200</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SETTINGS -->
+        <div class="card">
+            <div class="card-head">
+                <div class="card-icon">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <h3>Post Settings</h3>
+            </div>
+            <div class="card-body">
+                <div class="tog-item">
+                    <div class="tog-text"><span>Disable Comments</span><small>Nobody can comment on this post</small></div>
+                    <label class="tog"><input type="checkbox" id="noComments"><div class="tog-track"></div></label>
+                </div>
+                <div class="tog-item">
+                    <div class="tog-text"><span>Hide Like Count</span><small>Only you see the like count</small></div>
+                    <label class="tog"><input type="checkbox" id="hideLikes"><div class="tog-track"></div></label>
+                </div>
+                <div class="tog-item">
+                    <div class="tog-text"><span>Hide Comment Count</span><small>Hidden from others</small></div>
+                    <label class="tog"><input type="checkbox" id="hideComments"><div class="tog-track"></div></label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right">
+
+        <!-- POST INFO -->
+        <div id="postInfoBox" style="display:none;" class="card">
+            <div class="card-body" style="padding:12px 14px;">
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);margin-bottom:8px;">Post Info</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                    <span style="font-size:12px;color:var(--muted);">Status</span>
+                    <span id="statusPill" class="status-pill"></span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:12px;color:var(--muted);">Created</span>
+                    <span id="createdAt" style="font-size:12px;color:var(--text);font-weight:600;"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- PREVIEW -->
+        <div class="preview-card">
+            <div style="padding:10px 14px 8px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted);">Preview</span>
+            </div>
+            <div class="p-top">
+                <div class="p-av" id="pAv">U</div>
+                <div>
+                    <div class="p-nm" id="pNm">—</div>
+                    <div class="p-tm" id="pTm">Editing</div>
+                </div>
+            </div>
+            <div class="p-media" id="pMedia">
+                <div class="p-empty">
+                    <svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24" color="#c8c4bc"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    <span>No media</span>
+                </div>
+            </div>
+            <div class="p-dots" id="pDots" style="display:none;"></div>
+            <div class="p-body">
+                <div class="p-actions">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                </div>
+                <div class="p-caption" id="pCaption">
+                    <b id="pNmInline">—</b>
+                    <span id="pCapText" class="p-placeholder">Caption…</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- THUMBNAIL -->
+        <div class="card">
+            <div class="card-head">
+                <div class="card-icon">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                </div>
+                <h3>Thumbnail</h3>
+            </div>
+            <div class="card-body">
+                <div class="thumb-current" id="thumbPreview">
+                    <div class="thumb-placeholder">
+                        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <span>No thumbnail</span>
+                    </div>
+                </div>
+                <label class="thumb-change-btn">
+                    <input type="file" id="thumbFileIn" accept="image/jpeg,image/png,image/webp" onchange="handleNewThumb(this.files[0])">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span id="thumbBtnLabel">Change Thumbnail</span>
+                </label>
+                <div style="font-size:11px;color:var(--muted);margin-top:6px;text-align:center;" id="thumbHint">Leave unchanged to keep current thumbnail</div>
+            </div>
+        </div>
+
+        <!-- FLOW CARD -->
+        <div class="flow-card">
+            <div class="flow-title">Update Flow</div>
+            <div class="flow-row"><div class="fn" id="fs1">1</div><div class="ft"><b>Load post data</b>GET /api/v1/content/post/{id}</div></div>
+            <div class="flow-row"><div class="fn" id="fs2">2</div><div class="ft"><b>Upload new files</b>POST /api/v1/upload → PUT signed URL</div></div>
+            <div class="flow-row"><div class="fn" id="fs3">3</div><div class="ft"><b>Upload thumbnail</b>POST /api/v1/upload (if changed)</div></div>
+            <div class="flow-row"><div class="fn" id="fs4">4</div><div class="ft"><b>Update post</b>PATCH /api/v1/content/post</div></div>
+            <div class="flow-row"><div class="fn" id="fs5">5</div><div class="ft"><b>Done</b>Changes saved</div></div>
+        </div>
+
+    </div>
+</div>
+
+<div class="sb" id="sb"></div>
+
+<script>
+    // ─── CONFIG ───────────────────────────────────────────────────────────────────
+    let API = window.location.origin;
+    let JWT = '';
+    let USERNAME = '';
+
+    // ─── STATE ────────────────────────────────────────────────────────────────────
+    // Each item in mediaItems:
+    //   { kind: 'existing', id, filepath, mediaType, deleted: bool }
+    //   { kind: 'new', id: requestId|null, file, url, mediaType, status: pending|uploading|confirmed|failed }
+    let mediaItems = [];
+
+    let pidx = 0;
+    let dragSrcIndex = null;
+    let mediaLocked = false; // true when status is PUBLISHED or UNPUBLISHED
+
+    // Thumbnail state
+    let originalThumbnailUrl = null;
+    let newThumbFile = null;
+    let newThumbUrl = null;
+    let newThumbnailRequestId = null; // set after upload
+
+    // ─── INIT ─────────────────────────────────────────────────────────────────────
+    (async function init() {
+        const params = new URLSearchParams(window.location.search);
+        const token  = params.get('token');
+        const postId = params.get('postId');
+
+        if (!token || !postId) {
+            showPageError('Missing <code>token</code> or <code>postId</code> URL parameters.');
+            return;
+        }
+
+        JWT = token;
+
+        // Decode username from JWT
+        try {
+            const parts = token.split('.');
+            if (parts.length === 3) {
+                const pad = parts[1].length % 4 ? '='.repeat(4 - parts[1].length % 4) : '';
+                const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/') + pad));
+                USERNAME = payload.preferred_username || payload.username || payload.sub || payload.name || payload.email || 'you';
+            }
+        } catch (e) { USERNAME = 'you'; }
+
+        applyUser();
+
+        // Load post
+        document.getElementById('loaderMsg').textContent = 'Fetching post ' + postId;
+        try {
+            const post = await apiFetch('/api/v1/content/post/update/' + postId);
+            populateForm(post);
+            setFS(1, 'done');
+            hideLoader();
+        } catch (e) {
+            showPageError('Error ' + (e.status || '') + ': ' + (e.message || 'Could not load post.'));
+        }
+    })();
+
+    function applyUser() {
+        const COLORS = ['#2563eb','#7c3aed','#db2777','#ea580c','#16a34a','#0891b2'];
+        let h = 0;
+        for (const c of USERNAME) h = (h * 31 + c.charCodeAt(0)) & 0xffffffff;
+        const col = COLORS[Math.abs(h) % COLORS.length];
+        document.getElementById('pAv').textContent = USERNAME ? USERNAME[0].toUpperCase() : 'U';
+        document.getElementById('pAv').style.background = col;
+        document.getElementById('pNm').textContent = USERNAME || 'you';
+        document.getElementById('pNmInline').textContent = USERNAME || 'you';
+    }
+
+    function hideLoader() {
+        const loader = document.getElementById('pageLoader');
+        loader.classList.add('hidden');
+        setTimeout(() => { loader.style.display = 'none'; }, 400);
+        document.getElementById('mainPage').style.display = 'grid';
+        document.getElementById('updateBtn').disabled = false;
+    }
+
+    function showPageError(msg) {
+        document.getElementById('pageLoader').style.display = 'none';
+        document.getElementById('pageErrorMsg').innerHTML = msg;
+        document.getElementById('pageError').classList.add('show');
+    }
+
+    // ─── POPULATE FORM ───────────────────────────────────────────────────────────
+    function populateForm(post) {
+        // Caption
+        const capEl = document.getElementById('caption');
+        capEl.value = post.caption || '';
+        updateCC(capEl, 2200, 'cc');
+
+        // Post settings
+        if (post.postSettings) {
+            document.getElementById('noComments').checked = !!post.postSettings.commentsDisabled;
+            document.getElementById('hideLikes').checked   = !!post.postSettings.hideLikes;
+            document.getElementById('hideComments').checked = !!post.postSettings.hideComments;
+        }
+
+        // Status + created info
+        if (post.postStatus) {
+            const pill = document.getElementById('statusPill');
+            pill.textContent = post.postStatus;
+            pill.className = 'status-pill status-' + post.postStatus;
+            document.getElementById('postInfoBox').style.display = 'block';
+        }
+        if (post.createdAt) {
+            document.getElementById('createdAt').textContent =
+                new Date(post.createdAt).toLocaleDateString(undefined, { dateStyle: 'medium' });
+        }
+        if (post.postStatus) {
+            document.getElementById('pTm').textContent = 'Editing · ' + post.postStatus;
+        }
+
+        // Media lock check
+        const LOCKED_STATUSES = ['PUBLISHED', 'UNPUBLISHED'];
+        mediaLocked = LOCKED_STATUSES.includes(post.postStatus);
+        if (mediaLocked) {
+            document.getElementById('mediaLockBanner').style.display = 'flex';
+            document.getElementById('lockStatusName').textContent =
+                post.postStatus === 'PUBLISHED' ? 'published' : 'unpublished';
+            document.getElementById('dropZone').classList.add('locked');
+            document.getElementById('addMediaDivider').classList.add('locked');
+        }
+
+        // Thumbnail
+        originalThumbnailUrl = post.thumbnailUrl || null;
+        renderThumb();
+
+        // Media list
+        mediaItems = (post.mediaRepresentationList || []).map(m => ({
+            kind:      'existing',
+            id:        m.id,
+            filepath:  m.filepath,
+            mediaType: m.mediaType,
+            deleted:   false
+        }));
+
+        renderGrid();
+        syncPreview();
+    }
+
+    // ─── THUMBNAIL ───────────────────────────────────────────────────────────────
+    function handleNewThumb(file) {
+        if (!file) return;
+        if (newThumbUrl) URL.revokeObjectURL(newThumbUrl);
+        newThumbFile = file;
+        newThumbUrl = URL.createObjectURL(file);
+        newThumbnailRequestId = null; // reset so it gets re-uploaded on save
+        renderThumb();
+    }
+
+    function resetThumb() {
+        if (newThumbUrl) URL.revokeObjectURL(newThumbUrl);
+        newThumbFile = null; newThumbUrl = null; newThumbnailRequestId = null;
+        document.getElementById('thumbFileIn').value = '';
+        renderThumb();
+    }
+
+    function renderThumb() {
+        const box   = document.getElementById('thumbPreview');
+        const label = document.getElementById('thumbBtnLabel');
+        const hint  = document.getElementById('thumbHint');
+        const url   = newThumbUrl || originalThumbnailUrl;
+
+        if (url) {
+            box.innerHTML = '<img src="' + url + '" style="width:100%;height:100%;object-fit:cover;">' +
+                (newThumbUrl ? '<span class="thumb-new-badge">New</span>' : '') +
+                (newThumbUrl ? '<button class="thumb-reset-btn" onclick="resetThumb()" title="Revert to original">' +
+                    '<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>' : '');
+        } else {
+            box.innerHTML = '<div class="thumb-placeholder"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>No thumbnail</span></div>';
+        }
+
+        label.textContent = newThumbUrl ? 'Replace Thumbnail' : (originalThumbnailUrl ? 'Change Thumbnail' : 'Upload Thumbnail');
+        hint.textContent  = newThumbUrl ? 'New thumbnail will be uploaded on save' : 'Leave unchanged to keep current thumbnail';
+    }
+
+    // ─── GRID RENDER ─────────────────────────────────────────────────────────────
+    function renderGrid() {
+        const g = document.getElementById('mediaGrid');
+        const mc = document.getElementById('mediaCount');
+        const hint = document.getElementById('reorderHint');
+
+        const active = mediaItems.filter(m => !(m.kind === 'existing' && m.deleted));
+        const total  = mediaItems.length;
+
+        if (!total) { g.innerHTML = ''; mc.style.display = 'none'; hint.style.display = 'none'; return; }
+
+        mc.style.display = 'flex';
+        hint.style.display = (!mediaLocked && total > 1) ? 'flex' : 'none';
+
+        const newFiles = mediaItems.filter(m => m.kind === 'new');
+        const confirmed = newFiles.filter(m => m.status === 'confirmed').length;
+        document.getElementById('countVal').textContent = active.length + ' active · ' + total + ' total';
+        document.getElementById('uploadStatus').textContent =
+            newFiles.length === 0 ? '' :
+            confirmed === newFiles.length ? (newFiles.length + ' new file' + (newFiles.length > 1 ? 's' : '') + ' ready ✓') :
+            confirmed + ' / ' + newFiles.length + ' new confirmed';
+
+        document.getElementById('mediaHeadExtra').textContent =
+            active.length + ' media' + (mediaItems.filter(m => m.kind === 'existing' && m.deleted).length > 0
+                ? ' · ' + mediaItems.filter(m => m.kind === 'existing' && m.deleted).length + ' pending delete' : '');
+
+        const C = 2 * Math.PI * 13;
+        let activeNum = 0;
+
+        g.innerHTML = mediaItems.map((m, i) => {
+            const isDeleted = m.kind === 'existing' && m.deleted;
+            if (!isDeleted) activeNum++;
+            const displayNum = isDeleted ? '' : activeNum;
+
+            let mediaHtml = '';
+            let badgeType = '';
+
+            if (m.kind === 'existing') {
+                const isVid = m.mediaType === 'VIDEO';
+                badgeType = isVid ? 'VID' : 'IMG';
+                mediaHtml = isVid
+                    ? '<video src="' + m.filepath + '" muted playsinline></video>'
+                    : '<img src="' + m.filepath + '">';
+            } else {
+                const isVid = m.file.type.startsWith('video/');
+                badgeType = isVid ? 'VID' : 'IMG';
+                mediaHtml = isVid
+                    ? '<video src="' + m.url + '" muted playsinline></video>'
+                    : '<img src="' + m.url + '">';
+            }
+
+            // Build overlay for existing deleted
+            const deletedOverlay = isDeleted
+                ? '<div class="deleted-overlay"><span>Deleted</span><button class="restore-btn" onclick="restoreMedia(event,' + i + ')">Restore</button></div>'
+                : '';
+
+            // Number badge
+            const numBadge = displayNum ? '<div class="num">' + displayNum + '</div>' : '';
+
+            // Type badge
+            const typeBadge = !isDeleted ? '<div class="tbadge">' + badgeType + '</div>' : '';
+
+            // Source badge for existing
+            const srcBadge = (m.kind === 'existing' && !isDeleted)
+                ? '<div class="src-badge">SAVED</div>'
+                : '';
+
+            // Delete button (only non-deleted)
+            const delBtn = !isDeleted
+                ? '<button class="del" onclick="deleteMedia(event,' + i + ')"><svg width="8" height="8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>'
+                : '';
+
+            // Confirm button for new files
+            let confirmHtml = '';
+            if (m.kind === 'new') {
+                if (m.status === 'pending') {
+                    confirmHtml = '<button class="confirm-btn idle" onclick="confirmNewFile(event,' + i + ')"><svg width="8" height="8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Confirm</button>';
+                } else if (m.status === 'uploading') {
+                    confirmHtml = '<button class="confirm-btn loading" disabled><div class="spin" style="width:8px;height:8px;border-width:1.5px;"></div>Uploading</button>';
+                } else if (m.status === 'confirmed') {
+                    confirmHtml = '<button class="confirm-btn done" disabled><svg width="8" height="8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Done</button>';
+                } else if (m.status === 'failed') {
+                    confirmHtml = '<button class="confirm-btn failed" onclick="confirmNewFile(event,' + i + ')">Retry</button>';
+                }
+            }
+
+            // Progress wheel for new uploading
+            const showProgress = m.kind === 'new' && m.status === 'uploading';
+            const progressWheel = m.kind === 'new'
+                ? '<div class="pw ' + (!showProgress ? 'done' : '') + '" id="pw_' + i + '">' +
+                  '<svg class="pr" viewBox="0 0 32 32"><circle class="t" cx="16" cy="16" r="13"/><circle class="f" id="ring_' + i + '" cx="16" cy="16" r="13" stroke-dasharray="' + C + '" stroke-dashoffset="' + C + '"/></svg>' +
+                  '<div class="pp" id="pct_' + i + '">0%</div></div>'
+                : '';
+
+            return '<div class="media-tile' + (isDeleted ? ' deleted-tile' : '') + (mediaLocked ? ' locked' : '') + '" id="tile_' + i + '"' +
+                (mediaLocked ? '' : ' draggable="true"') +
+                ' ondragstart="onTileDragStart(event,' + i + ')"' +
+                ' ondragover="onTileDragOver(event,' + i + ')"' +
+                ' ondragleave="onTileDragLeave(event,' + i + ')"' +
+                ' ondrop="onTileDrop(event,' + i + ')">' +
+                mediaHtml +
+                numBadge + typeBadge + srcBadge +
+                delBtn + confirmHtml + deletedOverlay + progressWheel +
+                '</div>';
+        }).join('');
+    }
+
+    function setRing(i, pct) {
+        const C = 2 * Math.PI * 13;
+        const r = document.getElementById('ring_' + i), p = document.getElementById('pct_' + i);
+        if (r) r.style.strokeDashoffset = C - (pct / 100) * C;
+        if (p) p.textContent = pct + '%';
+        if (pct >= 100) setTimeout(() => { const w = document.getElementById('pw_' + i); if (w) w.classList.add('done'); }, 300);
+    }
+
+    // ─── MEDIA ACTIONS ────────────────────────────────────────────────────────────
+    function deleteMedia(event, i) {
+        event.stopPropagation();
+        if (mediaLocked) { toast('Media is locked for published posts', 'err'); return; }
+        const m = mediaItems[i];
+        if (m.kind === 'existing') {
+            m.deleted = true;
+            renderGrid(); syncPreview();
+        } else {
+            // Remove new file entirely
+            URL.revokeObjectURL(m.url);
+            mediaItems.splice(i, 1);
+            if (pidx >= mediaItems.length) pidx = Math.max(0, mediaItems.length - 1);
+            renderGrid(); syncPreview();
+        }
+    }
+
+    function restoreMedia(event, i) {
+        event.stopPropagation();
+        const m = mediaItems[i];
+        if (m.kind === 'existing') { m.deleted = false; renderGrid(); syncPreview(); }
+    }
+
+    // ─── NEW FILE UPLOAD ──────────────────────────────────────────────────────────
+    function onDragOver(e) {
+        if (mediaLocked) { e.preventDefault(); return; }
+        e.preventDefault(); document.getElementById('dropZone').classList.add('over');
+    }
+    function onDragLeave() {
+        if (mediaLocked) return;
+        document.getElementById('dropZone').classList.remove('over');
+    }
+    function onDrop(e) {
+        e.preventDefault();
+        if (mediaLocked) { toast('Media is locked for published posts', 'err'); return; }
+        document.getElementById('dropZone').classList.remove('over'); handleNewFiles(e.dataTransfer.files);
+    }
+
+    function handleNewFiles(list) {
+        if (mediaLocked) { toast('Media is locked for published posts', 'err'); return; }
+        const existingActive = mediaItems.filter(m => !(m.kind === 'existing' && m.deleted)).length;
+        const slots = 10 - existingActive;
+        if (slots <= 0) { toast('Maximum 10 active media items', 'err'); return; }
+        Array.from(list).slice(0, slots).forEach(f => {
+            const isVid = f.type.startsWith('video/');
+            mediaItems.push({ kind: 'new', id: null, file: f, url: URL.createObjectURL(f), mediaType: isVid ? 'VIDEO' : 'IMAGE', status: 'pending' });
+        });
+        renderGrid(); syncPreview();
+    }
+
+    async function confirmNewFile(event, i) {
+        event.stopPropagation();
+        const m = mediaItems[i];
+        if (!m || m.kind !== 'new') return;
+        if (m.status === 'uploading' || m.status === 'confirmed') return;
+        m.status = 'uploading'; m.id = null;
+        renderGrid(); setRing(i, 0); setFS(2, 'active');
+        try {
+            const { signedUrl, requestId } = await apiFetch('/api/v1/upload', {
+                method: 'POST',
+                body: JSON.stringify({ uploadType: 'POST', fileMimeType: m.file.type, fileSize: m.file.size, duration: m.file.type.startsWith('video/') ? 15 : 1 })
+            });
+            m.id = requestId;
+            await uploadDirect(signedUrl, m.file, pct => setRing(i, pct));
+            m.status = 'confirmed';
+            setRing(i, 100);
+            renderGrid(); syncPreview();
+            const allNewDone = mediaItems.filter(x => x.kind === 'new').every(x => x.status === 'confirmed');
+            if (allNewDone) setFS(2, 'done');
+            toast('File ready ✓', 'ok');
+        } catch (err) {
+            console.error(err); m.status = 'failed';
+            renderGrid(); toast('Upload failed — click Retry', 'err');
+        }
+    }
+
+    async function uploadDirect(signedUrl, file, onProg) {
+        return new Promise((res, rej) => {
+            const xhr = new XMLHttpRequest();
+            xhr.upload.onprogress = e => { if (e.lengthComputable) onProg(Math.round(e.loaded / e.total * 100)); };
+            xhr.onload = () => xhr.status < 300 ? res() : rej(new Error('Upload failed: ' + xhr.status));
+            xhr.onerror = () => rej(new Error('Network error'));
+            xhr.open('PUT', signedUrl);
+            xhr.setRequestHeader('Content-Type', file.type);
+            xhr.send(file);
+        });
+    }
+
+    // ─── TILE DRAG REORDER ────────────────────────────────────────────────────────
+    function onTileDragStart(event, i) {
+        if (mediaLocked) { event.preventDefault(); return; }
+        dragSrcIndex = i; event.dataTransfer.effectAllowed = 'move';
+        setTimeout(() => { const t = document.getElementById('tile_' + i); if (t) t.classList.add('dragging'); }, 0);
+    }
+    function onTileDragOver(event, i) {
+        if (mediaLocked) return;
+        event.preventDefault(); event.dataTransfer.dropEffect = 'move';
+        if (i === dragSrcIndex) return;
+        document.querySelectorAll('.media-tile').forEach(t => t.classList.remove('drag-over-tile'));
+        const t = document.getElementById('tile_' + i); if (t) t.classList.add('drag-over-tile');
+    }
+    function onTileDragLeave(event, i) {
+        if (mediaLocked) return;
+        const t = document.getElementById('tile_' + i); if (t) t.classList.remove('drag-over-tile');
+    }
+    function onTileDrop(event, i) {
+        event.preventDefault(); event.stopPropagation();
+        if (mediaLocked) return;
+        document.querySelectorAll('.media-tile').forEach(t => { t.classList.remove('drag-over-tile'); t.classList.remove('dragging'); });
+        if (dragSrcIndex === null || dragSrcIndex === i) return;
+        const moved = mediaItems.splice(dragSrcIndex, 1)[0];
+        mediaItems.splice(i, 0, moved);
+        dragSrcIndex = null; pidx = 0;
+        renderGrid(); syncPreview();
+    }
+
+    // ─── PREVIEW SYNC ────────────────────────────────────────────────────────────
+    function syncPreview() {
+        // Caption
+        const cap = document.getElementById('caption').value.trim();
+        const ct = document.getElementById('pCapText');
+        ct.textContent = cap || 'Caption…';
+        ct.className = cap ? '' : 'p-placeholder';
+
+        // Media preview (only non-deleted, in order)
+        const visible = mediaItems.filter(m => !(m.kind === 'existing' && m.deleted));
+        const pm = document.getElementById('pMedia'), pd = document.getElementById('pDots');
+
+        if (!visible.length) {
+            pm.innerHTML = '<div class="p-empty"><svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24" color="#c8c4bc"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>No media</span></div>';
+            pd.style.display = 'none'; return;
+        }
+
+        if (pidx >= visible.length) pidx = 0;
+        const current = visible[pidx];
+        const isVid = current.mediaType === 'VIDEO';
+        const url = current.kind === 'existing' ? current.filepath : current.url;
+        pm.innerHTML = isVid
+            ? '<video src="' + url + '" muted autoplay loop playsinline style="width:100%;height:100%;object-fit:cover;"></video>'
+            : '<img src="' + url + '" style="width:100%;height:100%;object-fit:cover;">';
+
+        if (visible.length > 1) {
+            pd.style.display = 'flex';
+            pd.innerHTML = visible.map((_, idx) =>
+                '<div class="p-dot ' + (idx === pidx ? 'on' : '') + '" onclick="pidx=' + idx + ';syncPreview()"></div>'
+            ).join('');
+        } else {
+            pd.style.display = 'none';
+        }
+    }
+
+    // ─── UPDATE FLOW ─────────────────────────────────────────────────────────────
+    function onUpdateClick() {
+        // Validate: at least one active media
+        const active = mediaItems.filter(m => !(m.kind === 'existing' && m.deleted));
+        if (!active.length) { toast('At least one media item required', 'err'); return; }
+
+        // Validate: all new files must be confirmed
+        const unconfirmed = mediaItems.filter(m => m.kind === 'new' && m.status !== 'confirmed');
+        if (unconfirmed.length) { toast(unconfirmed.length + ' new file(s) not yet confirmed', 'err'); return; }
+
+        savePost();
+    }
+
+    async function savePost() {
+        document.getElementById('updateBtn').disabled = true;
+
+        try {
+            // Step 2 marker
+            const newFiles = mediaItems.filter(m => m.kind === 'new');
+            if (newFiles.length > 0) setFS(2, 'done');
+
+            // Step 3: upload thumbnail if changed
+            let thumbnailRequestId = null;
+            if (newThumbFile) {
+                setFS(3, 'active');
+                toast('Uploading thumbnail…', 'loading', 0);
+                try {
+                    thumbnailRequestId = await uploadThumb(newThumbFile);
+                    setFS(3, 'done');
+                } catch (err) {
+                    console.warn('Thumb upload failed, skipping thumbnail update:', err);
+                    toast('Thumbnail upload failed, skipping…', 'err', 2500);
+                    await new Promise(r => setTimeout(r, 2600));
+                    thumbnailRequestId = null;
+                    setFS(3, '');
+                }
+            } else {
+                setFS(3, 'done'); // no change needed
+            }
+
+            // Step 4: PATCH post
+            setFS(4, 'active');
+            toast('Saving changes…', 'loading', 0);
+
+            // Build mediaIds: non-deleted existing IDs + new confirmed requestIds, in display order
+            const activeMedia = mediaItems.filter(m => !(m.kind === 'existing' && m.deleted));
+            const mediaIds = activeMedia.map(m => m.id);
+
+            const params = new URLSearchParams(window.location.search);
+            const postId = params.get('postId');
+
+            const body = {
+                id: postId,
+                caption: document.getElementById('caption').value.trim() || null,
+                mediaIds: mediaIds,
+                thumbnail: thumbnailRequestId, // null if unchanged
+                postSettings: {
+                    commentsDisabled: document.getElementById('noComments').checked,
+                    hideLikes:        document.getElementById('hideLikes').checked,
+                    hideComments:     document.getElementById('hideComments').checked
+                }
+            };
+
+            await apiFetch('/api/v1/content/post', { method: 'PATCH', body: JSON.stringify(body) });
+
+            setFS(4, 'done'); setFS(5, 'done');
+            toast('Updated!', 'ok');
+            setTimeout(() => document.getElementById('successScreen').classList.add('show'), 500);
+
+        } catch (e) {
+            console.error(e);
+            toast('Error: ' + (e.message || 'Something went wrong'), 'err', 5000);
+            document.getElementById('updateBtn').disabled = false;
+        }
+    }
+
+    async function uploadThumb(file) {
+        // Generate thumbnail blob
+        const isVid = file.type.startsWith('video/');
+        const thumbBlob = isVid ? await generateVideoThumbnail(file) : await generateImageThumbnail(file);
+
+        const { signedUrl, requestId } = await apiFetch('/api/v1/upload', {
+            method: 'POST',
+            body: JSON.stringify({ uploadType: 'THUMBNAIL', fileMimeType: 'image/jpeg', fileSize: thumbBlob.size, duration: 1 })
+        });
+
+        await new Promise((res, rej) => {
+            const xhr = new XMLHttpRequest();
+            xhr.onload = () => xhr.status < 300 ? res() : rej(new Error('Thumb upload HTTP ' + xhr.status));
+            xhr.onerror = () => rej(new Error('Network error'));
+            xhr.open('PUT', signedUrl);
+            xhr.setRequestHeader('Content-Type', 'image/jpeg');
+            xhr.send(thumbBlob);
+        });
+
+        return requestId;
+    }
+
+    function generateImageThumbnail(file) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            const url = URL.createObjectURL(file);
+            img.onload = () => {
+                const size = 300, canvas = document.createElement('canvas');
+                canvas.width = size; canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                const s = Math.min(img.width, img.height);
+                ctx.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, size, size);
+                URL.revokeObjectURL(url);
+                canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/jpeg', 0.85);
+            };
+            img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image load failed')); };
+            img.src = url;
+        });
+    }
+
+    function generateVideoThumbnail(file) {
+        return new Promise((resolve, reject) => {
+            const video = document.createElement('video');
+            const url = URL.createObjectURL(file);
+            video.muted = true; video.playsInline = true;
+            video.onloadeddata = () => { video.currentTime = 1; };
+            video.onseeked = () => {
+                const size = 300, canvas = document.createElement('canvas');
+                canvas.width = size; canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                const s = Math.min(video.videoWidth, video.videoHeight);
+                ctx.drawImage(video, (video.videoWidth - s) / 2, (video.videoHeight - s) / 2, s, s, 0, 0, size, size);
+                URL.revokeObjectURL(url);
+                canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/jpeg', 0.85);
+            };
+            video.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Video load failed')); };
+            video.src = url;
+        });
+    }
+
+    // ─── UTILS ───────────────────────────────────────────────────────────────────
+    function updateCC(el, max, id) {
+        const l = el.value.length, c = document.getElementById(id);
+        c.textContent = l + ' / ' + max;
+        c.classList.toggle('warn', l > max * 0.9);
+    }
+
+    function setFS(n, s) {
+        const el = document.getElementById('fs' + n);
+        if (!el) return;
+        el.className = 'fn' + (s === 'active' ? ' active' : s === 'done' ? ' done' : '');
+        el.textContent = s === 'done' ? '✓' : n;
+    }
+
+    let sbT;
+    function toast(msg, type, dur) {
+        if (dur === undefined) dur = 3500;
+        const el = document.getElementById('sb');
+        el.className = 'sb show' + (type ? ' ' + type : '');
+        el.innerHTML = type === 'loading' ? '<div class="spin"></div>' + msg : msg;
+        clearTimeout(sbT);
+        if (dur) sbT = setTimeout(() => el.classList.remove('show'), dur);
+    }
+
+    async function apiFetch(path, opts) {
+        if (!opts) opts = {};
+        const h = { 'Content-Type': 'application/json' };
+        if (JWT) h['Authorization'] = 'Bearer ' + JWT;
+        const r = await fetch(API + path, Object.assign({}, opts, { headers: Object.assign(h, opts.headers || {}) }));
+        if (!r.ok) {
+            const errBody = await r.json().catch(() => ({}));
+            const err = new Error('HTTP ' + r.status);
+            err.status = r.status; err.body = errBody;
+            throw err;
+        }
+        return r.json().catch(() => ({}));
+    }
+
+    // Mark step 1 as active while loading
+    setFS(1, 'active');
+</script>
+</body>
+</html>

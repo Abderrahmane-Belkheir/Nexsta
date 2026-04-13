@@ -1,10 +1,14 @@
 package com.example.SocialMediaApp.Content.application;
 
 import com.example.SocialMediaApp.Content.Exceptions.ContentNotAvailableException;
+import com.example.SocialMediaApp.Content.api.dto.MediaRepresentation;
 import com.example.SocialMediaApp.Content.api.dto.PostUpdateRequest;
+import com.example.SocialMediaApp.Content.api.dto.PostUpdateResponse;
 import com.example.SocialMediaApp.Content.domain.Media;
 import com.example.SocialMediaApp.Content.domain.Post;
+import com.example.SocialMediaApp.Content.domain.PostPreview;
 import com.example.SocialMediaApp.Content.persistence.PostRepo;
+import com.example.SocialMediaApp.Shared.Mappers.Contentmapper;
 import com.example.SocialMediaApp.Storage.StorageService;
 import com.example.SocialMediaApp.Storage.StorageTransferManager;
 import com.example.SocialMediaApp.Upload.domain.MediaUpload;
@@ -26,6 +30,8 @@ public class PostUpdateService {
     private final MediaLifecycleService mediaLifecycleService;
     private final StorageService storageService;
     private final StorageTransferManager storageTransferManager;
+    private final ThumbnailService thumbnailService;
+    private final Contentmapper contentmapper;
 
 
     public void updatePost(PostUpdateRequest request){
@@ -52,6 +58,7 @@ public class PostUpdateService {
                     existingMap.put(mediaId,media);
                 }
             }
+
             for(int i=0;i<request.getMediaIds().size();i++){
                 String id=request.getMediaIds().get(i);
                 Media media=existingMap.get(id);
@@ -60,7 +67,18 @@ public class PostUpdateService {
                     existingMedia.add(media);
                 }
             }
+
+            String thumbnail=request.getThumbnail();
+            PostPreview existsingPostPreview =post.getPostPreview();
+
+            if(thumbnail!=null&& !thumbnail.equals(existsingPostPreview.getThumbnail())){
+                PostPreview newPostPreview=thumbnailService.generatePostThumbnail(currentUserId,thumbnail,existingMedia.get(0));
+                existsingPostPreview.setThumbnail(newPostPreview.getThumbnail());
+                existsingPostPreview.setMediaType(newPostPreview.getMediaType());
+            }
+
         }
+
         postRepo.save(post);
 
         if(uploadFinalization!=null){
@@ -69,6 +87,17 @@ public class PostUpdateService {
             storageService.transferTemporaryContent(post.getPostFolderPath(),uploadFinalization.getFilePaths(),storageTransfer);
         }
 
+    }
+
+    public PostUpdateResponse getPostToUpdate(String postId){
+        String currentUserId=authenticatedUserService.getCurrentUser();
+        Post post=postRepo.findByIdAndUserId(postId,currentUserId).
+                orElseThrow(()->new ContentNotAvailableException("Post Not Found"));
+        Map<String,List<MediaRepresentation>> mediaRepresentationMap=mediaLifecycleService.getPostsMedia(List.of(post),post.getPostStatus());
+       List<MediaRepresentation>  mediaRepresentationList=mediaRepresentationMap.get(postId);
+       PostUpdateResponse response=contentmapper.toPostUpdateResponse(post);
+        response.setMediaRepresentationList(mediaRepresentationList);
+       return response;
     }
 
 }
