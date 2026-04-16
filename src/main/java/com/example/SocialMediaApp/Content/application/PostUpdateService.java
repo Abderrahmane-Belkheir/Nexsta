@@ -47,10 +47,8 @@ public class PostUpdateService {
         post.setPostSettings(request.getPostSettings());
 
         // prepare those if media changing is needed
-        UploadFinalization uploadFinalization=null;
+        UploadFinalization uploadFinalization=new UploadFinalization();
         Map<String,Media> existingMediaMap=new HashMap<>();
-        String thumbnailPath=null;
-
         if(post.getPostStatus()!= Post.PostStatus.PUBLISHED&&post.getPostStatus()!= Post.PostStatus.UNPUBLISHED){
             // only never published posts are allowed to update media
             List<Media> existingMediaList =post.getMediaList();
@@ -88,7 +86,7 @@ public class PostUpdateService {
                 PostPreview newPostPreview=thumbnailService.generatePostThumbnail(currentUserId,thumbnail, existingMediaList.get(0));
                 existsingPostPreview.setThumbnail(newPostPreview.getThumbnail());
                 existsingPostPreview.setMediaType(newPostPreview.getMediaType());
-                thumbnailPath=newPostPreview.getThumbnailFilePath();
+                uploadFinalization.addFilePath(newPostPreview.getThumbnailFilePath());
             }
 
         }
@@ -101,10 +99,9 @@ public class PostUpdateService {
         storageService.deleteFiles(deletedMediaPaths,storageTransferManager.resolveBucket(post.getPostStatus()));
         }
 
-        if(uploadFinalization!=null){
+        if(!uploadFinalization.checkEmptyFiles()){
             Post.PostStatus status=post.getPostStatus();
             StorageTransferManager.StorageTransfer storageTransfer=storageTransferManager.resolveStorageTransfer(status,status);
-            uploadFinalization.getFilePaths().add(thumbnailPath);
             storageService.transferTemporaryContent(post.getPostFolderPath(),uploadFinalization.getFilePaths(),storageTransfer);
         }
 

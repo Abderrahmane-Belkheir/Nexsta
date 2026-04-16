@@ -259,7 +259,7 @@
     <p>Your changes have been saved successfully.</p>
     <div class="btns">
         <button class="btn btn-ghost" onclick="window.history.back()">Go Back</button>
-        <button class="btn btn-primary" onclick="location.reload()">Edit Again</button>
+        <button class="btn btn-primary" onclick="refetchAndEdit()">Edit Again</button>
     </div>
 </div>
 
@@ -484,7 +484,7 @@
         // Load post
         document.getElementById('loaderMsg').textContent = 'Fetching post ' + postId;
         try {
-            const post = await apiFetch('/api/v1/content/post/update/' + postId);
+            const post = await apiFetch('/api/v1/content/post/'+postId+'/update');
             populateForm(post);
             setFS(1, 'done');
             hideLoader();
@@ -943,14 +943,16 @@
             body: JSON.stringify({ uploadType: 'THUMBNAIL', fileMimeType: 'image/jpeg', fileSize: thumbBlob.size, duration: 1 })
         });
 
-        await new Promise((res, rej) => {
-            const xhr = new XMLHttpRequest();
-            xhr.onload = () => xhr.status < 300 ? res() : rej(new Error('Thumb upload HTTP ' + xhr.status));
-            xhr.onerror = () => rej(new Error('Network error'));
-            xhr.open('PUT', signedUrl);
-            xhr.setRequestHeader('Content-Type', 'image/jpeg');
-            xhr.send(thumbBlob);
+        const putRes = await fetch(signedUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'image/jpeg' },
+            body: thumbBlob
         });
+        if (!putRes.ok) throw new Error('Thumbnail PUT failed: ' + putRes.status);
+
+        // Give the server a moment to finish processing the upload
+        // before the PATCH arrives referencing this requestId
+        await new Promise(r => setTimeout(r, 800));
 
         return requestId;
     }
@@ -1066,6 +1068,45 @@
             throw err;
         }
         return r.json().catch(() => ({}));
+    }
+
+    // Re-fetch post after a successful update so all state is fresh
+    async function refetchAndEdit() {
+        // Hide success screen, show loader
+        document.getElementById('successScreen').classList.remove('show');
+        document.getElementById('mainPage').style.display = 'none';
+        const loader = document.getElementById('pageLoader');
+        loader.style.display = 'flex'; loader.classList.remove('hidden');
+        document.getElementById('loaderMsg').textContent = 'Refreshing post data…';
+        document.getElementById('updateBtn').disabled = true;
+
+        // Reset all in-memory state
+        mediaItems.forEach(m => { if (m.kind === 'new' && m.url) URL.revokeObjectURL(m.url); });
+        mediaItems = [];
+        pidx = 0;
+        dragSrcIndex = null;
+        originalFirstMediaId = null;
+        mediaLocked = false;
+
+        // Reset flow steps
+        [1,2,3,4,5].forEach(n => setFS(n, ''));
+        setFS(1, 'active');
+
+        // Reset lock banner + drop zone state
+        document.getElementById('mediaLockBanner').style.display = 'none';
+        document.getElementById('dropZone').classList.remove('locked');
+        document.getElementById('addMediaDivider').classList.remove('locked');
+
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const postId = params.get('postId');
+            const post = await apiFetch('/api/v1/content/post/'+postId+'/update');
+            populateForm(post);
+            setFS(1, 'done');
+            hideLoader();
+        } catch (e) {
+            showPageError('Error ' + (e.status || '') + ': ' + (e.message || 'Could not reload post.'));
+        }
     }
 
     // Mark step 1 as active while loading

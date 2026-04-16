@@ -58,7 +58,7 @@ public class PostLifeCycleController {
         return ResponseEntity.ok(postVisibilityService.togglePostVisibility(postId));
     }
 
-    @GetMapping("/update/{postId}")
+    @GetMapping("/{postId}/update")
     public ResponseEntity<PostUpdateResponse> getPostToUpdate(@PathVariable String postId){
         return ResponseEntity.ok(postUpdateService.getPostToUpdate(postId));
     }
@@ -68,5 +68,12 @@ public class PostLifeCycleController {
         postUpdateService.updatePost(request);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{postId}/publish")
+    public ResponseEntity<Void> publishPost(){
+
+        return ResponseEntity.noContent().build();
+    }
+
 
 }
