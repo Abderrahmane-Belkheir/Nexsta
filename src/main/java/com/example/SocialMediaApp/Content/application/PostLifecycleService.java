@@ -53,7 +53,7 @@ public class PostLifecycleService {
         Post post = Post.builder()
                 .id(postId).postStatus(status).user(new User(currentUserId))
                 .caption(request.getCaption()).postSettings(request.getPostSettings())
-                .location(request.getLocation()).postFolderPath(destinationFolder)
+                .location(request.getLocation()).postFolderPath(destinationFolder).scheduledAt(request.getScheduleAt())
                 .build();
 
         List<Media> mediaList = mediaLifecycleService.persistMedia(uploadFinalization.getMediaUploads(), post);

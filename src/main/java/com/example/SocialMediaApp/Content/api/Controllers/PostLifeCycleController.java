@@ -59,7 +59,7 @@ public class PostLifeCycleController {
     }
 
     @GetMapping("/update/{postId}")
-    private ResponseEntity<PostUpdateResponse> getPostToUpdate(@PathVariable String postId){
+    public ResponseEntity<PostUpdateResponse> getPostToUpdate(@PathVariable String postId){
         return ResponseEntity.ok(postUpdateService.getPostToUpdate(postId));
     }
 
