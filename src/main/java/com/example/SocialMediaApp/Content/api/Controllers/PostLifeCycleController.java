@@ -9,6 +9,7 @@ import com.example.SocialMediaApp.Content.domain.Post;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import jakarta.ws.rs.POST;
 import lombok.RequiredArgsConstructor;
 import org.quartz.SchedulerException;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+
+import static org.jboss.resteasy.mock.MockHttpRequest.post;
 
 @RestController
 @RequiredArgsConstructor
@@ -70,8 +73,8 @@ public class PostLifeCycleController {
     }
 
     @PatchMapping("/{postId}/publish")
-    public ResponseEntity<Void> publishPost(){
-
+    public ResponseEntity<Void> publishPost(@PathVariable String postId,@RequestBody @Valid PostPublish postPublish) throws SchedulerException {
+        postLifecycleService.publishPost(postId,postPublish);
         return ResponseEntity.noContent().build();
     }
 

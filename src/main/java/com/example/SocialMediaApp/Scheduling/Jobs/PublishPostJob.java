@@ -1,6 +1,7 @@
 
 package com.example.SocialMediaApp.Scheduling.Jobs;
 
+import com.example.SocialMediaApp.Content.application.PostStorageService;
 import com.example.SocialMediaApp.Content.domain.Media;
 import com.example.SocialMediaApp.Content.domain.Post;
 import com.example.SocialMediaApp.Content.persistence.PostRepo;
@@ -21,8 +22,7 @@ import java.util.Optional;
 public class PublishPostJob implements Job {
 
     private final PostRepo postRepo;
-    private final StorageService storageService;
-    private final StorageTransferManager storageTransferManager;
+    private final PostStorageService postStorageService;
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
@@ -35,12 +35,10 @@ public class PublishPostJob implements Job {
             return;
         }
         Post post=optionalPost.get();
-        StorageTransferManager.StorageTransfer storageTransfer=storageTransferManager.resolveStorageTransfer(Post.PostStatus.SCHEDULED, Post.PostStatus.PUBLISHED);
-        storageService.moveBatchFiles(post.getPostFolderPath(),storageTransfer);
         post.setPostStatus(Post.PostStatus.PUBLISHED);
         post.setPublishedAt(context.getFireTime().toInstant());
         post.setScheduledAt(null);
-        post.setPostFolderPath(post.getPostFolderPath().replace(storageTransfer.getSourceDir().getDirName(),storageTransfer.getDestinationDir().getDirName()));
+        post.setPostFolderPath(postStorageService.moveAndResolvePath(post, Post.PostStatus.DRAFT, Post.PostStatus.PUBLISHED));
         postRepo.save(post);
     }
 

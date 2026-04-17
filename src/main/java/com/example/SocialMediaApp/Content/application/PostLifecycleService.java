@@ -1,16 +1,15 @@
 package com.example.SocialMediaApp.Content.application;
 
+import com.example.SocialMediaApp.Content.Exceptions.ContentNotAvailableException;
 import com.example.SocialMediaApp.Content.Exceptions.ContentNotFoundException;
-import com.example.SocialMediaApp.Content.api.dto.DeletePostResponse;
-import com.example.SocialMediaApp.Content.api.dto.MediaRepresentation;
-import com.example.SocialMediaApp.Content.api.dto.PostCreationRequest;
-import com.example.SocialMediaApp.Content.api.dto.PostRepresentation;
+import com.example.SocialMediaApp.Content.api.dto.*;
 import com.example.SocialMediaApp.Content.domain.Media;
 import com.example.SocialMediaApp.Content.domain.Post;
 import com.example.SocialMediaApp.Content.domain.PostPreview;
 import com.example.SocialMediaApp.Content.persistence.PostRepo;
 import com.example.SocialMediaApp.Shared.Exceptions.ActionNotAllowedException;
 import com.example.SocialMediaApp.Shared.Mappers.Contentmapper;
+import com.example.SocialMediaApp.Storage.StorageTransferManager;
 import com.example.SocialMediaApp.Upload.domain.UploadFinalization;
 import com.example.SocialMediaApp.Upload.domain.UploadType;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
@@ -73,7 +72,7 @@ public class PostLifecycleService {
 
     public DeletePostResponse deletePost(String postId) throws SchedulerException {
         String currentUserId = authenticatedUserService.getCurrentUser();
-        Post post = postRepo.findByIdAndUserIdAndPostStatusWithMediaList(currentUserId,postId)
+        Post post = postRepo.findByIdAndUserIdWithMediaList(currentUserId,postId)
                 .orElseThrow(() -> new ContentNotFoundException("Post to Delete Not Found"));
 
         if (post.getPostStatus() == Post.PostStatus.DELETED)
@@ -122,6 +121,27 @@ public class PostLifecycleService {
         rep.setRestored(true);
         rep.setPostStatus(post.getPostStatus());
         return rep;
+    }
+
+    // publishing post for first time draft -> published / scheduled
+    public void publishPost(String postId,PostPublish postPublish) throws SchedulerException {
+        String currentUserId=authenticatedUserService.getCurrentUser();
+
+        Post draftPost=postRepo.findByIdAndUserIdAndPostStatusWithMediaList(currentUserId,postId, Post.PostStatus.DRAFT).
+                orElseThrow(()-> new ContentNotFoundException("Post Not Found"));
+
+        if(postPublish.getScheduledAt()!=null) {
+            draftPost.setPostStatus(Post.PostStatus.SCHEDULED);
+            draftPost.setScheduledAt(postPublish.getScheduledAt());
+            postRepo.save(draftPost);
+            postSchedulingService.schedulePost(postId,postPublish.getScheduledAt());
+            return;
+        }
+
+        draftPost.setPublishedAt(Instant.now());
+        draftPost.setPostStatus(Post.PostStatus.PUBLISHED);
+        draftPost.setPostFolderPath(postStorageService.moveAndResolvePath(draftPost, Post.PostStatus.DRAFT, Post.PostStatus.PUBLISHED));
+        postRepo.save(draftPost);
     }
 
     private Post.PostStatus getPostStatus(PostCreationRequest.PostAction postAction) {

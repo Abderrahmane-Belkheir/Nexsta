@@ -30,8 +30,8 @@ public interface PostRepo extends JpaRepository<Post,String> {
     @Query("SELECT p FROM Post p LEFT JOIN FETCH p.mediaList WHERE p.id= :postId AND p.user.id= :userId AND p.postStatus= 'DELETED' ")
     Optional<Post> findPostToRestore(@Param("postId") String postId, @Param("userId") String userId);
 
-    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.mediaList WHERE p.id= :postId AND p.user.id= :userId")
-    Optional<Post> findByIdAndUserIdAndPostStatusWithMediaList(@Param("userId") String userId,@Param("postId") String postId);
+    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.mediaList WHERE p.id= :postId AND p.user.id= :userId AND p.postStatus=:status")
+    Optional<Post> findByIdAndUserIdAndPostStatusWithMediaList(@Param("userId") String userId,@Param("postId") String postId,@Param("status") Post.PostStatus status);
 
     @Query("SELECT p FROM Post p LEFT JOIN FETCH p.mediaList WHERE p.id= :postId AND p.postStatus=:status")
     Optional<Post> findByIdAndPostStatusWithMediaList(@Param("postId") String postId ,@Param("status") Post.PostStatus status);
