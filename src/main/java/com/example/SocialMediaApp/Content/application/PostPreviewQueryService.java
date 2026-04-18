@@ -33,6 +33,7 @@ public class PostPreviewQueryService {
     private final VisibilityPolicy visibilityPolicy;
     private final Contentmapper contentmapper;
     private final MediaUrlResolver mediaUrlResolver;
+    private static final int postQueryLimit=10;
 
 
     public PostPreviewResponse getMyPostsPreview(PostPreviewRequest request){
@@ -51,27 +52,39 @@ public class PostPreviewQueryService {
         return getPostsPreviewRepresentation(targetId, Post.PostStatus.PUBLISHED,request.getCursor(),ViewerType.VIEWER);
     }
 
+    private List<Post> fetchPosts(String userId,Post.PostStatus status,Instant cursor){
+        if(status== Post.PostStatus.PUBLISHED) return cursor==null?
+                postRepo.findTop11ByUserIdAndPostStatusOrderByPublishedAtDesc(userId,status):
+                postRepo.findTop11ByUserIdAndPostStatusAndPublishedAtBeforeOrderByPublishedAtDesc(userId,status,cursor);
+
+        return cursor==null?
+                postRepo.findTop11ByUserIdAndPostStatusOrderByCreatedAtDesc(userId,status):
+                postRepo.findTop11ByUserIdAndPostStatusAndCreatedAtBeforeOrderByCreatedAtDesc(userId,status,cursor);
+    }
+
     private PostPreviewResponse getPostsPreviewRepresentation(String userId, Post.PostStatus postStatus, Instant cursor, ViewerType viewerType){
 
-        int limit=10;
-        boolean hasMore=false;
-        Instant nextCursor=null;
-        log.info("inside the get post previews");
-        List<Post> postList=cursor==null?
-                postRepo.findTop10ByUserIdAndPostStatusOrderByPublishedAtDesc(userId,postStatus):
-                postRepo.findTop10ByUserIdAndPostStatusAndPublishedAtBeforeOrderByPublishedAtDesc(userId,postStatus,cursor);
-
+        List<Post> postList=fetchPosts(userId,postStatus,cursor);
+        boolean hasMore=postList.size()==postQueryLimit+1;
+        if(hasMore) postList.remove(postQueryLimit);
 
         List<PostPreviewRepresentation> postPreviewRepresentationList= postList.stream().map(post->{
+
             PostPreviewRepresentation postPreviewRepresentation= contentmapper.toPostPreview(post);
-            if(postStatus== Post.PostStatus.PUBLISHED) {
+
+
                 PostPreview postPreview=post.getPostPreview();
-                String thumbnailPath=mediaUrlResolver.resolvePath(post.getPostFolderPath(),postPreview.getThumbnail());
-                String thumbnailFullUrl=mediaUrlResolver.resolveFullUrl(thumbnailPath);
-                postPreview.setThumbnail(thumbnailFullUrl);
-                postPreviewRepresentation.setPostPreview(postPreview);
-            }
+
+                if(postPreview!=null){
+                    String thumbnailPath=mediaUrlResolver.resolvePath(post.getPostFolderPath(),postPreview.getThumbnail());
+                    String thumbnailFullUrl=postStatus== Post.PostStatus.PUBLISHED?mediaUrlResolver.resolveFullUrl(thumbnailPath): mediaUrlResolver.generateSignerUrl(thumbnailPath);
+                    postPreview.setThumbnail(thumbnailFullUrl);
+                    postPreviewRepresentation.setPostPreview(postPreview);
+                }
+
+
             PostSettings postSettings=post.getPostSettings();
+
             if(viewerType==ViewerType.VIEWER){
 
                 if(!postSettings.isHideLikes()){
@@ -91,12 +104,11 @@ public class PostPreviewQueryService {
             return postPreviewRepresentation;
         }).toList();
 
-        if(postPreviewRepresentationList.size()==limit){
+        Instant nextCursor=null;
+
+        if(!postList.isEmpty()){
             Post lastPost=postList.get(postList.size()-1);
-            hasMore=postRepo.existsByUserIdAndPostStatusAndPublishedAtBefore(userId,postStatus,lastPost.getPublishedAt());
-            if(hasMore){
-                nextCursor=lastPost.getPublishedAt();
-            }
+             nextCursor=postStatus== Post.PostStatus.PUBLISHED?lastPost.getPublishedAt():lastPost.getCreatedAt();
         }
 
         return new PostPreviewResponse(postPreviewRepresentationList,hasMore,nextCursor);

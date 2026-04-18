@@ -53,6 +53,8 @@ public class PostLifecycleService {
                 .location(request.getLocation()).postFolderPath(destinationFolder).scheduledAt(request.getScheduleAt())
                 .build();
 
+        if(request.getPostAction()== PostCreationRequest.PostAction.PUBLISHED) post.setPublishedAt(Instant.now());
+
         List<Media> mediaList = mediaLifecycleService.persistMedia(uploadFinalization.getMediaUploads(), post);
         PostPreview postPreview=thumbnailGenerator.generatePostThumbnail(currentUserId,request.getThumbnailRequestId(),mediaList.get(0));
         post.setPostPreview(postPreview);

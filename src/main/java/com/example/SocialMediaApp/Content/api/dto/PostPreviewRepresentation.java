@@ -9,6 +9,6 @@ import lombok.Data;
 public class PostPreviewRepresentation {
     private String id;
     private PostPreview postPreview;
-    private long likes;
-    private long comments;
+    private Long likes;
+    private Long comments;
 }

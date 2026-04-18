@@ -27,7 +27,7 @@ public class PostQueryController {
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<PostPreviewResponse> getUserPostsPreview(@PathVariable String userId,@RequestBody @Valid PostPreviewRequest request){
+    public ResponseEntity<PostPreviewResponse> getUserPostsPreview(@PathVariable String userId,@ModelAttribute @Valid PostPreviewRequest request){
         return ResponseEntity.ok(postPreviewQueryService.getUserPostsPreview(userId,request));
     }
 

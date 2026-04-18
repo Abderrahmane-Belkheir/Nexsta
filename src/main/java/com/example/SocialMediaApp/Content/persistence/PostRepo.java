@@ -1,6 +1,5 @@
 package com.example.SocialMediaApp.Content.persistence;
 
-import com.example.SocialMediaApp.Content.domain.FetchDirection;
 import com.example.SocialMediaApp.Content.domain.Post;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Pageable;
@@ -18,17 +17,17 @@ public interface PostRepo extends JpaRepository<Post,String> {
     @Query("SELECT p FROM Post p LEFT JOIN FETCH p.mediaList WHERE p.user.id=:userId AND p.id=:postId")
     Optional<Post> findByIdAndUserIdWithMediaList(@Param("userId") String userId,@Param("postId") String postId);
 
-    @Modifying
-    @Transactional
-    @Query("UPDATE Post p SET p.postStatus = :status WHERE " +
-            "p.id = :postId AND p.postStatus IN :allowedStatuses AND p.user.id = :userId")
-    int updatePostStatus(@Param("postId") String postId, @Param("status") Post.PostStatus status,
-                         @Param("userId") String userId, @Param("allowedStatuses") List<Post.PostStatus> allowedStatuses);
-    @Query("SELECT p FROM Post p WHERE p.user.id=:userId AND p.postStatus=:status AND  ((:direction='UP') AND p.publishedAt>:date) OR ((:direction='DOWN') AND  p.publishedAt<:date) ORDER By p.publishedAt DESC")
+    @Query("SELECT p FROM Post p WHERE p.user.id=:userId AND p.postStatus=:status AND (((:direction='UP') AND p.publishedAt>:date) OR ((:direction='DOWN') AND p.publishedAt<:date)) ORDER By p.publishedAt DESC")
     List<Post> findPostsAboveOrBelowPost(@Param("userId") String userId, @Param("date") Instant date, @Param("status") Post.PostStatus status, @Param("direction") String direction, Pageable pageable);
+
+
+
     Optional<Post> findByIdAndUserIdAndPostStatus(String postId,String userId,Post.PostStatus status);
+
     @Query("SELECT p FROM Post p LEFT JOIN FETCH p.mediaList WHERE p.id= :postId AND p.user.id= :userId AND p.postStatus= 'DELETED' ")
     Optional<Post> findPostToRestore(@Param("postId") String postId, @Param("userId") String userId);
+
+
 
     @Query("SELECT p FROM Post p LEFT JOIN FETCH p.mediaList WHERE p.id= :postId AND p.user.id= :userId AND p.postStatus=:status")
     Optional<Post> findByIdAndUserIdAndPostStatusWithMediaList(@Param("userId") String userId,@Param("postId") String postId,@Param("status") Post.PostStatus status);
@@ -54,11 +53,12 @@ public interface PostRepo extends JpaRepository<Post,String> {
     @Query("DELETE FROM Post p WHERE p.postStatus=:status AND p.deletedAt < :date ")
     void deleteByOldPostsWithStatus(@Param("status") Post.PostStatus status,@Param("date") Instant date);
 
-    Optional<Post> findByIdAndUserId(String userId,String postId);
+    Optional<Post> findByIdAndUserId(String postId,String userId);
 
-    List<Post> findTop10ByUserIdAndPostStatusAndPublishedAtBeforeOrderByPublishedAtDesc(String userId, Post.PostStatus status, Instant date);
-    List<Post> findTop10ByUserIdAndPostStatusOrderByPublishedAtDesc(String userId,Post.PostStatus status);
-    boolean existsByUserIdAndPostStatusAndPublishedAtBefore(String userId,Post.PostStatus status,Instant date);
+    List<Post> findTop11ByUserIdAndPostStatusAndPublishedAtBeforeOrderByPublishedAtDesc(String userId, Post.PostStatus status, Instant date);
+    List<Post> findTop11ByUserIdAndPostStatusOrderByPublishedAtDesc(String userId,Post.PostStatus status);
+    List<Post> findTop11ByUserIdAndPostStatusAndCreatedAtBeforeOrderByCreatedAtDesc(String userId, Post.PostStatus status, Instant date);
+    List<Post> findTop11ByUserIdAndPostStatusOrderByCreatedAtDesc(String userId,Post.PostStatus status);
     @Query("SELECT COUNT(p) >= :limit FROM Post p WHERE p.user.id = :userId AND p.postStatus = 'DRAFT'")
     boolean isDraftLimitReached(@Param("userId") String userId, @Param("limit") int limit);
 }
