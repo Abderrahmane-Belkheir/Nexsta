@@ -18,8 +18,6 @@ public class PostVisibilityService {
 
     private final AuthenticatedUserService authenticatedUserService;
     private final PostRepo postRepo;
-    private final StorageTransferManager storageTransferManager;
-    private final StorageService storageService;
     private final PostStorageService postStorageService;
 
 

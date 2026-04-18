@@ -7,7 +7,6 @@ import com.example.SocialMediaApp.Content.domain.Story;
 import com.example.SocialMediaApp.Content.persistence.MediaRepo;
 import com.example.SocialMediaApp.Shared.MediaUrlResolver;
 import com.example.SocialMediaApp.Storage.StorageDir;
-import com.example.SocialMediaApp.Storage.StorageTransferManager;
 import com.example.SocialMediaApp.Upload.application.UploadGatewayService;
 import com.example.SocialMediaApp.Upload.domain.MediaUpload;
 import com.example.SocialMediaApp.Upload.domain.UploadFinalization;

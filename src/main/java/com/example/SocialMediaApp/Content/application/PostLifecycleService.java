@@ -1,6 +1,5 @@
 package com.example.SocialMediaApp.Content.application;
 
-import com.example.SocialMediaApp.Content.Exceptions.ContentNotAvailableException;
 import com.example.SocialMediaApp.Content.Exceptions.ContentNotFoundException;
 import com.example.SocialMediaApp.Content.api.dto.*;
 import com.example.SocialMediaApp.Content.domain.Media;
@@ -9,7 +8,6 @@ import com.example.SocialMediaApp.Content.domain.PostPreview;
 import com.example.SocialMediaApp.Content.persistence.PostRepo;
 import com.example.SocialMediaApp.Shared.Exceptions.ActionNotAllowedException;
 import com.example.SocialMediaApp.Shared.Mappers.Contentmapper;
-import com.example.SocialMediaApp.Storage.StorageTransferManager;
 import com.example.SocialMediaApp.Upload.domain.UploadFinalization;
 import com.example.SocialMediaApp.Upload.domain.UploadType;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
