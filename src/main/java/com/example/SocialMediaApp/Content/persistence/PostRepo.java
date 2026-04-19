@@ -20,6 +20,13 @@ public interface PostRepo extends JpaRepository<Post,String> {
     @Query("SELECT p FROM Post p WHERE p.user.id=:userId AND p.postStatus=:status AND (((:direction='UP') AND p.publishedAt>:date) OR ((:direction='DOWN') AND p.publishedAt<:date)) ORDER By p.publishedAt DESC")
     List<Post> findPostsAboveOrBelowPost(@Param("userId") String userId, @Param("date") Instant date, @Param("status") Post.PostStatus status, @Param("direction") String direction, Pageable pageable);
 
+    @Query(value =
+            "(SELECT * FROM post WHERE user_id = :userId AND post_status = :status AND published_at < :date ORDER BY published_at DESC LIMIT :pageSize) " +
+                    "UNION ALL " +
+                    "(SELECT * FROM post WHERE user_id = :userId AND post_status = :status AND published_at > :date ORDER BY published_at ASC LIMIT :pageSize)",
+            nativeQuery = true)
+    List<Post> findMixedNeighbors(@Param("userId") String userId, @Param("date") Instant date, @Param("status") String status, @Param("pageSize") int pageSize);
+
 
 
     Optional<Post> findByIdAndUserIdAndPostStatus(String postId,String userId,Post.PostStatus status);

@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import java.util.*;
@@ -40,6 +41,7 @@ public class FullPostQueryService {
     private final PostLikeRepo postLikeRepo;
     private final MediaLifecycleService mediaLifecycleService;
 
+    @Transactional(readOnly = true)
     public PostRepresentationResponse getPostNeighbors(String postId, FetchDirection direction){
         String currentUserId=authenticatedUserService.getCurrentUser();
 
@@ -58,6 +60,7 @@ public class FullPostQueryService {
         return getPostNeighborsHelper(currentUserId,ownerId,()->post,post.getPostStatus(),viewerType,profileInfo,direction);
     }
 
+
     private PostRepresentationResponse getPostNeighborsHelper(String userId, String ownerId, Supplier<Post> postSupplier, Post.PostStatus postStatus, ViewerType viewerType, ProfileInfo profileInfo, FetchDirection direction){
         Post post=postSupplier.get();
         int pageSize=5;
@@ -72,11 +75,13 @@ public class FullPostQueryService {
                 previousPosts.add(post);
                 middlePostIndex=previousPosts.size()-1;
                 previousPosts.addAll(nextPosts);
+                List<Post> mixedPosts=postRepo.findMixedNeighbors(ownerId,)
               yield  previousPosts;
             }
         };
 
         if(postList.isEmpty()) return  new PostRepresentationResponse();
+
         Map<String,List<MediaRepresentation>> mediaRepresentationMap=mediaLifecycleService.getPostsMedia(postList,postStatus);
         Set<String> likeByPost= postLikeRepo.getLikesPostIds(userId,postList.stream().map(Post::getId).toList());
         List<PostRepresentation> postRepresentationList=postList.stream().map(p ->{
