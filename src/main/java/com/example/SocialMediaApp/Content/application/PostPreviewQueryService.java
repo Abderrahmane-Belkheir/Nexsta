@@ -53,7 +53,7 @@ public class PostPreviewQueryService {
     }
 
     private List<Post> fetchPosts(String userId,Post.PostStatus status,Instant cursor){
-        if(status== Post.PostStatus.PUBLISHED) return cursor==null?
+        if(status== Post.PostStatus.PUBLISHED||status== Post.PostStatus.UNPUBLISHED) return cursor==null?
                 postRepo.findTop11ByUserIdAndPostStatusOrderByPublishedAtDesc(userId,status):
                 postRepo.findTop11ByUserIdAndPostStatusAndPublishedAtBeforeOrderByPublishedAtDesc(userId,status,cursor);
 

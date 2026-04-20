@@ -18,12 +18,15 @@ public interface PostRepo extends JpaRepository<Post,String> {
     Optional<Post> findByIdAndUserIdWithMediaList(@Param("userId") String userId,@Param("postId") String postId);
 
     @Query("SELECT p FROM Post p WHERE p.user.id=:userId AND p.postStatus=:status AND (((:direction='UP') AND p.publishedAt>:date) OR ((:direction='DOWN') AND p.publishedAt<:date)) ORDER By p.publishedAt DESC")
-    List<Post> findPostsAboveOrBelowPost(@Param("userId") String userId, @Param("date") Instant date, @Param("status") Post.PostStatus status, @Param("direction") String direction, Pageable pageable);
+    List<Post> findPostsAboveOrBelowPostOrderByPublishedAt(@Param("userId") String userId, @Param("date") Instant date, @Param("status") Post.PostStatus status, @Param("direction") String direction, Pageable pageable);
+
+    @Query("SELECT p FROM Post p WHERE p.user.id=:userId AND p.postStatus=:status AND (((:direction='UP') AND p.createdAt>:date) OR ((:direction='DOWN') AND p.createdAt<:date)) ORDER By p.publishedAt DESC")
+    List<Post> findPostsAboveOrBelowPostOrderByCreatedAt(@Param("userId") String userId, @Param("date") Instant date, @Param("status") Post.PostStatus status, @Param("direction") String direction, Pageable pageable);
 
     @Query(value =
-            "(SELECT * FROM post WHERE user_id = :userId AND post_status = :status AND published_at < :date ORDER BY published_at DESC LIMIT :pageSize) " +
+            "(SELECT * FROM post WHERE user_id = :userId AND post_status = :status AND published_at < :date ORDER BY COALESCE(published_at, created_at) DESC LIMIT :pageSize) " +
                     "UNION ALL " +
-                    "(SELECT * FROM post WHERE user_id = :userId AND post_status = :status AND published_at > :date ORDER BY published_at ASC LIMIT :pageSize)",
+                    "(SELECT * FROM post WHERE user_id = :userId AND post_status = :status AND published_at > :date ORDER BY COALESCE(published_at, created_at) ASC LIMIT :pageSize)",
             nativeQuery = true)
     List<Post> findMixedNeighbors(@Param("userId") String userId, @Param("date") Instant date, @Param("status") String status, @Param("pageSize") int pageSize);
 
@@ -51,9 +54,6 @@ public interface PostRepo extends JpaRepository<Post,String> {
     @Transactional
     @Query("UPDATE Post p SET p.commentCount = p.commentCount + :delta WHERE p.id= :postId")
     void updatePostComments(@Param("postId") String postId,@Param("delta") int delta);
-    
-
-
 
     @Modifying
     @Transactional
@@ -66,6 +66,7 @@ public interface PostRepo extends JpaRepository<Post,String> {
     List<Post> findTop11ByUserIdAndPostStatusOrderByPublishedAtDesc(String userId,Post.PostStatus status);
     List<Post> findTop11ByUserIdAndPostStatusAndCreatedAtBeforeOrderByCreatedAtDesc(String userId, Post.PostStatus status, Instant date);
     List<Post> findTop11ByUserIdAndPostStatusOrderByCreatedAtDesc(String userId,Post.PostStatus status);
+
     @Query("SELECT COUNT(p) >= :limit FROM Post p WHERE p.user.id = :userId AND p.postStatus = 'DRAFT'")
     boolean isDraftLimitReached(@Param("userId") String userId, @Param("limit") int limit);
 }
