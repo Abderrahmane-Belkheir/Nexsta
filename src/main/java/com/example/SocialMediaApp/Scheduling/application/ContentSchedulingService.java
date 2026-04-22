@@ -1,5 +1,7 @@
 package com.example.SocialMediaApp.Scheduling.application;
 
+import com.example.SocialMediaApp.Notification.application.ContentNotificationService;
+import com.example.SocialMediaApp.Notification.domain.EmailSending;
 import com.example.SocialMediaApp.Scheduling.Jobs.PublishPostJob;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +19,7 @@ import java.util.Date;
 public class ContentSchedulingService {
 
     private final Scheduler scheduler;
+    private final ContentNotificationService contentNotificationService;
 
 
     public void schedulePostPublishing(String postId, Instant date) throws SchedulerException {
@@ -29,25 +32,25 @@ public class ContentSchedulingService {
                 withIdentity("trigger-" + postId, "post-triggers")
                 .startAt(Date.from(date)).forJob(jobDetail)
                 .build();
-        log.info("Scheduling post publishing for postId : "+postId+" At : "+date);
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
                 try {
                     scheduler.scheduleJob(jobDetail, trigger);
-                    log.info("🚀 Quartz Job scheduled AFTER DB Commit for post: " + postId);
                 } catch (SchedulerException e) {
-                    log.error("Failed to schedule job", e);
+                    log.error("");
                 }
             }
         });
-        log.info("Scheduling done");
+        EmailSending emailSending=EmailSending.builder().build();
+        contentNotificationService.sendEmail(emailSending);
+        log.info("Scheduling done for post {}", postId);
     }
 
     public void unSchedulePostPublishing(String postId) throws SchedulerException {
         JobKey jobKey=JobKey.jobKey("schedule-publish-post"+postId);
         if(scheduler.deleteJob(jobKey)) log.info("unScheduling post : "+postId);
-        else log.warn("failed unScheduling post : "+postId);
+        else log.warn("failed unScheduling post : {}", postId);
     }
 
 

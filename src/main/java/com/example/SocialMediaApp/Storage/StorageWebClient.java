@@ -2,17 +2,18 @@ package com.example.SocialMediaApp.Storage;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-@Service
+@Configuration
 @RequiredArgsConstructor
 public class StorageWebClient {
 
     private final WebClient.Builder webClientBuilder;
     private final StorageProperties storageEnv;
 
-    @Bean
+    @Bean(name = "storageWebClient")
     public WebClient webClient(){
         return webClientBuilder.baseUrl(storageEnv.getUrl()).defaultHeaders(headers -> {
             headers.set("Authorization", "Bearer " + storageEnv.getApiKey());
@@ -20,4 +21,5 @@ public class StorageWebClient {
             headers.set("x-upsert", "true");
         }).build();
     }
+
 }

@@ -5,6 +5,7 @@ import com.example.SocialMediaApp.Content.application.PostStorageService;
 import com.example.SocialMediaApp.Content.domain.Media;
 import com.example.SocialMediaApp.Content.domain.Post;
 import com.example.SocialMediaApp.Content.persistence.PostRepo;
+import com.example.SocialMediaApp.Notification.application.ContentNotificationService;
 import com.example.SocialMediaApp.Storage.StorageService;
 import com.example.SocialMediaApp.Storage.StorageTransferManager;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class PublishPostJob implements Job {
 
     private final PostRepo postRepo;
     private final PostStorageService postStorageService;
+
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {

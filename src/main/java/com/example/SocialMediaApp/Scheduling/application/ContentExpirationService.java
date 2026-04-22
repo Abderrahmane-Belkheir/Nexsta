@@ -4,6 +4,7 @@ import com.example.SocialMediaApp.Content.domain.Post;
 import com.example.SocialMediaApp.Content.persistence.MediaRepo;
 import com.example.SocialMediaApp.Content.persistence.PostRepo;
 import com.example.SocialMediaApp.Content.persistence.StoryRepo;
+import com.example.SocialMediaApp.Notification.application.ContentNotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,12 @@ public class ContentExpirationService {
     private final PostRepo postRepo;
     private final StoryRepo storyRepo;
     private final MediaRepo mediaRepo;
+    private final ContentNotificationService contentNotificationService;
+
+    @Scheduled(cron = "0 0 1 * * *")
+    public void notifyContentExpiration(){
+
+    }
 
     @Scheduled(cron = "0 0 2 * * *")
     public void deleteExpiredPosts(){
