@@ -1,7 +1,7 @@
 package com.example.SocialMediaApp.Scheduling.application;
 
 import com.example.SocialMediaApp.Notification.application.ContentNotificationService;
-import com.example.SocialMediaApp.Notification.domain.EmailSending;
+import com.example.SocialMediaApp.Notification.domain.ContentEmail;
 import com.example.SocialMediaApp.Scheduling.Jobs.PublishPostJob;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +11,10 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +25,7 @@ public class ContentSchedulingService {
     private final ContentNotificationService contentNotificationService;
 
 
-    public void schedulePostPublishing(String postId, Instant date) throws SchedulerException {
+    public void schedulePostPublishing(String postId,String email,Instant scheduledAt) throws SchedulerException {
         JobDetail jobDetail=JobBuilder.newJob(PublishPostJob.class).
                 withIdentity("schedule-publish-post"+postId).
                 withDescription("Publishing Scheduled Posts").storeDurably().
@@ -30,7 +33,7 @@ public class ContentSchedulingService {
                 build();
         Trigger trigger=TriggerBuilder.newTrigger().
                 withIdentity("trigger-" + postId, "post-triggers")
-                .startAt(Date.from(date)).forJob(jobDetail)
+                .startAt(Date.from(scheduledAt)).forJob(jobDetail)
                 .build();
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
@@ -42,9 +45,16 @@ public class ContentSchedulingService {
                 }
             }
         });
-        EmailSending emailSending=EmailSending.builder().build();
-        contentNotificationService.sendEmail(emailSending);
-        log.info("Scheduling done for post {}", postId);
+
+        // only send schedule email if post is scheduler 24h ahead
+        if(scheduledAt.isAfter(Instant.now().plus(24,ChronoUnit.HOURS))){
+            List<Map<String,String>> to=List.of(Map.of("email",email));
+            String at =scheduledAt.minus(12, ChronoUnit.HOURS).toString();
+            ContentEmail emailSending= new ContentEmail(to,"Reminder: Your post is going live soon",postId,at);
+            contentNotificationService.sendEmail(emailSending);
+            log.info("Scheduling done for post {}", postId);
+        }
+
     }
 
     public void unSchedulePostPublishing(String postId) throws SchedulerException {

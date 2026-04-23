@@ -1,6 +1,7 @@
 package com.example.SocialMediaApp.Content.application;
 
 import com.example.SocialMediaApp.Content.Exceptions.ContentNotFoundException;
+import com.example.SocialMediaApp.Content.api.dto.PostPublish;
 import com.example.SocialMediaApp.Content.domain.Post;
 import com.example.SocialMediaApp.Content.persistence.PostRepo;
 import com.example.SocialMediaApp.Scheduling.application.ContentSchedulingService;
@@ -19,8 +20,9 @@ public class PostSchedulingService {
     private final PostRepo postRepo;
     private final ContentSchedulingService contentSchedulingService;
 
-    public void schedulePost(String postId, Instant scheduledAt) throws SchedulerException {
-        contentSchedulingService.schedulePostPublishing(postId,scheduledAt);
+
+    public void schedulePost(String postId,String email,Instant scheduledAt) throws SchedulerException {
+        contentSchedulingService.schedulePostPublishing(postId,email,scheduledAt);
     }
 
     public void unSchedulePost(String postId) throws SchedulerException {

@@ -12,6 +12,7 @@ import com.example.SocialMediaApp.Upload.domain.UploadFinalization;
 import com.example.SocialMediaApp.Upload.domain.UploadType;
 import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
 import com.example.SocialMediaApp.User.domain.User;
+import com.example.SocialMediaApp.User.persistence.UserRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.SchedulerException;
@@ -30,6 +31,7 @@ public class PostLifecycleService {
 
     private final AuthenticatedUserService authenticatedUserService;
     private final PostRepo postRepo;
+    private final UserRepo userRepo;
     private final MediaLifecycleService mediaLifecycleService;
     private final Contentmapper contentmapper;
     private final PostStorageService postStorageService;
@@ -63,7 +65,10 @@ public class PostLifecycleService {
         filesPath.add(postPreview.getThumbnailFilePath());
         postStorageService.transferTemporaryFiles(destinationFolder,filesPath, status);
 
-        if (status == Post.PostStatus.SCHEDULED) postSchedulingService.schedulePost(postId, request.getScheduleAt());
+        if (status == Post.PostStatus.SCHEDULED){
+            User currentUser=userRepo.findById(currentUserId).orElseThrow();
+            postSchedulingService.schedulePost(postId,currentUser.getEmail(),request.getScheduleAt());
+        }
 
         PostRepresentation rep = contentmapper.toPostRepresentation(post);
         rep.setPostStatus(status);
@@ -131,10 +136,11 @@ public class PostLifecycleService {
                 orElseThrow(()-> new ContentNotFoundException("Post Not Found"));
 
         if(postPublish.getScheduledAt()!=null) {
+            User currentUser=userRepo.findById(currentUserId).orElseThrow();
             draftPost.setPostStatus(Post.PostStatus.SCHEDULED);
             draftPost.setScheduledAt(postPublish.getScheduledAt());
             postRepo.save(draftPost);
-            postSchedulingService.schedulePost(postId,postPublish.getScheduledAt());
+            postSchedulingService.schedulePost(postId,currentUser.getEmail(),postPublish.getScheduledAt());
             return;
         }
 

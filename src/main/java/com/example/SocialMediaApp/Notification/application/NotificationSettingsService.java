@@ -17,6 +17,7 @@ public class NotificationSettingsService {
     private final NotificationSettingsRepo notificationSettingsRepo;
     private final AuthenticatedUserService authenticatedUserService;
     private final Profilemapper profilemapper;
+
     public void updateNotificationSettings(NotificationSettings notification){
         String currentUserId=authenticatedUserService.getCurrentUser();
         NotificationsSettings notificationsSettings=notificationSettingsRepo.findByUserId(currentUserId);
