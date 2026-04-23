@@ -16,27 +16,11 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class AuthenticationController {
 
-
     private final RegistrationService registrationService;
-    private final AuthenticatedUserService authenticatedUserService;
 
     @PostMapping("/register")
     public void register(@RequestBody @Valid UserRegistration user) {
         registrationService.registerUser(user);
-    }
-
-    @Hidden
-    @GetMapping("/login")
-    public void login(HttpServletResponse response) throws IOException {
-        response.sendRedirect(authenticatedUserService.redirect());
-    }
-
-    @Hidden
-    @GetMapping("/callback")
-    public void callback(HttpServletResponse response,
-                         @RequestParam String code,
-                         @RequestParam String state ) throws IOException{
-        response.sendRedirect(authenticatedUserService.callBack(state,code));
     }
 
 }

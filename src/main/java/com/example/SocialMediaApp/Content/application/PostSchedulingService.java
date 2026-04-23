@@ -21,8 +21,8 @@ public class PostSchedulingService {
     private final ContentSchedulingService contentSchedulingService;
 
 
-    public void schedulePost(String postId,String email,Instant scheduledAt) throws SchedulerException {
-        contentSchedulingService.schedulePostPublishing(postId,email,scheduledAt);
+    public void schedulePost(String postId,Instant scheduledAt) throws SchedulerException {
+        contentSchedulingService.schedulePostPublishing(postId,scheduledAt);
     }
 
     public void unSchedulePost(String postId) throws SchedulerException {

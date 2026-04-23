@@ -7,20 +7,24 @@ import com.example.SocialMediaApp.Notification.api.dto.EmailSendingResponse;
 import com.example.SocialMediaApp.Notification.domain.ContentEmail;
 import com.example.SocialMediaApp.Notification.domain.ContentEmailModel;
 import com.example.SocialMediaApp.Notification.domain.Email;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 public class ContentNotificationService {
 
     private final EmailTemplateService emailTemplateService;
     private final EmailSendingProperties emailSendingProperties;
     private final WebClient webClient;
 
+    public ContentNotificationService(EmailTemplateService emailTemplateService,EmailSendingProperties emailSendingProperties,@Qualifier("emailWebClient") WebClient webClient){
+        this.emailTemplateService=emailTemplateService;
+        this.emailSendingProperties=emailSendingProperties;
+        this.webClient=webClient;
+    }
 
     public void sendEmail(Email email){
         Map<String,String> sender=Map.of("sender", emailSendingProperties.getSenderEmail(),"name","MySocialMediaApp");
@@ -37,7 +41,7 @@ public class ContentNotificationService {
         String htmlContent=null;
 
         if(email instanceof ContentEmail contentEmail){
-            ContentEmailModel emailModel=ContentEmailModel.builder().postId(contentEmail.getPostId()).scheduledAt(contentEmail.getScheduledAt()).build();
+            ContentEmailModel emailModel=ContentEmailModel.builder().postId(contentEmail.getPostId()).scheduledAt(contentEmail.getAt()).build();
             htmlContent=emailTemplateService.buildPostPublishing(emailModel);
         }
 

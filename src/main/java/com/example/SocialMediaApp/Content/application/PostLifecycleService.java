@@ -31,7 +31,6 @@ public class PostLifecycleService {
 
     private final AuthenticatedUserService authenticatedUserService;
     private final PostRepo postRepo;
-    private final UserRepo userRepo;
     private final MediaLifecycleService mediaLifecycleService;
     private final Contentmapper contentmapper;
     private final PostStorageService postStorageService;
@@ -66,8 +65,7 @@ public class PostLifecycleService {
         postStorageService.transferTemporaryFiles(destinationFolder,filesPath, status);
 
         if (status == Post.PostStatus.SCHEDULED){
-            User currentUser=userRepo.findById(currentUserId).orElseThrow();
-            postSchedulingService.schedulePost(postId,currentUser.getEmail(),request.getScheduleAt());
+            postSchedulingService.schedulePost(postId,request.getScheduleAt());
         }
 
         PostRepresentation rep = contentmapper.toPostRepresentation(post);
@@ -136,11 +134,10 @@ public class PostLifecycleService {
                 orElseThrow(()-> new ContentNotFoundException("Post Not Found"));
 
         if(postPublish.getScheduledAt()!=null) {
-            User currentUser=userRepo.findById(currentUserId).orElseThrow();
             draftPost.setPostStatus(Post.PostStatus.SCHEDULED);
             draftPost.setScheduledAt(postPublish.getScheduledAt());
             postRepo.save(draftPost);
-            postSchedulingService.schedulePost(postId,currentUser.getEmail(),postPublish.getScheduledAt());
+            postSchedulingService.schedulePost(postId,postPublish.getScheduledAt());
             return;
         }
 

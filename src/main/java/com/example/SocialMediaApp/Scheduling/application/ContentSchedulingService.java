@@ -3,6 +3,9 @@ package com.example.SocialMediaApp.Scheduling.application;
 import com.example.SocialMediaApp.Notification.application.ContentNotificationService;
 import com.example.SocialMediaApp.Notification.domain.ContentEmail;
 import com.example.SocialMediaApp.Scheduling.Jobs.PublishPostJob;
+import com.example.SocialMediaApp.User.application.AuthenticatedUserService;
+import com.example.SocialMediaApp.User.domain.User;
+import com.example.SocialMediaApp.User.persistence.UserRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
@@ -23,9 +26,10 @@ public class ContentSchedulingService {
 
     private final Scheduler scheduler;
     private final ContentNotificationService contentNotificationService;
+    private final UserRepo userRepo;
+    private final AuthenticatedUserService authenticatedUserService;
 
-
-    public void schedulePostPublishing(String postId,String email,Instant scheduledAt) throws SchedulerException {
+    public void schedulePostPublishing(String postId,Instant scheduledAt) throws SchedulerException {
         JobDetail jobDetail=JobBuilder.newJob(PublishPostJob.class).
                 withIdentity("schedule-publish-post"+postId).
                 withDescription("Publishing Scheduled Posts").storeDurably().
@@ -48,7 +52,9 @@ public class ContentSchedulingService {
 
         // only send schedule email if post is scheduler 24h ahead
         if(scheduledAt.isAfter(Instant.now().plus(24,ChronoUnit.HOURS))){
-            List<Map<String,String>> to=List.of(Map.of("email",email));
+            String currentUserId=authenticatedUserService.getCurrentUser();
+            User user=userRepo.findById(currentUserId).orElseThrow();
+            List<Map<String,String>> to=List.of(Map.of("email",user.getEmail()));
             String at =scheduledAt.minus(12, ChronoUnit.HOURS).toString();
             ContentEmail emailSending= new ContentEmail(to,"Reminder: Your post is going live soon",postId,at);
             contentNotificationService.sendEmail(emailSending);

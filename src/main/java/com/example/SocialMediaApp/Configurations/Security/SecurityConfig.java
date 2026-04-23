@@ -1,7 +1,6 @@
 package com.example.SocialMediaApp.Configurations.Security;
 
 import com.example.SocialMediaApp.Storage.StorageProperties;
-import com.example.SocialMediaApp.User.application.ClientPropeties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,7 +14,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableJpaAuditing
 @EnableScheduling
-@EnableConfigurationProperties({StorageProperties.class, ClientPropeties.class})
+@EnableConfigurationProperties({StorageProperties.class})
 public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
@@ -23,7 +22,7 @@ public class SecurityConfig {
         .csrf(AbstractHttpConfigurer::disable).
                 oauth2ResourceServer(httpSecurityOAuth2ResourceServerConfigurer -> httpSecurityOAuth2ResourceServerConfigurer.jwt(Customizer.withDefaults())).
                 authorizeHttpRequests(authorization -> authorization.requestMatchers("api/v1/auth/**",
-                        "/swagger.html",
+                        "/UI.html",
                         "/swagger-ui/**",
                         "/ws/**",
                         "/v3/api-docs/**",

@@ -3,8 +3,8 @@ package com.example.SocialMediaApp.Storage;
 import com.example.SocialMediaApp.Storage.Dto.MoveFolderRequest;
 import com.example.SocialMediaApp.Storage.Dto.MoveFolderResponse;
 import com.example.SocialMediaApp.Storage.Dto.MoveTemporaryContentRequest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -20,13 +20,17 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class StorageService {
 
     private final WebClient webClient;
     private final StorageProperties storageProperties;
     private final StorageTransferManager storageTransferManager;
 
+    public StorageService(StorageProperties storageProperties, StorageTransferManager storageTransferManager, @Qualifier("storageWebClient") WebClient webClient){
+        this.storageProperties=storageProperties;
+        this.storageTransferManager=storageTransferManager;
+        this.webClient=webClient;
+    }
     // profile avatar uploading is done directly via the server
     public void uploadFile(MultipartFile file,String filepath) throws IOException {
 
@@ -66,7 +70,7 @@ public class StorageService {
             log.info(request.toString());
 
             try {
-                ResponseEntity<MoveFolderResponse> response=webClient.post().uri(storageProperties.getBatchFileMoveEndpoint()).contentType(MediaType.APPLICATION_JSON).
+                ResponseEntity<MoveFolderResponse> response= webClient.post().uri(storageProperties.getBatchFileMoveEndpoint()).contentType(MediaType.APPLICATION_JSON).
                         bodyValue(request).retrieve().toEntity(MoveFolderResponse.class).block();
 
 
@@ -94,7 +98,7 @@ public class StorageService {
     public String generateSignedUrl(String filePath){
         String bucket= storageProperties.getPrivateMediaBucket();
         SignedUploadRequest signRequest=new SignedUploadRequest(5);
-        String signedUri= storageProperties.getUrl()+webClient.post().uri(uriBuilder -> uriBuilder.path(storageProperties.getEndpoint()+"/upload/sign/{bucket}/{path}").build(bucket, filePath))
+        String signedUri= storageProperties.getUrl()+ webClient.post().uri(uriBuilder -> uriBuilder.path(storageProperties.getEndpoint()+"/upload/sign/{bucket}/{path}").build(bucket, filePath))
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(signRequest).retrieve().bodyToMono(signedUploadResponse.class).map(signedUploadResponse::getUrl).block();
 

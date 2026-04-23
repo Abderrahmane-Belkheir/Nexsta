@@ -3,12 +3,11 @@ package com.example.SocialMediaApp.Storage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
 @RequiredArgsConstructor
-public class StorageWebClient {
+public class StorageWebClientConfig {
 
     private final WebClient.Builder webClientBuilder;
     private final StorageProperties storageEnv;

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Swagger UI + Keycloak Auth</title>
+
+    <link rel="stylesheet" href="/swagger-ui/swagger-ui.css"/>
+
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+    <style>
+        html { box-sizing: border-box; overflow-y: scroll; }
+        *, *:before, *:after { box-sizing: inherit; }
+        body { margin:0; background:#fafafa; }
+
+        #notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 320px;
+            z-index: 99999;
+        }
+        .notification-popup {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            animation: slideIn .4s ease forwards;
+            opacity: 0;
+        }
+        .notification-popup img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to   { transform: translateX(0);    opacity: 1; }
+        }
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateX(100%); }
+        }
+
+        #create-post-btn {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 13px 22px;
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 24px rgba(99,102,241,0.45);
+            transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+            outline: none;
+        }
+        #create-post-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        #create-post-btn:hover         { transform: translateY(-3px) scale(1.03); }
+        #create-post-btn:hover::before { opacity: 1; }
+        #create-post-btn:active        { transform: scale(0.97); }
+        #create-post-btn svg,
+        #create-post-btn span          { position: relative; z-index: 1; }
+
+        #edit-post-btn {
+            position: fixed;
+            bottom: 28px;
+            right: 180px;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 13px 22px;
+            background: linear-gradient(135deg, #0891b2 0%, #0d9488 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 24px rgba(8,145,178,0.4);
+            transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+            outline: none;
+        }
+        #edit-post-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #06b6d4 0%, #14b8a6 100%);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        #edit-post-btn:hover         { transform: translateY(-3px) scale(1.03); }
+        #edit-post-btn:hover::before { opacity: 1; }
+        #edit-post-btn:active        { transform: scale(0.97); }
+        #edit-post-btn svg,
+        #edit-post-btn span          { position: relative; z-index: 1; }
+
+        #postid-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(6px);
+            z-index: 100000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        #postid-overlay.show { display: flex; }
+        #postid-modal {
+            background: #fff;
+            border-radius: 20px;
+            padding: 32px;
+            width: 400px;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.15);
+            animation: modalPop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        @keyframes modalPop {
+            from { transform: scale(0.85); opacity: 0; }
+            to   { transform: scale(1);    opacity: 1; }
+        }
+        #postid-modal h3           { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 18px; font-weight: 700; color: #1c1b18; margin: 0 0 6px; }
+        #postid-modal p            { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; color: #8c8880; margin: 0 0 20px; line-height: 1.5; }
+        #postid-input              { width: 100%; padding: 12px 14px; border: 1.5px solid #e8e6e0; border-radius: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; color: #1c1b18; outline: none; transition: border-color 0.15s, box-shadow 0.15s; background: #fafaf8; margin-bottom: 8px; }
+        #postid-input:focus        { border-color: #0891b2; box-shadow: 0 0 0 3px rgba(8,145,178,0.12); background: #fff; }
+        #postid-input::placeholder { color: #c8c4bc; }
+        #postid-error              { font-size: 12px; color: #dc2626; min-height: 16px; margin-bottom: 16px; display: none; }
+        #postid-modal-footer       { display: flex; gap: 8px; justify-content: flex-end; }
+        .modal-btn                 { padding: 10px 20px; border-radius: 50px; border: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+        .modal-btn-ghost           { background: #f0ede6; color: #8c8880; }
+        .modal-btn-ghost:hover     { background: #e8e6e0; color: #1c1b18; }
+        .modal-btn-primary         { background: linear-gradient(135deg, #0891b2 0%, #0d9488 100%); color: white; box-shadow: 0 2px 8px rgba(8,145,178,0.3); }
+        .modal-btn-primary:hover   { box-shadow: 0 4px 14px rgba(8,145,178,0.4); transform: translateY(-1px); }
+    </style>
+</head>
+<body>
+
+<div id="swagger-ui"></div>
+<div id="notification-container"></div>
+
+<div id="postid-overlay">
+    <div id="postid-modal">
+        <h3>Edit a Post</h3>
+        <p>Paste the Post ID you want to edit. You can find it in the API response after creating a post.</p>
+        <input type="text" id="postid-input" placeholder="e.g. 01959b06-4a2e-7f3d-b1c8-..."
+               autocomplete="off" onkeydown="if(event.key==='Enter') goEditPost()">
+        <div id="postid-error">Please enter a valid Post ID.</div>
+        <div id="postid-modal-footer">
+            <button class="modal-btn modal-btn-ghost"   onclick="closePostIdModal()">Cancel</button>
+            <button class="modal-btn modal-btn-primary" onclick="goEditPost()">Open Editor →</button>
+        </div>
+    </div>
+</div>
+
+<script src="/swagger-ui/swagger-ui-bundle.js"></script>
+<script src="/swagger-ui/swagger-ui-standalone-preset.js"></script>
+
+<script>
+    /* ============================================================
+       CONFIG — only two values to change
+       ============================================================ */
+    const CLIENT_ID = "swagger-client";        // must match springdoc.swagger-ui.oauth.client-id
+    const APP_BASE  = "http://localhost:8080"; // change for production
+    /* ============================================================ */
+
+    let _token     = null;
+    let _wsStarted = false;
+
+    function onTokenReady(token) {
+        if (!token || token === _token) return;
+        _token = token;
+        console.log("[Auth] token ready");
+        initWebSocket(token);
+        history.replaceState(null, null, location.pathname);
+    }
+
+    function initWebSocket(token) {
+        if (_wsStarted) return;
+        _wsStarted = true;
+
+        const stomp = Stomp.over(new SockJS("/ws"));
+        stomp.debug = msg => console.log("[STOMP]", msg);
+        stomp.connect(
+            { Authorization: "Bearer " + token },
+            () => {
+                console.log("[STOMP] connected");
+                stomp.subscribe("/user/queue/notifications", msg => {
+                    try { showNotification(JSON.parse(msg.body)); }
+                    catch { showNotification({ message: msg.body }); }
+                });
+                setInterval(() => {
+                    if (stomp.connected) stomp.send("/app/heartbeat", {}, "ping");
+                }, 10000);
+            },
+            err => console.error("[STOMP] error", err)
+        );
+    }
+
+    function showNotification(n) {
+        const c = document.getElementById("notification-container");
+        const p = document.createElement("div");
+        p.className = "notification-popup";
+        p.innerHTML = `
+            <img src="${n.pfpurl || '/default-avatar.png'}">
+            <div>
+                <div><strong>${n.message}</strong></div>
+                <div style="font-size:12px;color:#666">Tap to view</div>
+            </div>`;
+        c.appendChild(p);
+        setTimeout(() => {
+            p.style.animation = "fadeOut .4s forwards";
+            setTimeout(() => p.remove(), 400);
+        }, 5000);
+    }
+
+    function openPostIdModal() {
+        document.getElementById('postid-input').value = '';
+        document.getElementById('postid-error').style.display = 'none';
+        document.getElementById('postid-overlay').classList.add('show');
+        setTimeout(() => document.getElementById('postid-input').focus(), 100);
+    }
+    function closePostIdModal() {
+        document.getElementById('postid-overlay').classList.remove('show');
+    }
+    function goEditPost() {
+        const postId = document.getElementById('postid-input').value.trim();
+        const errEl  = document.getElementById('postid-error');
+        if (!postId) { errEl.textContent = 'Please enter a Post ID.'; errEl.style.display = 'block'; return; }
+        errEl.style.display = 'none';
+        closePostIdModal();
+        window.open(
+            `${APP_BASE}/edit-post.html?token=${_token || ''}&postId=${encodeURIComponent(postId)}`,
+            "_blank"
+        );
+    }
+    document.addEventListener('click', e => {
+        if (e.target === document.getElementById('postid-overlay')) closePostIdModal();
+    });
+
+    window.addEventListener("load", () => {
+
+        /* Backward-compat: accept ?token= in the URL */
+        const legacyToken = new URLSearchParams(location.search).get("token");
+        if (legacyToken) onTokenReady(legacyToken);
+
+        /* Floating action buttons */
+        const createBtn = document.createElement("button");
+        createBtn.id = "create-post-btn";
+        createBtn.innerHTML = `
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"
+                 viewBox="0 0 24 24" style="position:relative;z-index:1">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg><span>New Post</span>`;
+        createBtn.onclick = () =>
+            window.open(
+                _token ? `${APP_BASE}/create-post.html?token=${_token}` : `${APP_BASE}/create-post.html`,
+                "_blank"
+            );
+        document.body.appendChild(createBtn);
+
+        const editBtn = document.createElement("button");
+        editBtn.id = "edit-post-btn";
+        editBtn.innerHTML = `
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"
+                 viewBox="0 0 24 24" style="position:relative;z-index:1">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg><span>Edit Post</span>`;
+        editBtn.onclick = openPostIdModal;
+        document.body.appendChild(editBtn);
+
+        /* ---- Swagger UI ----
+         *
+         * Auth URLs come from /v3/api-docs (SwaggerConfig.java).
+         * additionalQueryStringParams forces code_challenge_method=S256
+         * into the Keycloak redirect — this is what was missing and
+         * caused the "Missing parameter: code_challenge_method" error.
+         */
+        SwaggerUIBundle({
+            url: "/v3/api-docs",
+            dom_id: "#swagger-ui",
+            presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+            layout: "StandaloneLayout",
+            persistAuthorization: true,
+
+            oauth2RedirectUrl: `${APP_BASE}/swagger-ui/oauth2-redirect.html`,
+
+            initOAuth: {
+              clientId: "swagger-client",
+              scopes: "openid profile email",
+              scopeSeparator: " ",
+              usePkceWithAuthorizationCodeGrant: true,
+                additionalQueryStringParams: {
+                    code_challenge_method: "S256"
+                }
+            },
+
+            requestInterceptor: req => {
+                const auth = req.headers && req.headers["Authorization"];
+                if (auth && auth.startsWith("Bearer ")) {
+                    onTokenReady(auth.substring(7));
+                } else if (_token) {
+                    req.headers["Authorization"] = "Bearer " + _token;
+                }
+                return req;
+            },
+        });
+    });
+</script>
+
+</body>
+</html>
