@@ -10,5 +10,4 @@ import lombok.Getter;
 public  class ContentEmailModel {
     private String postId;
     private String scheduledAt;
-    private String redirectUrl;
 }

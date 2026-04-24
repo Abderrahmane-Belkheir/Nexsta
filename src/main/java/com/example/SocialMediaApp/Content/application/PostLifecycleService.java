@@ -98,6 +98,7 @@ public class PostLifecycleService {
         post.setPreDeletionStatus(sourceStatus == Post.PostStatus.SCHEDULED ? Post.PostStatus.DRAFT : sourceStatus);
         post.setPostStatus(Post.PostStatus.DELETED);
         post.setDeletedAt(Instant.now());
+        post.setScheduledAt(null);
         post.setPostFolderPath(postStorageService.moveAndResolvePath(post, sourceStatus, Post.PostStatus.DELETED));
         postRepo.save(post);
         return new DeletePostResponse(true);

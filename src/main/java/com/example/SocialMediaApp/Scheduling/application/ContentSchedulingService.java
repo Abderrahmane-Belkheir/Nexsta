@@ -51,16 +51,15 @@ public class ContentSchedulingService {
         });
 
         // only send schedule email if post is scheduler 24h ahead
-        if(scheduledAt.isAfter(Instant.now().plus(24,ChronoUnit.HOURS))){
+      if(scheduledAt.isAfter(Instant.now().plus(24,ChronoUnit.HOURS))){
             String currentUserId=authenticatedUserService.getCurrentUser();
             User user=userRepo.findById(currentUserId).orElseThrow();
-            List<Map<String,String>> to=List.of(Map.of("email",user.getEmail()));
             String at =scheduledAt.minus(12, ChronoUnit.HOURS).toString();
-            ContentEmail emailSending= new ContentEmail(to,"Reminder: Your post is going live soon",postId,at);
+            ContentEmail emailSending= new ContentEmail(user.getEmail(),"Reminder: Your post is going live soon",postId,at);
             contentNotificationService.sendEmail(emailSending);
-            log.info("Scheduling done for post {}", postId);
-        }
-
+            log.info("email scheduled for {}", user.getEmail()+" at : "+at);
+       }
+        log.info("Scheduling done for post {}", postId);
     }
 
     public void unSchedulePostPublishing(String postId) throws SchedulerException {

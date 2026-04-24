@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.quartz.SchedulerException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -78,5 +79,8 @@ public class PostLifeCycleController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/{postId}/edit-redirect")
+    public void redirectPostEdit(@PathVariable String postId,@AuthenticationPrincipal OAuth2User principal){
 
+    }
 }

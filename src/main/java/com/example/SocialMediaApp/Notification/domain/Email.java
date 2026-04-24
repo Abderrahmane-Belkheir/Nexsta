@@ -9,7 +9,7 @@ import java.util.Map;
 @Getter
 @AllArgsConstructor
 public abstract class Email {
-    private List<Map<String, String>> to;
+    private String to;
     private String subject;
     private String at;
 }

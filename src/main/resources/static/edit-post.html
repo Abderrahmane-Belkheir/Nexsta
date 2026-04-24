@@ -443,6 +443,94 @@
     let JWT = '';
     let USERNAME = '';
 
+    // ─── KEYCLOAK CONFIG — update these three values ──────────────────────────────
+    const KC_URL       = 'http://localhost:8180';
+    const KC_REALM     = 'Realm';
+    const KC_CLIENT_ID = 'front-client';
+
+    const KC_AUTH_EP  = KC_URL + '/realms/' + KC_REALM + '/protocol/openid-connect/auth';
+    const KC_TOKEN_EP = KC_URL + '/realms/' + KC_REALM + '/protocol/openid-connect/token';
+
+    // ─── PKCE HELPERS ─────────────────────────────────────────────────────────────
+    function _generateVerifier() {
+        const arr = new Uint8Array(32);
+        crypto.getRandomValues(arr);
+        return btoa(String.fromCharCode(...arr))
+            .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    }
+
+    async function _generateChallenge(verifier) {
+        const data   = new TextEncoder().encode(verifier);
+        const digest = await crypto.subtle.digest('SHA-256', data);
+        return btoa(String.fromCharCode(...new Uint8Array(digest)))
+            .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    }
+
+    function _redirectUri() {
+        return window.location.origin + window.location.pathname;
+    }
+
+    // ─── TOKEN STORAGE ────────────────────────────────────────────────────────────
+    function _storeToken(tokenData) {
+        const expiresAt = Date.now() + (tokenData.expires_in - 30) * 1000; // 30-s buffer
+        localStorage.setItem('kc_token', JSON.stringify({ ...tokenData, expires_at: expiresAt }));
+    }
+
+    function _loadToken() {
+        try {
+            const t = JSON.parse(localStorage.getItem('kc_token'));
+            if (t && t.access_token && t.expires_at > Date.now()) return t;
+        } catch (e) { /* ignore */ }
+        return null;
+    }
+
+    function _clearToken() { localStorage.removeItem('kc_token'); }
+
+    // ─── AUTH FLOW ────────────────────────────────────────────────────────────────
+    async function _startLogin(postId) {
+        const verifier   = _generateVerifier();
+        const challenge  = await _generateChallenge(verifier);
+        const state      = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
+
+        sessionStorage.setItem('pkce_verifier', verifier);
+        sessionStorage.setItem('oauth_state',   state);
+        if (postId) sessionStorage.setItem('saved_post_id', postId);
+
+        const qs = new URLSearchParams({
+            response_type:         'code',
+            client_id:             KC_CLIENT_ID,
+            redirect_uri:          _redirectUri(),
+            scope:                 'openid profile email',
+            state,
+            code_challenge:        challenge,
+            code_challenge_method: 'S256'
+        });
+        window.location.href = KC_AUTH_EP + '?' + qs;
+    }
+
+    async function _exchangeCode(code) {
+        const verifier = sessionStorage.getItem('pkce_verifier');
+        if (!verifier) throw new Error('PKCE verifier missing — please try logging in again.');
+
+        const resp = await fetch(KC_TOKEN_EP, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body:    new URLSearchParams({
+                grant_type:    'authorization_code',
+                client_id:     KC_CLIENT_ID,
+                code,
+                redirect_uri:  _redirectUri(),
+                code_verifier: verifier
+            })
+        });
+
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err.error_description || ('Token endpoint returned ' + resp.status));
+        }
+        return resp.json();
+    }
+
     // ─── STATE ────────────────────────────────────────────────────────────────────
     // Each item in mediaItems:
     //   { kind: 'existing', id, filepath, mediaType, deleted: bool }
@@ -459,21 +547,75 @@
     // ─── INIT ─────────────────────────────────────────────────────────────────────
     (async function init() {
         const params = new URLSearchParams(window.location.search);
-        const token  = params.get('token');
-        const postId = params.get('postId');
+        const code   = params.get('code');
+        const state  = params.get('state');
+        const error  = params.get('error');
 
-        if (!token || !postId) {
-            showPageError('Missing <code>token</code> or <code>postId</code> URL parameters.');
+        // postId may come from the URL or from session (saved before redirect)
+        let postId = params.get('postId') || sessionStorage.getItem('saved_post_id');
+
+        // ── Keycloak returned an error ────────────────────────────────────────────
+        if (error) {
+            const desc = params.get('error_description') || error;
+            showPageError('Keycloak login error: <b>' + desc + '</b><br><br>'
+                + '<button class="btn btn-primary" onclick="_clearToken();location.href=location.pathname+(postId?\'?postId=\'+postId:\'\')">Try again</button>');
             return;
         }
 
-        JWT = token;
+        // ── Returning from Keycloak with auth code ────────────────────────────────
+        if (code) {
+            // Validate state to prevent CSRF
+            const savedState = sessionStorage.getItem('oauth_state');
+            if (savedState && state && state !== savedState) {
+                showPageError('OAuth state mismatch — possible CSRF attempt. <button class="btn btn-primary" onclick="location.reload()">Retry</button>');
+                return;
+            }
 
-        // Decode username from JWT
+            document.getElementById('loaderMsg').textContent = 'Authenticating with Keycloak…';
+
+            try {
+                const tokenData = await _exchangeCode(code);
+                _storeToken(tokenData);
+                JWT = tokenData.access_token;
+            } catch (e) {
+                showPageError('Token exchange failed: ' + e.message
+                    + '<br><br><button class="btn btn-primary" onclick="_clearToken();location.href=location.pathname+(postId?\'?postId=\'+postId:\'\')">Login again</button>');
+                return;
+            }
+
+            // Clean code/state/session_state from URL and restore postId
+            sessionStorage.removeItem('pkce_verifier');
+            sessionStorage.removeItem('oauth_state');
+            sessionStorage.removeItem('saved_post_id');
+            const cleanUrl = window.location.pathname + (postId ? '?postId=' + postId : '');
+            window.history.replaceState({}, '', cleanUrl);
+
+        } else {
+            // ── No code in URL — try stored token, else redirect to Keycloak ─────
+            const stored = _loadToken();
+            if (stored) {
+                JWT = stored.access_token;
+            } else {
+                if (!postId) {
+                    showPageError('Missing <code>postId</code> URL parameter.');
+                    return;
+                }
+                // Kick off login — page will return here with ?code=...
+                await _startLogin(postId);
+                return; // navigation is happening
+            }
+        }
+
+        if (!postId) {
+            showPageError('Missing <code>postId</code> URL parameter.');
+            return;
+        }
+
+        // ── Decode username from JWT ──────────────────────────────────────────────
         try {
-            const parts = token.split('.');
+            const parts = JWT.split('.');
             if (parts.length === 3) {
-                const pad = parts[1].length % 4 ? '='.repeat(4 - parts[1].length % 4) : '';
+                const pad     = parts[1].length % 4 ? '='.repeat(4 - parts[1].length % 4) : '';
                 const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/') + pad));
                 USERNAME = payload.preferred_username || payload.username || payload.sub || payload.name || payload.email || 'you';
             }
@@ -481,14 +623,20 @@
 
         applyUser();
 
-        // Load post
+        // ── Load post ─────────────────────────────────────────────────────────────
         document.getElementById('loaderMsg').textContent = 'Fetching post ' + postId;
         try {
-            const post = await apiFetch('/api/v1/content/post/'+postId+'/update');
+            const post = await apiFetch('/api/v1/content/post/' + postId + '/update');
             populateForm(post);
             setFS(1, 'done');
             hideLoader();
         } catch (e) {
+            // If 401 → token expired/invalid → clear and re-login
+            if (e.status === 401) {
+                _clearToken();
+                await _startLogin(postId);
+                return;
+            }
             showPageError('Error ' + (e.status || '') + ': ' + (e.message || 'Could not load post.'));
         }
     })();
@@ -1105,6 +1253,12 @@
             setFS(1, 'done');
             hideLoader();
         } catch (e) {
+            if (e.status === 401) {
+                _clearToken();
+                const postId = new URLSearchParams(window.location.search).get('postId');
+                await _startLogin(postId);
+                return;
+            }
             showPageError('Error ' + (e.status || '') + ': ' + (e.message || 'Could not reload post.'));
         }
     }

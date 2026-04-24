@@ -9,11 +9,11 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 
-    @Service
-    @Slf4j
-    public class AuthenticatedUserService {
+@Service
+@Slf4j
+public class AuthenticatedUserService {
 
-        public String getCurrentUser(){
+     public String getCurrentUser(){
             Authentication authentication= SecurityContextHolder.getContext().getAuthentication();
             if(authentication==null||!(authentication.getPrincipal() instanceof Jwt)){
                 throw new AuthenticationCredentialsNotFoundException("User not authenticated");
