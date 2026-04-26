@@ -24,9 +24,9 @@ public interface PostRepo extends JpaRepository<Post,String> {
     List<Post> findPostsAboveOrBelowPostOrderByCreatedAt(@Param("userId") String userId, @Param("date") Instant date, @Param("status") Post.PostStatus status, @Param("direction") String direction, Pageable pageable);
 
     @Query(value =
-            "(SELECT * FROM post WHERE user_id = :userId AND post_status = :status AND published_at < :date ORDER BY COALESCE(published_at, created_at) DESC LIMIT :pageSize) " +
+            "(SELECT * FROM post WHERE user_id = :userId AND post_status = :status AND COALESCE(published_at, created_at) < :date ORDER BY COALESCE(published_at, created_at) DESC LIMIT :pageSize) " +
                     "UNION ALL " +
-                    "(SELECT * FROM post WHERE user_id = :userId AND post_status = :status AND published_at > :date ORDER BY COALESCE(published_at, created_at) ASC LIMIT :pageSize)",
+                    "(SELECT * FROM post WHERE user_id = :userId AND post_status = :status AND COALESCE(published_at, created_at) > :date ORDER BY COALESCE(published_at, created_at) ASC LIMIT :pageSize)",
             nativeQuery = true)
     List<Post> findMixedNeighbors(@Param("userId") String userId, @Param("date") Instant date, @Param("status") String status, @Param("pageSize") int pageSize);
 

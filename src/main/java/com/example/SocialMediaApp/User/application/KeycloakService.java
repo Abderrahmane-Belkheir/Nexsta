@@ -28,23 +28,32 @@ public class KeycloakService implements IdentityService {
         org.keycloak.representations.idm.UserRepresentation userRepresentation= new org.keycloak.representations.idm.UserRepresentation();
         userRepresentation.setEmail(userregistration.getEmail());
         userRepresentation.setUsername(userregistration.getUsername());
+        userRepresentation.setEmailVerified(false);
+        userRepresentation.setRequiredActions(List.of("VERIFY_EMAIL"));
         // no need for first and last name in keycloak
         userRepresentation.setFirstName("empty");
         userRepresentation.setLastName("empty");
-        userRepresentation.setEmailVerified(true);
         CredentialRepresentation credentialRepresentation=new CredentialRepresentation();
         credentialRepresentation.setTemporary(false);
         credentialRepresentation.setType(CredentialRepresentation.PASSWORD);
         credentialRepresentation.setValue(userregistration.getPassword());
         userRepresentation.setCredentials(List.of(credentialRepresentation));
         userRepresentation.setEnabled(true);
-        Response response= realmResource.users().create(userRepresentation);
-            if(response.getStatus()!=201){
-                response.close();
-                log.error("failed to provision user in auth server "+response.readEntity(String.class));
+        try (Response response = realmResource.users().create(userRepresentation)) {
+
+            int status = response.getStatus();
+
+            if (status != 201) {
+                String error = response.readEntity(String.class);
+                log.error("Failed to provision user in auth server: {}", error);
                 throw new UserProvisioningException("registration failed!!");
             }
-       return  CreatedResponseUtil.getCreatedId(response);
+            String userId = CreatedResponseUtil.getCreatedId(response);
+
+            realmResource.users().get(userId).sendVerifyEmail();
+
+            return userId;
+        }
     }
 
     public void UserRemoval(String userId){

@@ -3,7 +3,6 @@ package com.example.SocialMediaApp.Notification.application;
 import com.example.SocialMediaApp.Notification.domain.ContentEmailModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.thymeleaf.context.Context;
 

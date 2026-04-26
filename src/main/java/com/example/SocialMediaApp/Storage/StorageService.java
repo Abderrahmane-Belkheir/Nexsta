@@ -98,10 +98,16 @@ public class StorageService {
     public String generateSignedUrl(String filePath){
         String bucket= storageProperties.getPrivateMediaBucket();
         SignedUploadRequest signRequest=new SignedUploadRequest(5);
-        String signedUri= storageProperties.getUrl()+ webClient.post().uri(uriBuilder -> uriBuilder.path(storageProperties.getEndpoint()+"/upload/sign/{bucket}/{path}").build(bucket, filePath))
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(signRequest).retrieve().bodyToMono(signedUploadResponse.class).map(signedUploadResponse::getUrl).block();
-
+        log.info(storageProperties.getUrl()+storageProperties.getEndpoint());
+        String signedUri=null;
+        try {
+             signedUri= storageProperties.getUrl()+ webClient.post().uri(uriBuilder -> uriBuilder.path(storageProperties.getEndpoint()+"/upload/sign/{bucket}/{path}").build(bucket, filePath))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(signRequest).retrieve().bodyToMono(signedUploadResponse.class).map(signedUploadResponse::getUrl).block();
+        }catch (Exception e) {
+            log.error(e.getMessage());
+            throw e;
+        }
        return fullUrlBuilder(signedUri);
     }
 

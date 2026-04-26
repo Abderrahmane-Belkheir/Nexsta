@@ -9,6 +9,7 @@ import com.example.SocialMediaApp.Notification.domain.ContentEmailModel;
 import com.example.SocialMediaApp.Notification.domain.Email;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -25,6 +26,9 @@ public class ContentNotificationService {
     private final EmailSendingProperties emailSendingProperties;
     private final WebClient webClient;
 
+    @Value("${spring.application.name}")
+    private String applicationName;
+
     public ContentNotificationService(EmailTemplateService emailTemplateService,EmailSendingProperties emailSendingProperties,@Qualifier("emailWebClient") WebClient webClient){
         this.emailTemplateService=emailTemplateService;
         this.emailSendingProperties=emailSendingProperties;
@@ -32,7 +36,7 @@ public class ContentNotificationService {
     }
 
     public void sendEmail(Email email){
-        Map<String,String> sender=Map.of("email", emailSendingProperties.getSenderEmail(),"name","MySocialMediaApp");
+        Map<String,String> sender=Map.of("email", emailSendingProperties.getSenderEmail(),"name",applicationName);
         String htmlContent=buildHtmlContent(email);
         List<Map<String,String>> to= List.of(Map.of("email",email.getTo()));
         EmailSendingRequest request=EmailSendingRequest.builder().
