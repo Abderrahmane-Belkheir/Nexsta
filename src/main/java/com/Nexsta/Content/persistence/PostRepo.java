@@ -1,0 +1,73 @@
+package com.Nexsta.Content.persistence;
+
+import com.Nexsta.Content.domain.Post;
+import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+
+public interface PostRepo extends JpaRepository<Post,String> {
+
+    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.mediaList WHERE p.user.id=:userId AND p.id=:postId")
+    Optional<Post> findByIdAndUserIdWithMediaList(@Param("userId") String userId,@Param("postId") String postId);
+
+    @Query("SELECT p FROM Post p WHERE p.user.id=:userId AND p.postStatus=:status AND (((:direction='UP') AND p.publishedAt>:date) OR ((:direction='DOWN') AND p.publishedAt<:date)) ORDER By p.publishedAt DESC")
+    List<Post> findPostsAboveOrBelowPostOrderByPublishedAt(@Param("userId") String userId, @Param("date") Instant date, @Param("status") Post.PostStatus status, @Param("direction") String direction, Pageable pageable);
+
+    @Query("SELECT p FROM Post p WHERE p.user.id=:userId AND p.postStatus=:status AND (((:direction='UP') AND p.createdAt>:date) OR ((:direction='DOWN') AND p.createdAt<:date)) ORDER By p.publishedAt DESC")
+    List<Post> findPostsAboveOrBelowPostOrderByCreatedAt(@Param("userId") String userId, @Param("date") Instant date, @Param("status") Post.PostStatus status, @Param("direction") String direction, Pageable pageable);
+
+    @Query(value =
+            "(SELECT * FROM post WHERE user_id = :userId AND post_status = :status AND COALESCE(published_at, created_at) < :date ORDER BY COALESCE(published_at, created_at) DESC LIMIT :pageSize) " +
+                    "UNION ALL " +
+                    "(SELECT * FROM post WHERE user_id = :userId AND post_status = :status AND COALESCE(published_at, created_at) > :date ORDER BY COALESCE(published_at, created_at) ASC LIMIT :pageSize)",
+            nativeQuery = true)
+    List<Post> findMixedNeighbors(@Param("userId") String userId, @Param("date") Instant date, @Param("status") String status, @Param("pageSize") int pageSize);
+
+
+
+    Optional<Post> findByIdAndUserIdAndPostStatus(String postId,String userId,Post.PostStatus status);
+
+    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.mediaList WHERE p.id= :postId AND p.user.id= :userId AND p.postStatus= 'DELETED' ")
+    Optional<Post> findPostToRestore(@Param("postId") String postId, @Param("userId") String userId);
+
+
+
+    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.mediaList WHERE p.id= :postId AND p.user.id= :userId AND p.postStatus=:status")
+    Optional<Post> findByIdAndUserIdAndPostStatusWithMediaList(@Param("userId") String userId,@Param("postId") String postId,@Param("status") Post.PostStatus status);
+
+    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.mediaList WHERE p.id= :postId AND p.postStatus=:status")
+    Optional<Post> findByIdAndPostStatusWithMediaList(@Param("postId") String postId ,@Param("status") Post.PostStatus status);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Post p SET p.likeCount = p.likeCount + :delta WHERE p.id = :postId")
+    void updatePostLikes(@Param("postId") String postId,@Param("delta") int delta);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Post p SET p.commentCount = p.commentCount + :delta WHERE p.id= :postId")
+    void updatePostComments(@Param("postId") String postId,@Param("delta") int delta);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Post p WHERE p.postStatus=:status AND p.deletedAt < :date ")
+    void deleteByOldPostsWithStatus(@Param("status") Post.PostStatus status,@Param("date") Instant date);
+
+    Optional<Post> findByIdAndUserId(String postId,String userId);
+
+    List<Post> findTop11ByUserIdAndPostStatusAndPublishedAtBeforeOrderByPublishedAtDesc(String userId, Post.PostStatus status, Instant date);
+    List<Post> findTop11ByUserIdAndPostStatusOrderByPublishedAtDesc(String userId,Post.PostStatus status);
+    List<Post> findTop11ByUserIdAndPostStatusAndCreatedAtBeforeOrderByCreatedAtDesc(String userId, Post.PostStatus status, Instant date);
+    List<Post> findTop11ByUserIdAndPostStatusOrderByCreatedAtDesc(String userId,Post.PostStatus status);
+
+    @Query("SELECT COUNT(p) >= :limit FROM Post p WHERE p.user.id = :userId AND p.postStatus = 'DRAFT'")
+    boolean isDraftLimitReached(@Param("userId") String userId, @Param("limit") int limit);
+}
+

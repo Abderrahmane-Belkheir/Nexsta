@@ -1,0 +1,28 @@
+package com.Nexsta.Content.api.dto;
+
+import com.Nexsta.Content.domain.Location;
+import com.Nexsta.Content.domain.PostSettings;
+import com.Nexsta.Validation.Annotations.ValidScheduled;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+
+import java.time.Instant;
+import java.util.List;
+
+@Data
+@ValidScheduled
+public class PostCreationRequest {
+
+    private String caption;
+    @Size(min = 1, max = 10)
+    private List<String> uploadRequestsIds;
+    private String thumbnailRequestId;
+    private List<String> tags;
+    private PostSettings postSettings;
+    private Location location;
+
+
+    private PostAction postAction;
+    private Instant scheduleAt;
+    public enum PostAction{DRAFT,PUBLISHED,SCHEDULED}
+}

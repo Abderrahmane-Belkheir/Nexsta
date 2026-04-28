@@ -1,6 +1,6 @@
 # Social Media Platform — Backend
 
-A production-grade RESTful backend for a social media platform, built with a modular domain-driven architecture, fully containerized with Docker, and secured with Keycloak. Continuous delivery to **Azure Cloud via GitHub Actions** is currently being configured and will be available in the near future.
+A production-grade RESTfull backend for a social media platform, built with a modular domain-driven architecture, fully containerized with Docker, and secured with Keycloak. Continuous delivery to **Azure Cloud via GitHub Actions** is currently being configured and will be available in the near future.
 
 ---
 
