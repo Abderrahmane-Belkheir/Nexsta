@@ -5,8 +5,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 
 @SpringBootApplication
-public class SocialMediaApplication {
+public class Nexsta {
     public static void main(String[] args) {
-        SpringApplication.run(SocialMediaApplication.class, args);
+        SpringApplication.run(Nexsta.class, args);
 }
 }

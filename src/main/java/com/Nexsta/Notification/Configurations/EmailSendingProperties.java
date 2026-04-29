@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
     private String apiKey;
 
     @Getter
-    private String senderEmail;
+    private String emailSender;
 
     protected String getUrl(){
         return url;
