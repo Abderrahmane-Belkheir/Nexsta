@@ -6,7 +6,7 @@ import com.Nexsta.Content.api.dto.CommentCreationRequest;
 import com.Nexsta.Content.api.dto.CommentRepresentation;
 import com.Nexsta.Content.api.dto.LikeResponse;
 import com.Nexsta.Content.domain.*;
-import com.example.SocialMediaApp.Content.domain.*;
+import com.Nexsta.Content.domain.*;
 import com.Nexsta.Content.persistence.CommentRepo;
 import com.Nexsta.Content.persistence.LikeRepo;
 import com.Nexsta.Content.persistence.PostRepo;

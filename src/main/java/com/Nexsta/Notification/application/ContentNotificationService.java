@@ -36,7 +36,7 @@ public class ContentNotificationService {
     }
 
     public void sendEmail(Email email){
-        Map<String,String> sender=Map.of("email", emailSendingProperties.getSenderEmail(),"name",applicationName);
+        Map<String,String> sender=Map.of("email", emailSendingProperties.getEmailSender(),"name",applicationName);
         String htmlContent=buildHtmlContent(email);
         List<Map<String,String>> to= List.of(Map.of("email",email.getTo()));
         EmailSendingRequest request=EmailSendingRequest.builder().

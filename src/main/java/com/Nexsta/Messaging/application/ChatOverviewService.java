@@ -2,7 +2,7 @@ package com.Nexsta.Messaging.application;
 
 import com.Nexsta.Messaging.Exceptions.ChatMessagingException;
 import com.Nexsta.Messaging.api.dto.*;
-import com.example.SocialMediaApp.Messaging.api.dto.*;
+import com.Nexsta.Messaging.api.dto.*;
 import com.Nexsta.Messaging.domain.Chat;
 import com.Nexsta.Messaging.domain.ChatMember;
 import com.Nexsta.Messaging.domain.Message;

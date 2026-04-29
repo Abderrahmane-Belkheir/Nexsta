@@ -6,7 +6,7 @@ import com.Nexsta.Content.domain.Story;
 import com.Nexsta.Content.persistence.LikeRepo;
 import com.Nexsta.Content.persistence.MediaRepo;
 import com.Nexsta.Content.persistence.StoryRepo;
-import com.example.SocialMediaApp.Content.persistence.*;
+import com.Nexsta.Content.persistence.*;
 
 import com.Nexsta.Profile.application.ProfileQueryService;
 import com.Nexsta.Shared.CheckUserExistence;

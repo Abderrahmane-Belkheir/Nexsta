@@ -3,7 +3,7 @@ package com.Nexsta.Content.api.Controllers;
 import com.Nexsta.Content.api.dto.PostPreviewRequest;
 import com.Nexsta.Content.api.dto.PostPreviewResponse;
 import com.Nexsta.Content.api.dto.PostRepresentationResponse;
-import com.example.SocialMediaApp.Content.api.dto.*;
+import com.Nexsta.Content.api.dto.*;
 import com.Nexsta.Content.application.FullPostQueryService;
 import com.Nexsta.Content.application.PostPreviewQueryService;
 import com.Nexsta.Content.domain.FetchDirection;

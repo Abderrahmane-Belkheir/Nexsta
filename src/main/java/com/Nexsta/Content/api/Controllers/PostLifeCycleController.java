@@ -1,7 +1,7 @@
 package com.Nexsta.Content.api.Controllers;
 
 import com.Nexsta.Content.api.dto.*;
-import com.example.SocialMediaApp.Content.api.dto.*;
+import com.Nexsta.Content.api.dto.*;
 import com.Nexsta.Content.application.PostLifecycleService;
 import com.Nexsta.Content.application.PostSchedulingService;
 import com.Nexsta.Content.application.PostUpdateService;

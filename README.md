@@ -167,35 +167,64 @@ This starts the following containers:
 | MongoDB | `27017` |
 | Keycloak | `8180` |
 
-### 2. Configure the Application
+# ⚙️ 2. Configure the Application
 
-Set the following environment variables (or update `application.properties`):
+Set up your environment variables in a **`.env`** file *(recommended for local development)* or in **`application.properties`** / deployment secrets for production.
 
-```bash
-# Keycloak
-KEYCLOAK_REALM=<your-realm>
-KEYCLOAK_CLIENT_ID=<your-client-id>
-KEYCLOAK_ADMIN_CLIENT_SECRET=<admin-client-secret>
-KEYCLOAK_SERVER_URL=http://localhost:8180
+<br>
 
-# Databases
-SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/SocialMediaAppDB
-SPRING_DATA_MONGODB_URI=mongodb://localhost:27017/socialmedia
+### 🗄️ Database Configuration
 
-# Redis
-SPRING_REDIS_HOST=localhost
-
-# Supabase Storage
-STORAGE_ENDPOINT=<supabase-storage-endpoint>
-STORAGE_PUBLIC_MEDIA_BUCKET=<bucket-name>
-STORAGE_API_KEY=<supabase-service-role-key>
-
-# Mail
-SPRING_MAIL_HOST=<smtp-host>
-SPRING_MAIL_USERNAME=<smtp-username>
-SPRING_MAIL_PASSWORD=<smtp-password>
+```env
+DB_URL=           # JDBC connection string (e.g. jdbc:postgresql://host:5432/db)
+DB_USERNAME=      # Database user
+DB_PASSWORD=      # Database password
 ```
 
+<br>
+
+### 🔐 Authentication & Security
+
+```env
+JWT_ISSUER=       # Token issuer URL (e.g. your Keycloak realm URL)
+KEYCLOAK_CLIENT=  # Keycloak client ID
+KEYCLOAK_SECRET=  # Keycloak client secret
+```
+
+<br>
+
+### 🗃️ Supabase Storage & Webhooks
+
+```env
+SUPABASE_URL=            # Your Supabase project URL
+SUPABASE_APIKEY=         # Supabase service role API key
+SUPABASE_PUBLIC_BUCKET=  # Name of the public storage bucket
+SUPABASE_PRIVATE_BUCKET= # Name of the private storage bucket
+SUPABASE_WEBHOOK_SECRET= # Secret used to verify webhook payloads
+```
+
+<br>
+
+### 📧 Email Service (Brevo)
+
+```env
+BREVO_APIKEY=        # Brevo (formerly Sendinblue) API key
+BREVO_EMAIL_SENDER=  # Verified sender email address
+```
+
+<br>
+
+### 📁 File Storage Paths
+
+```env
+FILE_MOVE=           # Destination path for permanent file storage
+TEMPORARY_FILE_MOVE= # Staging path for temporary file uploads
+```
+
+<br>
+
+> [!WARNING]
+> Never commit your `.env` file to version control. Add it to `.gitignore` and use a secrets manager or CI/CD environment variables for production deployments.
 ### 3. Build and Run
 
 ```bash

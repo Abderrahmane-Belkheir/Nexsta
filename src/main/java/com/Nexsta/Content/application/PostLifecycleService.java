@@ -2,7 +2,7 @@ package com.Nexsta.Content.application;
 
 import com.Nexsta.Content.Exceptions.ContentNotFoundException;
 import com.Nexsta.Content.api.dto.*;
-import com.example.SocialMediaApp.Content.api.dto.*;
+import com.Nexsta.Content.api.dto.*;
 import com.Nexsta.Content.domain.Media;
 import com.Nexsta.Content.domain.Post;
 import com.Nexsta.Content.domain.PostPreview;
