@@ -4,6 +4,7 @@ package com.Nexsta.Scheduling.Jobs;
 import com.Nexsta.Content.application.PostStorageService;
 import com.Nexsta.Content.domain.Post;
 import com.Nexsta.Content.persistence.PostRepo;
+import com.Nexsta.User.persistence.UserRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.Job;
@@ -19,6 +20,7 @@ public class PublishPostJob implements Job {
 
     private final PostRepo postRepo;
     private final PostStorageService postStorageService;
+    private final UserRepo userRepo;
 
 
     @Override

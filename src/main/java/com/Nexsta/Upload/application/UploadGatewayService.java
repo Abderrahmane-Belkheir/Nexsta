@@ -40,17 +40,17 @@ UploadGatewayService {
     private static final int UPLOAD_CONFIRM_DURATION_MINUTES = 5;
 
 
-    // used to upload files directly though the server
-    public String Upload(MultipartFile file, String userId) throws IOException {
-        UploadRequest uploadRequest= uploadUtil.toUploadRequest(file);
-        uploadValidationService.validateFile(uploadRequest);
-        UploadInitiation uploadInitiation= uploadUtil.generateUploadResponse(userId,uploadRequest);
-        String filepath=uploadInitiation.getFilepath();
-        // for this method since the uploading is done directly via the server
-        // don't need to make the file start with temporary to not get deleted later by the cron job
-        storageService.uploadFile(file,filepath.replace("temporary","permanent"));
-        return filepath;
-    }
+//    // used to upload files directly though the server
+//    public String Upload(MultipartFile file, String userId) throws IOException {
+//        UploadRequest uploadRequest= uploadUtil.toUploadRequest(file);
+//        uploadValidationService.validateFile(uploadRequest);
+//        UploadInitiation uploadInitiation= uploadUtil.generateUploadResponse(userId,uploadRequest);
+//        String filepath=uploadInitiation.getFilepath();
+//        // for this method since the uploading is done directly via the server
+//        // don't need to make the file start with temporary to not get deleted later by the cron job
+//        storageService.uploadFile(file,filepath.replace("temporary","permanent"));
+//        return filepath;
+//    }
 
     public UploadResponse requestUpload(String userId, UploadRequest request){
          uploadValidationService.validateFile(request);
@@ -73,12 +73,12 @@ UploadGatewayService {
 
         String filePath=null;
         webhookVerification.verifySignature(signature);
-
+        UploadSession uploadSession=null;
         try{
 
             filePath=webhookPayload.getRecord().getName();
 
-            UploadSession uploadSession=uploadStateService.validateUploadSession("",filePath, UploadPhase.REQUESTED);
+            uploadSession=uploadStateService.validateUploadSession("",filePath, UploadPhase.REQUESTED);
 
             webhookVerification.verifyFileUploaded(uploadSession,webhookPayload.getRecord());
 
@@ -93,7 +93,7 @@ UploadGatewayService {
             storageService.deleteFile(filePath,storageTransferManager.resolveBucket(Post.PostStatus.DRAFT));
 
             if(e instanceof  UnsupportedMediaTypeException || e instanceof FileTooLargeException ){
-                // might block user later for bypassing the request phase filter
+                log.warn("user: "+ Objects.requireNonNull(uploadSession).getUserId()+" tried to upload inCompatible file: "+filePath);
             }
 
         }
@@ -122,17 +122,17 @@ UploadGatewayService {
         List<String> failedUploadIds=new ArrayList<>();
 
         for(String uploadRequestId : uploadRequestsIds){
+            String filepath=null;
             try{
                 UploadSession uploadSession=finalizeUpload(userId,uploadRequestId,uploadType);
-                String filepath=uploadSession.getFilePath();
+                filepath=uploadSession.getFilePath();
                 filesPaths.add(filepath);
-                log.info("media type is "+uploadSession.getMediaType());
                 mediaList.add(new MediaUpload(uploadRequestId, uploadSession.getMediaType()));
                 // upload session expired which mean the key is not found in redis is the only recoverable case
             }catch (UploadSessionExpiredException e){
                 failedUploadIds.add(uploadRequestId);
             }catch (UnauthorizedResourceAccessException e){
-                // logging and blocking user later
+                log.warn("user: "+userId+" tried to confirm not owned file: "+filepath);
                 throw e;
             }
 

@@ -22,7 +22,7 @@ public class WebhookVerification {
     @Value("${supabase.webhook.secret}")
     private String webhookSecret;
     private final UploadValidationService uploadValidationService;
-    private final RedisTemplate<String,String> redisTemplate;
+
 
     public void verifySignature(String signature) {
         if (signature == null || !signature.equals(webhookSecret)) {

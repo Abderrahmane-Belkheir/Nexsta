@@ -13,11 +13,13 @@ import com.Nexsta.Upload.domain.UploadFinalization;
 import com.Nexsta.Upload.domain.UploadType;
 import com.Nexsta.User.application.AuthenticatedUserService;
 import com.Nexsta.User.domain.User;
+import com.Nexsta.User.persistence.UserRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.SchedulerException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Instant;
 import java.util.List;
@@ -36,6 +38,7 @@ public class PostLifecycleService {
     private final PostStorageService postStorageService;
     private final ThumbnailService thumbnailGenerator;
     private final PostSchedulingService postSchedulingService;
+    private final UserRepo userRepo;
 
     public PostRepresentation createPost(PostCreationRequest request) throws SchedulerException {
         String currentUserId = authenticatedUserService.getCurrentUser();
@@ -60,6 +63,9 @@ public class PostLifecycleService {
         PostPreview postPreview=thumbnailGenerator.generatePostThumbnail(currentUserId,request.getThumbnailRequestId(),mediaList.get(0));
         post.setPostPreview(postPreview);
         postRepo.save(post);
+
+        if(request.getPostAction()== PostCreationRequest.PostAction.PUBLISHED) userRepo.updateUserPosts(currentUserId,1);
+
         List<String> filesPath= uploadFinalization.getFilePaths();
         filesPath.add(postPreview.getThumbnailFilePath());
         postStorageService.transferTemporaryFiles(destinationFolder,filesPath, status);
@@ -91,6 +97,7 @@ public class PostLifecycleService {
                 log.error("Failed to delete files from storage for post {}: {}", postId, e.getMessage());
             }
             postRepo.delete(post);
+            if (post.getPostStatus()== Post.PostStatus.PUBLISHED) userRepo.updateUserPosts(currentUserId,-1);
             return new DeletePostResponse(false);
         }
 
@@ -115,7 +122,7 @@ public class PostLifecycleService {
         post.setPreDeletionStatus(null);
         post.setPostFolderPath(postStorageService.moveAndResolvePath(post, Post.PostStatus.DELETED, destinationStatus));
         postRepo.save(post);
-
+        if(destinationStatus== Post.PostStatus.PUBLISHED) userRepo.updateUserPosts(currentUserId,1);
         List<Media> mediaList = post.getMediaList();
         PostRepresentation rep = contentmapper.toPostRepresentation(post);
         rep.getMediaList().addAll(mediaList.stream()
@@ -146,6 +153,7 @@ public class PostLifecycleService {
         draftPost.setPostStatus(Post.PostStatus.PUBLISHED);
         draftPost.setPostFolderPath(postStorageService.moveAndResolvePath(draftPost, Post.PostStatus.DRAFT, Post.PostStatus.PUBLISHED));
         postRepo.save(draftPost);
+        userRepo.updateUserPosts(currentUserId,1);
     }
 
     private Post.PostStatus getPostStatus(PostCreationRequest.PostAction postAction) {

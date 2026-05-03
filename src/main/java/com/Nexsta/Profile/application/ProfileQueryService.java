@@ -16,6 +16,7 @@ import com.Nexsta.SocialGraph.domain.Follow;
 import com.Nexsta.SocialGraph.domain.RelationshipStatus;
 import com.Nexsta.SocialGraph.persistence.BlocksRepo;
 import com.Nexsta.SocialGraph.persistence.FollowRepo;
+import com.Nexsta.User.persistence.UserRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,16 +32,16 @@ public class ProfileQueryService {
     private final Profilemapper profilemapper;
     private final FollowRepo followRepo;
     private final BlocksRepo blocksRepo;
-    private final FollowCacheWriter followCacheWriter;
+    private final UserRepo userRepo;
 
     @CheckUserExistence
     public ProfileDetails getUserProfile(String targetUserId){
        String currentUserId=authenticatedUserService.getCurrentUser();
        ProfileInfo profileInfo= getUserProfileInfo(targetUserId);
         ProfileDetails profileDetails=profilemapper.toProfileDetails(profileInfo);
-
-        profileDetails.setFollowers(followCacheWriter.UserFollowerCount(targetUserId));
-        profileDetails.setFollowings(followCacheWriter.UserFollowingCount(targetUserId));
+        profileDetails.setFollowers(null);
+        profileDetails.setFollowers(null);
+        profileDetails.setPosts(null);
         // no relation should be set
         if(currentUserId.equals(targetUserId)){
             return profileDetails;
@@ -50,7 +51,7 @@ public class ProfileQueryService {
      if(blocksRepo.existsByBlockerIdAndBlockedId(currentUserId,targetUserId)||blocksRepo.existsByBlockerIdAndBlockedId(targetUserId,currentUserId)){
          profileDetails.setBio(null);
          profileDetails.setAvatarurl(null);
-         profileDetails.setUsername("Instagram User");
+         profileDetails.setUsername("Nexsta User");
          return profileDetails;
      }
 

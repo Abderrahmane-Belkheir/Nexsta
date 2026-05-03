@@ -5,8 +5,6 @@ import com.Nexsta.Content.domain.Comment;
 import com.Nexsta.Content.domain.Post;
 import com.Nexsta.Content.domain.PostSettings;
 import com.Nexsta.Content.domain.Story;
-import com.example.SocialMediaApp.Content.api.dto.*;
-import com.example.SocialMediaApp.Content.domain.*;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
