@@ -48,6 +48,8 @@ public class User {
 
     private Long postCount=0L;
 
+    private Instant lastPresence;
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Profile profile;
 

@@ -9,7 +9,6 @@ import com.Nexsta.Upload.domain.UploadType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -32,12 +31,19 @@ public class WebhookVerification {
     }
 
     public void verifyFileUploaded(UploadSession uploadSession, SupabaseWebhookPayload.StorageRecord storageRecord){
+
         Map<String,Object> metaData=storageRecord.getMetadata();
+
         String fileMimeType = (String) metaData.get("mimetype");
+
         Long fileSize = ((Number) metaData.get("size")).longValue();
+
         UploadType uploadType=uploadSession.getUploadType();
+
         uploadValidationService.validateFile(new UploadRequest(uploadType,fileMimeType,fileSize,0));
+
         Media.MediaType mediaType= determineMediaType(fileMimeType);
+
         uploadSession.setMediaType(mediaType);
     }
 

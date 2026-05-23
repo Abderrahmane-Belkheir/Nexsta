@@ -60,7 +60,8 @@ public class ProfileUpdatingService {
 
         String oldAvatarUri=currentprofile.getAvatarPath();
 
-        String profileAvatarUri=uploadGatewayService.Upload(file,currentUserId);
+        String profileAvatarUri=null;
+
 
         if(oldAvatarUri!=null){
                 //storageService.deleteFile(oldAvatarUri);

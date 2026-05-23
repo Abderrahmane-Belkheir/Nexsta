@@ -28,5 +28,10 @@ public interface UserRepo extends JpaRepository<User,String> {
     @Query("UPDATE User u SET u.postCount = u.postCount + :delta WHERE u.id= :userId")
     void updateUserPosts(@Param("userId")String userId,@Param("delta")int delta);
 
+    @Modifying
+    @Transactional
+    @Query("UPDATE User u SET u.lastPresence= CURRENT_TIMESTAMP WHERE u.id=:userId")
+    void updateUserPresence(@Param("userId") String userId);
+
     Optional<User> findByUserName(String username);
 }

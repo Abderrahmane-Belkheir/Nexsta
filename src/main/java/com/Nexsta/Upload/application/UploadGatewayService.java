@@ -15,9 +15,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
+
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -39,25 +38,18 @@ UploadGatewayService {
     private static final int UPLOAD_WAIT_DURATION_MINUTES = 5;
     private static final int UPLOAD_CONFIRM_DURATION_MINUTES = 5;
 
-
-//    // used to upload files directly though the server
-//    public String Upload(MultipartFile file, String userId) throws IOException {
-//        UploadRequest uploadRequest= uploadUtil.toUploadRequest(file);
-//        uploadValidationService.validateFile(uploadRequest);
-//        UploadInitiation uploadInitiation= uploadUtil.generateUploadResponse(userId,uploadRequest);
-//        String filepath=uploadInitiation.getFilepath();
-//        // for this method since the uploading is done directly via the server
-//        // don't need to make the file start with temporary to not get deleted later by the cron job
-//        storageService.uploadFile(file,filepath.replace("temporary","permanent"));
-//        return filepath;
-//    }
-
     public UploadResponse requestUpload(String userId, UploadRequest request){
+
          uploadValidationService.validateFile(request);
+
          UploadInitiation uploadInitiation=uploadUtil.generateUploadResponse(userId,request);
+
          UploadType uploadType=request.getUploadType();
+
          String filepath=uploadInitiation.getFilepath();
+
          String uploadRequestId=uploadInitiation.getUploadRequestId();
+
          String signedUrl=storageService.generateSignedUrl(filepath);
 
          // creating an upload session containing the user id for authorization later + the request id and the upload type
@@ -65,15 +57,20 @@ UploadGatewayService {
                 .userId(userId).uploadType(uploadType).
                 uploadRequestId(uploadRequestId)
                 .filePath(filepath).build();
+
         objectRedisTemplate.opsForValue().set(filepath,uploadSession,UPLOAD_WAIT_DURATION_MINUTES,TimeUnit.MINUTES);
+
         return new UploadResponse(signedUrl,uploadRequestId);
     }
 
     public void confirmUpload(String signature, SupabaseWebhookPayload webhookPayload){
 
         String filePath=null;
+
         webhookVerification.verifySignature(signature);
+
         UploadSession uploadSession=null;
+
         try{
 
             filePath=webhookPayload.getRecord().getName();

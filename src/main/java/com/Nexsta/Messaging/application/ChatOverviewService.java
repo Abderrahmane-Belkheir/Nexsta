@@ -2,8 +2,8 @@ package com.Nexsta.Messaging.application;
 
 import com.Nexsta.Messaging.Exceptions.ChatMessagingException;
 import com.Nexsta.Messaging.api.dto.*;
-import com.Nexsta.Messaging.api.dto.*;
 import com.Nexsta.Messaging.domain.Chat;
+import com.Nexsta.Messaging.domain.ChatAggregate;
 import com.Nexsta.Messaging.domain.ChatMember;
 import com.Nexsta.Messaging.domain.Message;
 import com.Nexsta.Messaging.persistence.ChatMemberRepo;
@@ -24,7 +24,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -45,23 +47,61 @@ public class ChatOverviewService {
     private final UserActivityTracker userActivityService;
     private final ProfileCacheManager profileCacheManager;
 
-    public List<ChatSummary> getUserChats(int page){
-        String currentUserId=authenticatedUserService.getCurrentUser();
-        Pageable pageable= PageRequest.of(page,10);
-        Page<Chat> Page = chatRepo.findByUserId(currentUserId,pageable);
-        List<Chat> chats = Page.getContent();
-        List<chatMemberDTO> otherChatMembers=chatMemberRepo.findOtherChatMembers(chats.stream().map(Chat::getId).toList(),currentUserId);
-        List<ProfileSummary> profileSummaries= profileSummaryBuilder.buildProfileSummaries(otherChatMembers.stream().map(chatMemberDTO::getUser_Id).toList());
-        Map<String,chatMemberDTO> map=otherChatMembers.stream()
-                .collect(Collectors.toMap(chatMemberDTO::getUser_Id, Function.identity()));
-        List<ChatSummary> chatSummaries= profileSummaries.stream().map(profileSummary -> {
-            chatMemberDTO chatMemberDTO=map.get(profileSummary.getUserId());
-            ChatSummary chatDTO=chatmapper.toChatDTO(profileSummary);
-            chatDTO.setChatId(chatMemberDTO.getChat_Id());
-            return chatDTO;
-        }).toList();
-        chatStatusResolver.computeStatus(chats,chatSummaries,currentUserId);
-        return chatSummaries;
+
+    public List<ChatSummary> getUserChats(Instant cursor){
+    String currentUserId = authenticatedUserService.getCurrentUser();
+    Pageable pageable = PageRequest.of(0, 11);
+
+    // 1. paginate
+    List<String> chatsId = chatRepo.findUserChatIds(currentUserId, cursor, pageable);
+    boolean hasMore = chatsId.size() > 10;
+    if (hasMore) chatsId = chatsId.subList(0, 10);
+    if (chatsId.isEmpty()) return List.of();
+
+
+    List<Chat> chats = chatRepo.findChatsByIds(chatsId);
+
+    List<ChatMember> otherChatMembers=chats.stream()
+            .flatMap(chat -> chat.getMembers().stream())
+            .filter(m -> !m.getUserId().equals(currentUserId))
+            .toList();
+
+
+    List<ProfileSummary> profileSummaries = profileSummaryBuilder.buildProfileSummaries(
+            otherChatMembers.stream().map(ChatMember::getUserId).toList()
+    );
+
+
+    Map<String, ChatMember> memberByUserId = otherChatMembers.stream()
+            .collect(Collectors.toMap(ChatMember::getUserId, Function.identity()));
+
+
+    Map<String, Chat> chatMap = chats.stream()
+            .collect(Collectors.toMap(Chat::getId, Function.identity()));
+
+
+    Map<String, ChatAggregate> aggregateMap = new HashMap<>();
+
+    List<ChatSummary> chatSummaries = profileSummaries.stream().map(profileSummary -> {
+        ChatMember otherMember = memberByUserId.get(profileSummary.getUserId());
+        String chatId = otherMember.getChatId();
+        Chat chat = chatMap.get(chatId);
+
+        ChatSummary summary = ChatSummary.builder()
+                .chatId(chatId)
+                .avatarUrl(profileSummary.getAvatarurl())
+                .build();
+
+        // populate aggregate with chat and members only
+        aggregateMap.put(chatId, new ChatAggregate(chat, summary, chat.getMembers()));
+
+        return summary;
+    }).toList();
+
+    // 7. resolve preview for each chat using aggregate map
+    chatStatusResolver.computeStatus(aggregateMap, currentUserId);
+
+    return chatSummaries;
     }
 
     public ChatDetails getUserChat(String chatId, int page){
@@ -91,7 +131,7 @@ public class ChatOverviewService {
           }
 
           if(page==0&&!messages.isEmpty()){
-             chatMemberRepo.updateUserChat(messages.get(0).getId(),currentUserId,chatId);
+
           }
 
           return new ChatDetails(chatId,chatUser,messageDTOS);

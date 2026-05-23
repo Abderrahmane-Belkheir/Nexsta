@@ -47,17 +47,25 @@ import static com.Nexsta.Upload.domain.UploadType.*;
     public static final long MAX_THUMBNAIL_SIZE = 200 * 1024L;
 
     public void validateFile(UploadRequest request){
+
         UploadType uploadType=request.getUploadType();
+
      List<String> supportedMediaTypesForRequest = supportedMediaTypes.get(uploadType);
+
      boolean compatible=false;
+
      if(supportedMediaTypesForRequest !=null){
+
         compatible= supportedMediaTypesForRequest.stream().anyMatch(allowedTypes->allowedTypes.equals(request.getFileMimeType().toLowerCase()));
+
      }
 
         String filetMimeType =request.getFileMimeType();
 
      if(compatible){
+
          boolean isVideo =  filetMimeType.startsWith("video/");
+
          long limit=switch (uploadType) {
 
              case PROFILE -> MAX_PROFILE_SIZE;

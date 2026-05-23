@@ -1,10 +1,9 @@
 package com.Nexsta.Messaging.api.Controllers;
 
 import com.Nexsta.Messaging.api.dto.ChatHearbeatDTO;
-import com.Nexsta.Messaging.api.dto.SendMessageToChatDTO;
 import com.Nexsta.Messaging.application.ChatActivityTracker;
-import com.Nexsta.Messaging.application.ChatMessageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
 
@@ -15,16 +14,22 @@ import java.security.Principal;
 public class RealTimeChatController {
 
     private final ChatActivityTracker chatActivityTracker;
-    private final ChatMessageService chatMessageService;
 
-    @MessageMapping("/chat.join")
-    public void join(Principal principal, ChatHearbeatDTO chatHearbeatDTO){
-        chatActivityTracker.setChat_UserStatus(principal.getName(),chatHearbeatDTO.getChatId());
+
+    @MessageMapping("/chat.enter")
+    public void enterChat(@DestinationVariable String chatId, Principal principal) {
+        chatActivityTracker.userEnteredChat(principal.getName(),chatId);
     }
 
-    @MessageMapping("chat.send")
-    public void sendMessage(Principal principal, SendMessageToChatDTO sendMessageToChatDTO){
-        chatMessageService.sendMessageToChat(principal,sendMessageToChatDTO);
+    @MessageMapping("/chat.leave")
+    public void leaveChat(@DestinationVariable String chatId, Principal principal) {
+        chatActivityTracker.userLeftChat(principal.getName(),chatId);
+
+    }
+
+    @MessageMapping("/inbox.open")
+    public void openInbox(Principal principal){
+        chatActivityTracker.UserEnteredInbox(principal.getName());
     }
 
 }

@@ -18,17 +18,28 @@ import java.util.List;
 public class Chat {
 
     @Id
-    @GeneratedValue(generator = "uuid")
-    @GenericGenerator(name = "uuid", strategy = "org.hibernate.id.UUIDGenerator")
+    @GeneratedValue(strategy =GenerationType.UUID)
     private String id;
 
     @CreatedDate
-    private Instant createddate;
+    private Instant createdDate;
 
-    @OneToMany(mappedBy = "chat",fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "chat",fetch = FetchType.LAZY,cascade =CascadeType.PERSIST)
     private List<ChatMember> members;
 
     private String lastMessageId;
     private Instant lastMessageAt;
 
+    private String name;
+    private String photo;
+
+    @Enumerated(EnumType.STRING)
+    private ChatType type;
+
+    public enum ChatType {
+        DIRECT,
+        GROUP
+    }
+
 }
+

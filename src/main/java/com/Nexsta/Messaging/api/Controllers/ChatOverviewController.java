@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.List;
 
 @RestController
@@ -19,8 +20,8 @@ public class ChatOverviewController {
     private final ChatOverviewService chatOverviewService;
 
     @GetMapping
-    public List<ChatSummary> getChats(@RequestParam(defaultValue = "0") @PositiveOrZero int page){
-        return chatOverviewService.getUserChats(page);
+    public List<ChatSummary> getChats(@RequestParam(defaultValue = "null")Instant cursor){
+        return chatOverviewService.getUserChats(cursor);
     }
 
     @GetMapping("/{chatId}")

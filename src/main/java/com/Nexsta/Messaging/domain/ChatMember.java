@@ -15,15 +15,15 @@ import java.util.UUID;
 })
 public class ChatMember {
 
-    @Id
-    @GeneratedValue
-    private UUID id;
+    @EmbeddedId
+    private ChatMemberId id;
 
     @Column(name = "chat_id",updatable = false,insertable = false)
     private String chatId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chat_id")
+    @MapsId("chatId")
     private Chat chat;
 
     @Column(name="user_id",updatable = false,insertable = false)
@@ -31,11 +31,15 @@ public class ChatMember {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
+    @MapsId("userId")
     private User user;
 
     private int unreadCount;
 
-    private String lastreadMessageId;
+    private String lastReadMessageId;
+
+    @Transient
+    private String avatarUrl;
 
     public ChatMember(Chat chat,String userId){
         this.chat=chat;
