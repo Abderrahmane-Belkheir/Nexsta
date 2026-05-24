@@ -1,6 +1,6 @@
 package com.Nexsta.Messaging.api.Controllers;
 
-import com.Nexsta.Messaging.api.dto.ChatHearbeatDTO;
+
 import com.Nexsta.Messaging.application.ChatActivityTracker;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -29,7 +29,7 @@ public class RealTimeChatController {
 
     @MessageMapping("/inbox.open")
     public void openInbox(Principal principal){
-        chatActivityTracker.UserEnteredInbox(principal.getName());
+        chatActivityTracker.userOpenedInbox(principal.getName());
     }
 
 }

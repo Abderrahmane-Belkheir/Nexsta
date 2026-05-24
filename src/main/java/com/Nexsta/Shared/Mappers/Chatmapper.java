@@ -2,7 +2,8 @@ package com.Nexsta.Shared.Mappers;
 
 import com.Nexsta.Messaging.api.dto.ChatSummary;
 import com.Nexsta.Messaging.api.dto.ChatUser;
-import com.Nexsta.Messaging.api.dto.MessageDTO;
+
+import com.Nexsta.Messaging.api.dto.MessageView;
 import com.Nexsta.Messaging.domain.Message;
 import com.Nexsta.Profile.api.dto.ProfileSummary;
 import com.Nexsta.Profile.domain.Profile;
@@ -12,6 +13,6 @@ import org.mapstruct.Mapper;
 public interface Chatmapper {
 
     ChatUser tochatUser(Profile profile);
-    MessageDTO tomessageDTO(Message message);
-    ChatSummary toChatDTO(ProfileSummary profileSummary);
+    MessageView toMessageView(Message message);
+
 }

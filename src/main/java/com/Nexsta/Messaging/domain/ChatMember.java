@@ -11,7 +11,8 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @Table(indexes={
-        @Index(name="chat_userid",columnList = "user_id")
+        @Index(name="chat_userid",columnList = "user_id"),
+        @Index(name = "chat_unread",columnList = "chat_id,unReadCount")
 })
 public class ChatMember {
 
@@ -34,7 +35,7 @@ public class ChatMember {
     @MapsId("userId")
     private User user;
 
-    private int unreadCount;
+    private int unReadCount;
 
     private String lastReadMessageId;
 
@@ -46,9 +47,5 @@ public class ChatMember {
         this.user=new User(userId);
         }
 
-        public void incrementUnreadCount(){
-        if(unreadCount<4){
-            unreadCount+=1;
-        }
-        }
+
 }

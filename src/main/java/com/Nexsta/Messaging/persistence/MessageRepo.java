@@ -14,5 +14,12 @@ public interface MessageRepo extends MongoRepository<Message,String> {
 
     List<Message> findByIdIn(List<String> lastmessageIds);
 
-    // Pag findAllByChatIdIn();
+    List<Message> findByChatIdOrderByIdDesc(String chatId, Pageable pageable);
+
+    List<Message> findByChatIdAndIdLessThanOrderByIdDesc(
+            String chatId,
+            String beforeId,
+            Pageable pageable
+    );
+
 }

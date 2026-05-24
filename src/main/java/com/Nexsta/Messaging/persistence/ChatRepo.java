@@ -25,7 +25,7 @@ public interface ChatRepo extends JpaRepository<Chat,String> {
             Pageable pageable
     );
 
-    // step 2 — fetch full chats with members by ids
+
     @Query("""
     SELECT DISTINCT c FROM Chat c
     JOIN FETCH c.members

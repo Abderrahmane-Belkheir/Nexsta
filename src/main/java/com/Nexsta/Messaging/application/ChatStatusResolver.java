@@ -34,8 +34,8 @@ public class ChatStatusResolver {
                     .findFirst()
                     .orElseThrow();
 
-            if (currentMember.getUnreadCount() > 0) {
-                summary.setPreview(ChatPreview.unread(currentMember.getUnreadCount()));
+            if (currentMember.getUnReadCount() > 0&&!aggregate.getChat().getLastMessageId().equals(currentMember.getLastReadMessageId())) {
+                summary.setPreview(ChatPreview.unread(currentMember.getUnReadCount()));
             }
 
         }
@@ -61,13 +61,13 @@ public class ChatStatusResolver {
                 // current user sent it — check if others saw it
                 List<String> seenBy = aggregate.getMembers().stream()
                         .filter(m -> !m.getUserId().equals(currentUserId))
-                        .filter(m -> m.getUnreadCount() == 0)
+                        .filter(m -> m.getUnReadCount() == 0&&m.getLastReadMessageId().equals(message.getId()))
                         .map(ChatMember::getAvatarUrl)
                         .toList();
 
                 summary.setPreview(seenBy.isEmpty()
                         ? ChatPreview.sent()
-                        : ChatPreview.seen(seenBy));
+                        : ChatPreview.seen(seenBy,message.getReadAt()));
             }
 
         }

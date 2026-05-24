@@ -31,7 +31,7 @@ public class Chat {
     private Instant lastMessageAt;
 
     private String name;
-    private String photo;
+    private String avatarUrl;
 
     @Enumerated(EnumType.STRING)
     private ChatType type;

@@ -2,7 +2,7 @@ package com.Nexsta.Messaging.application;
 
 import com.Nexsta.Content.Exceptions.ContentNotAvailableException;
 import com.Nexsta.Messaging.Exceptions.ChatMessagingException;
-import com.Nexsta.Messaging.api.dto.SendMessageDTO;
+import com.Nexsta.Messaging.api.dto.SendMessage;
 import com.Nexsta.Messaging.domain.Chat;
 import com.Nexsta.Messaging.domain.ChatMember;
 import com.Nexsta.Messaging.domain.Message;
@@ -44,7 +44,7 @@ public class ChatSendingService {
 
 
 
-    public void sendMessageRouting(SendMessageDTO messageDTO){
+    public void sendMessageRouting(SendMessage messageDTO){
         if(messageDTO.getChatId()!=null){
             sendMessageByChatId(messageDTO);
         }else{
@@ -54,7 +54,7 @@ public class ChatSendingService {
 
     // this is meant for first time chatting it first check whether a chat exists between users or not
     @CheckUserExistence
-    private void sendMessageByUserId(SendMessageDTO messageDTO){
+    private void sendMessageByUserId(SendMessage messageDTO){
         String currentUserId=authenticatedUserService.getCurrentUser();
         String recipientId=messageDTO.getRecipientId();
         isAllowedToSendUser(currentUserId,recipientId);
@@ -77,14 +77,15 @@ public class ChatSendingService {
         newChat.getMembers().addAll(List.of(chatMember1,chatMember2));
         newChat.setType(Chat.ChatType.DIRECT);
         chatRepo.save(newChat);
-      //  messageDeliveringService.deliverMessage();
+        if(chatActivityTracker.isUserActiveInInbox(recipientId))messageDeliveringService.deliverMessage(null,null);
+
         }catch (Exception e){
             log.error("sending message to user failed "+e.getMessage());
             throw new ChatMessagingException("could not send message to user");
         }
     }
 
-    private void processAndDeliverMessage(Chat chat, String currentUserId, SendMessageDTO messageDTO){
+    private void processAndDeliverMessage(Chat chat, String currentUserId, SendMessage messageDTO){
         Message message=messageRepo.save(new Message(chat.getId(),currentUserId, messageDTO.getContent()));
         chat.setLastMessageId(message.getId());
         chat.setLastMessageAt(chat.getLastMessageAt());
@@ -105,7 +106,7 @@ public class ChatSendingService {
     }
 
     @CheckUserExistence
-    private void sendMessageByChatId(SendMessageDTO messageDTO){
+    private void sendMessageByChatId(SendMessage messageDTO){
         String currentUserId=authenticatedUserService.getCurrentUser();
         Chat chat=chatRepo.findChatById(messageDTO.getChatId(),currentUserId).orElseThrow(()->new ContentNotAvailableException("Chat Not Found"));
         processAndDeliverMessage(chat,currentUserId,messageDTO);

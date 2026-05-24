@@ -6,14 +6,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class MessageDTO {
+public class MessageView {
     private String id;
+    private String senderId;
     private String content;
     private Instant sentAt;
-    private Boolean lastView;
-    private Boolean sentByme;
+    private boolean mine;
+    private List<String> seenByUserIds;
 }

@@ -1,6 +1,6 @@
 package com.Nexsta.Shared;
 
-import com.Nexsta.Messaging.api.dto.SendMessageDTO;
+import com.Nexsta.Messaging.api.dto.SendMessage;
 import com.Nexsta.Messaging.api.dto.SendMessageToUserDTO;
 import com.Nexsta.User.Exceptions.UserNotFoundException;
 import com.Nexsta.User.persistence.UserRepo;
@@ -34,7 +34,7 @@ public class UserExistence {
         return switch (object.getClass().getSimpleName()){
             case "String" -> (String) object;
             case "sendMessageToUserDTO" -> ((SendMessageToUserDTO) object).getUserId();
-            case "sendMessageToChatDTO" -> ((SendMessageDTO) object).getChatId();
+            case "sendMessageToChatDTO" -> ((SendMessage) object).getChatId();
             default -> throw new IllegalStateException("Unexpected value: " + object.getClass().getSimpleName());
         };
     }

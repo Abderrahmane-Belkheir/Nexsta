@@ -1,6 +1,6 @@
 package com.Nexsta.Messaging.api.Controllers;
 
-import com.Nexsta.Messaging.api.dto.SendMessageDTO;
+import com.Nexsta.Messaging.api.dto.SendMessage;
 import com.Nexsta.Messaging.application.ChatSendingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,7 @@ public class ChatSendingController {
     private final ChatSendingService chatSendingService;
 
     @PostMapping
-    public ResponseEntity<Void> send(@RequestBody @Valid SendMessageDTO message){
+    public ResponseEntity<Void> send(@RequestBody @Valid SendMessage message){
         chatSendingService.sendMessageRouting(message);
         return ResponseEntity.noContent().build();
     }
