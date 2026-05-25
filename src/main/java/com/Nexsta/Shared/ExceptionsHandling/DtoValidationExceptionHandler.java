@@ -18,8 +18,11 @@ public class DtoValidationExceptionHandler {
     public ResponseEntity<Map<String,String>> handleNotValidDto(MethodArgumentNotValidException e){
         Map<String,String> map=new HashMap<>();
         e.getBindingResult().getAllErrors().forEach(error ->{
-            String field=((FieldError)error).getField();
-            map.put(field,error.getDefaultMessage());
+            if (error instanceof FieldError fieldError) {
+                map.put(fieldError.getField(), fieldError.getDefaultMessage());
+            } else {
+                map.put(error.getObjectName(), error.getDefaultMessage());
+            }
         });
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(map);
     }

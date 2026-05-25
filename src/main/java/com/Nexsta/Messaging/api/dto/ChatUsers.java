@@ -1,6 +1,5 @@
 package com.Nexsta.Messaging.api.dto;
 
-import com.Nexsta.Messaging.domain.Chat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,14 +11,6 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @Builder
-public class ChatDetails {
-    private String chatId;
-    private Chat.ChatType chatType;
-
-
-    private String chatName;
-    private String chatAvatar;
-
+public class ChatUsers {
     private List<ChatUser>  chatUsers;
-
 }

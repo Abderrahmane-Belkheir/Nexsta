@@ -1,8 +1,6 @@
 package com.Nexsta.Validation.Annotations;
 
 import com.Nexsta.Validation.application.ValidateMessageSending;
-import com.Nexsta.Validation.application.ValidateScheduledInstant;
-import com.Nexsta.Validation.application.ValidateSchedulerPost;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 

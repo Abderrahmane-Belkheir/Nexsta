@@ -50,7 +50,7 @@ public class KeycloakService implements IdentityService {
             }
             String userId = CreatedResponseUtil.getCreatedId(response);
 
-            realmResource.users().get(userId).sendVerifyEmail();
+        realmResource.users().get(userId).sendVerifyEmail();
 
             return userId;
         }

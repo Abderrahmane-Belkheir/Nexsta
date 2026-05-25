@@ -17,18 +17,12 @@ import java.util.UUID;
 public class ChatMember {
 
     @EmbeddedId
-    private ChatMemberId id;
-
-    @Column(name = "chat_id",updatable = false,insertable = false)
-    private String chatId;
+    private ChatMemberId id=new ChatMemberId();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chat_id")
     @MapsId("chatId")
     private Chat chat;
-
-    @Column(name="user_id",updatable = false,insertable = false)
-    private String userId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")

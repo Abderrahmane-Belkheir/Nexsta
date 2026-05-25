@@ -13,18 +13,25 @@ import java.util.Optional;
 
 public interface ChatRepo extends JpaRepository<Chat,String> {
     @Query("""
-    SELECT c.id FROM Chat c
-    JOIN c.members cm
-    WHERE cm.id.userId = :userId
-    AND (:cursor IS NULL OR c.lastMessageAt < :cursor)
-    ORDER BY c.lastMessageAt DESC
+       SELECT c FROM Chat c
+       JOIN c.members m
+       WHERE m.id.userId = :userId
+       AND c.lastMessageAt < :cursor
+       ORDER BY c.lastMessageAt DESC                                    
     """)
-    List<String> findUserChatIds(
+    List<Chat> findUserChatIds(
             @Param("userId") String userId,
             @Param("cursor") Instant cursor,
             Pageable pageable
     );
 
+    @Query("""
+            SELECT c FROM Chat c
+            JOIN c.members m
+            WHERE m.id.userId = :userId
+            ORDER BY c.lastMessageAt DESC
+            """)
+    List<Chat> findLastestChats(@Param("userId") String userId,Pageable pageable);
 
     @Query("""
     SELECT DISTINCT c FROM Chat c
@@ -39,7 +46,7 @@ public interface ChatRepo extends JpaRepository<Chat,String> {
            JOIN c.members cm
            WHERE cm.id.userId IN (:user1Id, :user2Id)
            GROUP BY c
-           HAVING COUNT(DISTINCT cm.userId) = 2
+           HAVING COUNT(DISTINCT cm.id.userId) = 2
      
      """)
     Optional<Chat> findChatBetween(@Param("user1Id") String user1Id,@Param("user2Id") String user2Id);

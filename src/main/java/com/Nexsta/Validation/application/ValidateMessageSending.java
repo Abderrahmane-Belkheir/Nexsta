@@ -9,9 +9,9 @@ public class ValidateMessageSending implements ConstraintValidator<ValidMessage,
     @Override
     public boolean isValid(SendMessage message, ConstraintValidatorContext constraintValidatorContext) {
         if((message.getRecipientId()!=null&&message.getChatId()==null)||(message.getRecipientId()==null&&message.getChatId()!=null)) {
-            constraintValidatorContext.buildConstraintViolationWithTemplate("Provide either chat_id or recipient_id, not both or neither").addConstraintViolation();
-            return false;
+            return true;
         }
-        return true;
+        constraintValidatorContext.buildConstraintViolationWithTemplate("Provide either chat_id or recipient_id, not both or neither").addConstraintViolation();
+        return false;
     }
 }

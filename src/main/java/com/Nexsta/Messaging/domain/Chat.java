@@ -4,11 +4,11 @@ package com.Nexsta.Messaging.domain;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.GenericGenerator;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @EntityListeners(AuditingEntityListener.class)
@@ -18,14 +18,13 @@ import java.util.List;
 public class Chat {
 
     @Id
-    @GeneratedValue(strategy =GenerationType.UUID)
     private String id;
 
     @CreatedDate
     private Instant createdDate;
 
-    @OneToMany(mappedBy = "chat",fetch = FetchType.LAZY,cascade =CascadeType.PERSIST)
-    private List<ChatMember> members;
+    @OneToMany(mappedBy = "chat",fetch = FetchType.LAZY,cascade =CascadeType.ALL,orphanRemoval = true)
+    private List<ChatMember> members=new ArrayList<>();
 
     private String lastMessageId;
     private Instant lastMessageAt;
@@ -35,6 +34,10 @@ public class Chat {
 
     @Enumerated(EnumType.STRING)
     private ChatType type;
+
+    public Chat(String id){
+        this.id=id;
+    }
 
     public enum ChatType {
         DIRECT,

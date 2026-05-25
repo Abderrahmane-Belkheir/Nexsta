@@ -1,6 +1,7 @@
 package com.Nexsta.Messaging.api.dto;
 
 import com.Nexsta.Messaging.domain.Chat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

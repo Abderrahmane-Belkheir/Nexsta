@@ -1,7 +1,7 @@
 package com.Nexsta.Shared;
 
 import com.Nexsta.Messaging.api.dto.SendMessage;
-import com.Nexsta.Messaging.api.dto.SendMessageToUserDTO;
+
 import com.Nexsta.User.Exceptions.UserNotFoundException;
 import com.Nexsta.User.persistence.UserRepo;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ public class UserExistence {
         Object[] args = joinPoint.getArgs();
         String userId=getUserId(args[0]);
                 log.info("checking user existence for "+userId);
-                if (!userRepo.existsById(userId)) {
+                if (userId!=null&&!userRepo.existsById(userId)) {
                     throw new UserNotFoundException(userId);
                 }
     }
@@ -33,8 +33,7 @@ public class UserExistence {
     private String getUserId(Object object){
         return switch (object.getClass().getSimpleName()){
             case "String" -> (String) object;
-            case "sendMessageToUserDTO" -> ((SendMessageToUserDTO) object).getUserId();
-            case "sendMessageToChatDTO" -> ((SendMessage) object).getChatId();
+            case "SendMessage" -> ((SendMessage) object).getRecipientId();
             default -> throw new IllegalStateException("Unexpected value: " + object.getClass().getSimpleName());
         };
     }

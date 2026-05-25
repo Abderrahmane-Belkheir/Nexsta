@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -20,58 +21,65 @@ import java.util.*;
 public class ChatStatusResolver {
 
     private final MessageRepo messageRepo;
+    private final ChatMemberRepo chatMemberRepo;
 
 
+    public void computeStatus(Map<String,ChatAggregate> chatAggregateMap,String currentUserId){
 
-    public void computeStatus(Map<String, ChatAggregate> chatAggregateMap, String currentUserId){
+    List<ChatMemberRepo.ChatUnread> chatUnReads=chatMemberRepo.
+            findUnreadCountsForUser(currentUserId,chatAggregateMap.values().stream().map(chatAggregate -> chatAggregate.getChat().getId()).toList());
 
-        for (ChatAggregate aggregate : chatAggregateMap.values()) {
+    List<String> lastMessagesIds=new ArrayList<>();
 
-            ChatSummary summary = aggregate.getSummary();
-            // get current user member directly from already loaded members
-            ChatMember currentMember = aggregate.getMembers().stream()
-                    .filter(m -> m.getUserId().equals(currentUserId))
-                    .findFirst()
-                    .orElseThrow();
-
-            if (currentMember.getUnReadCount() > 0&&!aggregate.getChat().getLastMessageId().equals(currentMember.getLastReadMessageId())) {
-                summary.setPreview(ChatPreview.unread(currentMember.getUnReadCount()));
-            }
-
+           for(ChatMemberRepo.ChatUnread chatUnread:chatUnReads){
+               int unReadCount=chatUnread.getUnRead()!=null?chatUnread.getUnRead():0;
+        if(unReadCount>0){
+            chatAggregateMap.get(chatUnread.getChatId()).getSummary().setPreview(ChatPreview.unread(unReadCount));
+        }else{
+            Chat chat=chatAggregateMap.get(chatUnread.getChatId()).getChat();
+            lastMessagesIds.add(chat.getLastMessageId());
         }
-
-        List<String> lastMessagesIds =chatAggregateMap.values().stream().
-                filter(chatAggregate -> chatAggregate.getSummary().getPreview()==null).
-                map(chatAggregate -> chatAggregate.getChat().getLastMessageId()).toList();
+    }
 
         if(lastMessagesIds.isEmpty()) return;
 
-        List<Message> lastMessages= messageRepo.findByIdIn(lastMessagesIds);
+    List<Message> lastMessages= messageRepo.findByIdIn(lastMessagesIds);
+    List<String> c=new ArrayList<>();
 
         for (Message message : lastMessages) {
-            ChatAggregate aggregate = chatAggregateMap.get(message.getChatId());
-            if (aggregate == null) continue;
+        ChatAggregate aggregate = chatAggregateMap.get(message.getChatId());
 
-            ChatSummary summary = aggregate.getSummary();
+        if (aggregate == null) continue;
 
-            if (!message.getSenderId().equals(currentUserId)) {
-                // other user sent it
-                summary.setPreview(ChatPreview.received(message.getContent()));
-            } else {
-                // current user sent it — check if others saw it
-                List<String> seenBy = aggregate.getMembers().stream()
-                        .filter(m -> !m.getUserId().equals(currentUserId))
-                        .filter(m -> m.getUnReadCount() == 0&&m.getLastReadMessageId().equals(message.getId()))
-                        .map(ChatMember::getAvatarUrl)
-                        .toList();
+        ChatSummary summary = aggregate.getSummary();
 
-                summary.setPreview(seenBy.isEmpty()
-                        ? ChatPreview.sent()
-                        : ChatPreview.seen(seenBy,message.getReadAt()));
-            }
+        if (!message.getSenderId().equals(currentUserId)) {
 
+            summary.setPreview(ChatPreview.received(message.getContent()));
+        } else {
+            c.add(message.getChatId());
         }
 
     }
+
+    List<ChatMemberRepo.ChatMember> p=chatMemberRepo.findMembersWhoSeenLastMessage(c,currentUserId);
+
+    Map<String, List<String>> seenByChatId = p.stream()
+            .collect(Collectors.groupingBy(
+                    ChatMemberRepo.ChatMember::getChatId,
+                    Collectors.mapping(ChatMemberRepo.ChatMember::getUserId, Collectors.toList())
+            ));
+
+        for(Map.Entry<String,List<String>> chatId:seenByChatId.entrySet()){
+        chatAggregateMap.get(chatId.getKey()).getSummary().setPreview(ChatPreview.seen(chatId.getValue(),null));
+    }
+
+        chatAggregateMap.values().stream().filter(chatAggregate -> chatAggregate.getSummary().getPreview()==null).forEach(chatAggregate -> {
+            Chat chat=chatAggregate.getChat();
+            ChatSummary chatSummary=chatAggregate.getSummary();
+            chatSummary.setPreview(ChatPreview.sent(chat.getLastMessageAt()));
+        });
+
+}
 }
 

@@ -46,67 +46,63 @@ public class ChatViewService {
 
 
     public ChatPage getUserChats(Instant cursor){
+
     String currentUserId = authenticatedUserService.getCurrentUser();
+
     Pageable pageable = PageRequest.of(0, chatPageLimit+1);
 
+    List<Chat> chats = cursor==null?chatRepo.findLastestChats(currentUserId,pageable):chatRepo.findUserChatIds(currentUserId, cursor, pageable);
 
-    List<String> chatsId = chatRepo.findUserChatIds(currentUserId, cursor, pageable);
-    boolean hasMore = chatsId.size() > chatPageLimit;
-    if (hasMore) chatsId = chatsId.subList(0, chatPageLimit);
-    if (chatsId.isEmpty()) return null;
+    boolean hasMore = chats.size() > chatPageLimit;
 
+    if (hasMore){
+        chats = chats.subList(0, chatPageLimit);
+    }
 
-    List<Chat> chats = chatRepo.findChatsByIds(chatsId);
+       List<String> directChats =chats.stream().filter(chat -> chat.getType()== Chat.ChatType.DIRECT).map(Chat::getId).toList();
+       directChats.forEach(System.out::println);
+       List<ChatMemberRepo.ChatMember> m=chatMemberRepo.findOtherChatMember(directChats,currentUserId);
 
-    List<ChatMember> otherChatMembers=chats.stream().filter(chat -> chat.getType()== Chat.ChatType.DIRECT)
-            .flatMap(chat -> chat.getMembers().stream())
-            .toList();
+        Map<String, String> otherMemberByChatId = m.stream()
+                .collect(Collectors.toMap(
+                        ChatMemberRepo.ChatMember::getChatId,
+                        ChatMemberRepo.ChatMember::getUserId
+                ));
 
-
-    List<ProfileSummary> profileSummaries = profileSummaryBuilder.buildProfileSummaries(
-            otherChatMembers.stream().map(ChatMember::getUserId).toList()
-    );
-
-
-    Map<String, ChatMember> memberByUserId = otherChatMembers.stream()
-            .collect(Collectors.toMap(ChatMember::getUserId, Function.identity()));
-
-
-    Map<String, Chat> chatMap = chats.stream()
-            .collect(Collectors.toMap(Chat::getId, Function.identity()));
+    Map<String,ProfileSummary> profileSummaries = profileSummaryBuilder.buildProfileSummaries(
+           m.stream().map(ChatMemberRepo.ChatMember::getUserId).toList()
+    ).stream().collect(Collectors.toMap(ProfileSummary::getUserId, Function.identity()));
 
 
     Map<String, ChatAggregate> aggregateMap = new HashMap<>();
 
-    List<ChatSummary> chatSummaries = profileSummaries.stream().map(profileSummary -> {
-        ChatMember otherMember = memberByUserId.get(profileSummary.getUserId());
-        String chatId = otherMember.getChatId();
-        Chat chat = chatMap.get(chatId);
-
-       if(!otherMember.getUserId().equals(currentUserId)){
-           otherMember.setAvatarUrl(profileSummary.getAvatarurl());
-       }
-
+    List<ChatSummary> chatSummaries = chats.stream().map(chat -> {
+        String chatId=chat.getId();
         ChatSummary summary = ChatSummary.builder()
-                .chatId(chatId)
+                .chatId(chat.getId())
+                .chatType(chat.getType())
                 .build();
 
         if(chat.getType()== Chat.ChatType.DIRECT) {
-            summary.setChatName(profileSummary.getUsername());
-            summary.setChatAvatar(profileSummary.getAvatarurl());
-            summary.setActive(userActivityService.getUserStatus(profileSummary.getUserId()));
-            summary.setLastSeen(null);
+            String memberId= otherMemberByChatId.get(chatId);
+            ProfileSummary profileSummary=profileSummaries.get(memberId);
+            if(profileSummary!=null){
+                summary.setChatName(profileSummary.getUsername());
+                summary.setChatAvatar(profileSummary.getAvatarurl());
+                summary.setActive(userActivityService.getUserStatus(profileSummary.getUserId()));
+                summary.setLastSeen(null);
+            }
         }else{
             summary.setChatName(chat.getName());
             summary.setChatAvatar(chat.getAvatarUrl());
         }
-        // populate aggregate with chat and members only
-        aggregateMap.put(chatId, new ChatAggregate(chat, summary, chat.getMembers()));
+
+        aggregateMap.put(chatId, new ChatAggregate(chat, summary));
 
         return summary;
     }).toList();
 
-    // 7. resolve preview for each chat using aggregate map
+
     chatStatusResolver.computeStatus(aggregateMap, currentUserId);
 
     return ChatPage.builder()
@@ -114,12 +110,12 @@ public class ChatViewService {
             .build();
     }
 
-    public ChatDetails getChatDetails(String chatId){
+    public ChatUsers getChatDetails(String chatId){
         String currentUserId=authenticatedUserService.getCurrentUser();
         Chat chat=chatRepo.findChatById(chatId,currentUserId).orElseThrow(()->new ContentNotAvailableException("Chat Not Found"));
         List<ChatMember> members=chat.getMembers();
         List<ChatUser> chatUsers=buildChatUsers(members);
-        return ChatDetails.builder().chatUsers(chatUsers).build();
+        return ChatUsers.builder().chatUsers(chatUsers).build();
     }
 
     public MessagePage getChatMessages(String chatId,String cursor){
@@ -145,8 +141,9 @@ public class ChatViewService {
         }
 
         if(cursor==null){
-              chatMemberRepo.resetCountAndUpdateLastReadMessage(chatId,currentUserId);
-       }
+          chatMemberRepo.resetCountAndUpdateLastReadMessage(chatId,currentUserId,messagesView.get(0).getId());
+
+        }
 
         Collections.reverse(messagesView);
 
@@ -159,10 +156,10 @@ public class ChatViewService {
 
     private List<ChatUser> buildChatUsers(List<ChatMember> chatMembers){
       Map<String,ProfileSummary> profileSummaries=profileSummaryBuilder.buildProfileSummaries(chatMembers.stream().
-              map(ChatMember::getUserId).toList()).stream().collect(Collectors.toMap(ProfileSummary::getUserId, Function.identity()));
+              map(chatMember -> chatMember.getId().getUserId()).toList()).stream().collect(Collectors.toMap(ProfileSummary::getUserId, Function.identity()));
 
       return chatMembers.stream().map(chatMember ->{
-          String userId=chatMember.getUserId();
+          String userId=chatMember.getId().getUserId();
          ProfileSummary profileSummary=profileSummaries.get(userId);
          boolean isActive=userActivityService.getUserStatus(userId);
          String lastSeen=null;
@@ -175,6 +172,7 @@ public class ChatViewService {
                  userId(userId).
                  username(profileSummary.getUsername()).
                  avatarPath(profileSummary.getAvatarurl()).
+                 lastSeenMessageId(chatMember.getLastReadMessageId()).
                  isActive(isActive).lastActivity(lastSeen).
                  build();
 

@@ -13,6 +13,7 @@ public class ChatUser {
     private String userId;
     private String username;
     private String avatarPath;
+    private String lastSeenMessageId;
     private Boolean isActive;
     private String lastActivity;
 }

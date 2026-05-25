@@ -9,6 +9,7 @@ import com.Nexsta.Messaging.domain.Message;
 import com.Nexsta.Messaging.persistence.ChatMemberRepo;
 import com.Nexsta.Messaging.persistence.ChatRepo;
 import com.Nexsta.Messaging.persistence.MessageRepo;
+import com.Nexsta.Profile.application.ProfileQueryService;
 import com.Nexsta.Profile.application.cache.ProfileCacheManager;
 import com.Nexsta.Profile.domain.Profile;
 import com.Nexsta.Shared.CheckUserExistence;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 
 @Service
@@ -36,14 +38,14 @@ public class ChatSendingService {
     private final ChatMemberRepo chatMemberRepo;
     private final AuthenticatedUserService authenticatedUserService;
     private final BlocksRepo blocksRepo;
-    private final ProfileCacheManager profileCacheManager;
+    private final ProfileQueryService profileQueryService;
     private final ChatRepo chatRepo;
     private final FollowRepo followRepo;
     private final ChatActivityTracker chatActivityTracker;
     private final MessageDeliveringService messageDeliveringService;
 
 
-
+    @CheckUserExistence
     public void sendMessageRouting(SendMessage messageDTO){
         if(messageDTO.getChatId()!=null){
             sendMessageByChatId(messageDTO);
@@ -53,7 +55,6 @@ public class ChatSendingService {
     }
 
     // this is meant for first time chatting it first check whether a chat exists between users or not
-    @CheckUserExistence
     private void sendMessageByUserId(SendMessage messageDTO){
         String currentUserId=authenticatedUserService.getCurrentUser();
         String recipientId=messageDTO.getRecipientId();
@@ -68,16 +69,23 @@ public class ChatSendingService {
         }
 
         try{
-        Chat newChat =chatRepo.save(new Chat());
-        ChatMember chatMember1=new ChatMember(newChat,currentUserId);
-        ChatMember chatMember2=new ChatMember(newChat,recipientId);
-        Message message=messageRepo.save(new Message(newChat.getId(),currentUserId, messageDTO.getContent()));
-        newChat.setLastMessageId(message.getId());
-        newChat.setLastMessageAt(message.getSentAt());
-        newChat.getMembers().addAll(List.of(chatMember1,chatMember2));
-        newChat.setType(Chat.ChatType.DIRECT);
-        chatRepo.save(newChat);
-        if(chatActivityTracker.isUserActiveInInbox(recipientId))messageDeliveringService.deliverMessage(null,null);
+            String id= UUID.randomUUID().toString();
+            Chat newChat = new Chat(id);
+            newChat.setType(Chat.ChatType.DIRECT);
+
+            ChatMember chatMember1 = new ChatMember(newChat, currentUserId);
+            ChatMember chatMember2 = new ChatMember(newChat, recipientId);
+            chatMember2.setUnReadCount(1);
+            newChat.getMembers().addAll(List.of(chatMember1, chatMember2));
+
+            Message message = messageRepo.save(new Message(newChat.getId(), currentUserId, messageDTO.getContent()));
+
+            newChat.setLastMessageId(message.getId());
+            newChat.setLastMessageAt(message.getSentAt());
+
+            chatRepo.save(newChat);
+
+      //  if(chatActivityTracker.isUserActiveInInbox(recipientId))messageDeliveringService.deliverMessage(null,null);
 
         }catch (Exception e){
             log.error("sending message to user failed "+e.getMessage());
@@ -88,11 +96,12 @@ public class ChatSendingService {
     private void processAndDeliverMessage(Chat chat, String currentUserId, SendMessage messageDTO){
         Message message=messageRepo.save(new Message(chat.getId(),currentUserId, messageDTO.getContent()));
         chat.setLastMessageId(message.getId());
-        chat.setLastMessageAt(chat.getLastMessageAt());
+        chat.setLastMessageAt(message.getSentAt());
+
         if(!chat.getMembers().isEmpty()){
             List<String> activeUsersInChat=new ArrayList<>();
             for(ChatMember member:chat.getMembers()){
-                String memberId=member.getUserId();
+                String memberId=member.getId().getUserId();
                 if(chatActivityTracker.isUserActiveInChat(memberId,chat.getId())){
                     activeUsersInChat.add(memberId);
                 }
@@ -101,11 +110,13 @@ public class ChatSendingService {
             if(!activeUsersInChat.isEmpty()) {
                 messageDeliveringService.deliverMessage(activeUsersInChat,message);
             }
-            chatMemberRepo.incrementUnReadCount(chat.getId(),activeUsersInChat);
-        }
+
+            chatMemberRepo.incrementUnReadCount(chat.getId(),currentUserId,activeUsersInChat);
+            chatMemberRepo.resetCountAndUpdateLastReadMessage(chat.getId(),currentUserId,message.getId());
     }
 
-    @CheckUserExistence
+    }
+
     private void sendMessageByChatId(SendMessage messageDTO){
         String currentUserId=authenticatedUserService.getCurrentUser();
         Chat chat=chatRepo.findChatById(messageDTO.getChatId(),currentUserId).orElseThrow(()->new ContentNotAvailableException("Chat Not Found"));
@@ -117,7 +128,7 @@ public class ChatSendingService {
         if(blocksRepo.existsByBlockerIdAndBlockedId(currentUserId,recipientId)||blocksRepo.existsByBlockerIdAndBlockedId(recipientId,currentUserId)){
             throw new ChatMessagingException("cannot send message to user");
         }
-        Profile profile=profileCacheManager.getProfile(recipientId).get();
+        Profile profile=profileQueryService.getUserProfile(currentUserId,true);
         if(profile.getProfileSettings().isPrivate()){
             boolean followed=followRepo.existsByFollowerIdAndFollowingIdAndStatus(currentUserId,recipientId,Follow.Status.ACCEPTED);
             if(!followed){

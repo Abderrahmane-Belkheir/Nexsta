@@ -11,5 +11,4 @@ import java.util.List;
 public class ChatAggregate {
     private Chat chat;
     private ChatSummary summary;
-    private List<ChatMember> members;
 }
