@@ -1,6 +1,7 @@
 package com.Nexsta.Messaging.application;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -9,6 +10,7 @@ import java.time.Duration;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class ChatActivityTracker {
 
     private final RedisTemplate<String,String> redisTemplate;
@@ -19,6 +21,7 @@ public class ChatActivityTracker {
 
 
     public void userEnteredChat(String userId, String chatId) {
+        log.info("user : {} entered chat : {}",userId,chatId);
         redisTemplate.opsForValue().set(
                 CHAT_ACTIVE_KEY + chatId + ":" + userId,
                 "1",

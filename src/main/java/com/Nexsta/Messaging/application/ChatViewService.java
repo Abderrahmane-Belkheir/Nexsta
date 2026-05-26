@@ -121,7 +121,7 @@ public class ChatViewService {
     public MessagePage getChatMessages(String chatId,String cursor){
         String currentUserId=authenticatedUserService.getCurrentUser();
         Pageable pageable=PageRequest.of(0,messagePageLimit+1);
-
+        Chat chat=chatRepo.findById(chatId).orElseThrow(()->new ContentNotAvailableException("Chat Not Found"));
         List<Message> messages= cursor==null?
                 messageRepo.findByChatIdOrderByIdDesc(chatId,pageable):
                 messageRepo.findByChatIdAndIdLessThanOrderByIdDesc(chatId,currentUserId,pageable);
@@ -142,7 +142,11 @@ public class ChatViewService {
 
         if(cursor==null){
           chatMemberRepo.resetCountAndUpdateLastReadMessage(chatId,currentUserId,messagesView.get(0).getId());
-
+          Message latestMessage=messages.get(0);
+          if(latestMessage.getSeenAt()==null&&!latestMessage.getSenderId().equals(currentUserId)&&chat.getType()== Chat.ChatType.DIRECT){
+              latestMessage.setSeenAt(Instant.now());
+              messageRepo.save(latestMessage);
+          }
         }
 
         Collections.reverse(messagesView);

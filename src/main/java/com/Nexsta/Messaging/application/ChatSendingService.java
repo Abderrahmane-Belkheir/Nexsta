@@ -2,6 +2,7 @@ package com.Nexsta.Messaging.application;
 
 import com.Nexsta.Content.Exceptions.ContentNotAvailableException;
 import com.Nexsta.Messaging.Exceptions.ChatMessagingException;
+import com.Nexsta.Messaging.api.dto.MessageView;
 import com.Nexsta.Messaging.api.dto.SendMessage;
 import com.Nexsta.Messaging.domain.Chat;
 import com.Nexsta.Messaging.domain.ChatMember;
@@ -103,11 +104,12 @@ public class ChatSendingService {
             for(ChatMember member:chat.getMembers()){
                 String memberId=member.getId().getUserId();
                 if(chatActivityTracker.isUserActiveInChat(memberId,chat.getId())){
+                    log.info("{} is active in chat",memberId);
                     activeUsersInChat.add(memberId);
                 }
             }
-
             if(!activeUsersInChat.isEmpty()) {
+                log.info("delevering message");
                 messageDeliveringService.deliverMessage(activeUsersInChat,message);
             }
 

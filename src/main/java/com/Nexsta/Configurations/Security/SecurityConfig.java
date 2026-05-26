@@ -29,6 +29,7 @@ public class SecurityConfig {
                         "/create-post.html",
                         "/create-story.html",
                         "/edit-post.html",
+                        "/chat.html",
                         "/api/v1/upload/confirm").permitAll().anyRequest().authenticated());
         return http.build();
     }

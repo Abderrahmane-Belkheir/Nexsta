@@ -16,15 +16,14 @@ public class RealTimeChatController {
     private final ChatActivityTracker chatActivityTracker;
 
 
-    @MessageMapping("/chat.enter")
+    @MessageMapping("/chat.enter/{chatId}")
     public void enterChat(@DestinationVariable String chatId, Principal principal) {
         chatActivityTracker.userEnteredChat(principal.getName(),chatId);
     }
 
-    @MessageMapping("/chat.leave")
+    @MessageMapping("/chat.leave/{chatId}")
     public void leaveChat(@DestinationVariable String chatId, Principal principal) {
         chatActivityTracker.userLeftChat(principal.getName(),chatId);
-
     }
 
     @MessageMapping("/inbox.open")

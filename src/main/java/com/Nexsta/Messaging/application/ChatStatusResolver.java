@@ -4,7 +4,6 @@ import com.Nexsta.Messaging.api.dto.ChatPreview;
 import com.Nexsta.Messaging.api.dto.ChatSummary;
 import com.Nexsta.Messaging.domain.Chat;
 import com.Nexsta.Messaging.domain.ChatAggregate;
-import com.Nexsta.Messaging.domain.ChatMember;
 import com.Nexsta.Messaging.domain.Message;
 import com.Nexsta.Messaging.persistence.ChatMemberRepo;
 import com.Nexsta.Messaging.persistence.MessageRepo;
@@ -12,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -44,7 +44,7 @@ public class ChatStatusResolver {
         if(lastMessagesIds.isEmpty()) return;
 
     List<Message> lastMessages= messageRepo.findByIdIn(lastMessagesIds);
-    List<String> c=new ArrayList<>();
+    Map<String, Instant> c=new HashMap<>();
 
         for (Message message : lastMessages) {
         ChatAggregate aggregate = chatAggregateMap.get(message.getChatId());
@@ -57,12 +57,11 @@ public class ChatStatusResolver {
 
             summary.setPreview(ChatPreview.received(message.getContent()));
         } else {
-            c.add(message.getChatId());
+            c.put(message.getChatId(),message.getSeenAt());
         }
-
     }
 
-    List<ChatMemberRepo.ChatMember> p=chatMemberRepo.findMembersWhoSeenLastMessage(c,currentUserId);
+    List<ChatMemberRepo.ChatMember> p=chatMemberRepo.findMembersWhoSeenLastMessage(c.keySet().stream().toList(),currentUserId);
 
     Map<String, List<String>> seenByChatId = p.stream()
             .collect(Collectors.groupingBy(
@@ -70,8 +69,8 @@ public class ChatStatusResolver {
                     Collectors.mapping(ChatMemberRepo.ChatMember::getUserId, Collectors.toList())
             ));
 
-        for(Map.Entry<String,List<String>> chatId:seenByChatId.entrySet()){
-        chatAggregateMap.get(chatId.getKey()).getSummary().setPreview(ChatPreview.seen(chatId.getValue(),null));
+        for(Map.Entry<String,List<String>> chatMap :seenByChatId.entrySet()){
+        chatAggregateMap.get(chatMap.getKey()).getSummary().setPreview(ChatPreview.seen(chatMap.getValue(),c.get(chatMap.getKey())));
     }
 
         chatAggregateMap.values().stream().filter(chatAggregate -> chatAggregate.getSummary().getPreview()==null).forEach(chatAggregate -> {

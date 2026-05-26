@@ -18,7 +18,7 @@ public class Message {
     private MessageType messageType=MessageType.TEXT;
     private String content;
     private Instant sentAt= Instant.now();
-    private Instant readAt;
+    private Instant seenAt;
     private boolean edited=false;
     public Message(String chatId,String senderId,String content){
         this.senderId=senderId;
