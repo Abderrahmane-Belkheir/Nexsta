@@ -37,8 +37,9 @@ public class ChatViewService {
     private final Chatmapper chatmapper;
     private final ChatStatusResolver chatStatusResolver;
     private final MessageRepo messageRepo;
-    private final UserActivityTracker userActivityService;
-
+    private final RealTimeDeliveringService realTimeDeliveringService;
+    private final ChatActivityTracker chatActivityTracker;
+    private final UserActivityTracker userActivityTracker;
 
     private final static int messagePageLimit=20;
     private final static int chatPageLimit=10;
@@ -89,7 +90,7 @@ public class ChatViewService {
             if(profileSummary!=null){
                 summary.setChatName(profileSummary.getUsername());
                 summary.setChatAvatar(profileSummary.getAvatarurl());
-                summary.setActive(userActivityService.getUserStatus(profileSummary.getUserId()));
+                summary.setActive(userActivityTracker.getUserStatus(profileSummary.getUserId()));
                 summary.setLastSeen(null);
             }
         }else{
@@ -108,6 +109,14 @@ public class ChatViewService {
     return ChatPage.builder()
             .chats(chatSummaries)
             .build();
+    }
+
+    public ChatPreview getUserChat(String chatId){
+        String currentUserId=authenticatedUserService.getCurrentUser();
+        Chat chat=chatRepo.findChatById(chatId,currentUserId).orElseThrow();
+
+
+        return null;
     }
 
     public ChatUsers getChatDetails(String chatId){
@@ -141,12 +150,19 @@ public class ChatViewService {
         }
 
         if(cursor==null){
-          chatMemberRepo.resetCountAndUpdateLastReadMessage(chatId,currentUserId,messagesView.get(0).getId());
-          Message latestMessage=messages.get(0);
+            Message latestMessage=messages.get(0);
+          chatMemberRepo.resetCountAndUpdateLastReadMessage(chatId,currentUserId,latestMessage.getId());
           if(latestMessage.getSeenAt()==null&&!latestMessage.getSenderId().equals(currentUserId)&&chat.getType()== Chat.ChatType.DIRECT){
               latestMessage.setSeenAt(Instant.now());
               messageRepo.save(latestMessage);
           }
+
+          String lastMessageSenderId =latestMessage.getSenderId();
+
+      if(chatActivityTracker.isUserActiveInInbox(lastMessageSenderId)){
+           realTimeDeliveringService.deliverInboxEvent(List.of(lastMessageSenderId),InboxEvent.readReceipt(chatId,List.of(currentUserId)));
+          }
+
         }
 
         Collections.reverse(messagesView);
@@ -165,11 +181,11 @@ public class ChatViewService {
       return chatMembers.stream().map(chatMember ->{
           String userId=chatMember.getId().getUserId();
          ProfileSummary profileSummary=profileSummaries.get(userId);
-         boolean isActive=userActivityService.getUserStatus(userId);
+         boolean isActive=userActivityTracker.getUserStatus(userId);
          String lastSeen=null;
 
          if(!isActive) {
-             lastSeen=userActivityService.getUserLastSeen(userId);
+             lastSeen=userActivityTracker.getUserLastSeen(userId);
          }
 
          return ChatUser.builder().

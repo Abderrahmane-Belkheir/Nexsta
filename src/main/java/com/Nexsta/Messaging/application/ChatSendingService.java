@@ -2,7 +2,7 @@ package com.Nexsta.Messaging.application;
 
 import com.Nexsta.Content.Exceptions.ContentNotAvailableException;
 import com.Nexsta.Messaging.Exceptions.ChatMessagingException;
-import com.Nexsta.Messaging.api.dto.MessageView;
+import com.Nexsta.Messaging.api.dto.InboxEvent;
 import com.Nexsta.Messaging.api.dto.SendMessage;
 import com.Nexsta.Messaging.domain.Chat;
 import com.Nexsta.Messaging.domain.ChatMember;
@@ -11,7 +11,6 @@ import com.Nexsta.Messaging.persistence.ChatMemberRepo;
 import com.Nexsta.Messaging.persistence.ChatRepo;
 import com.Nexsta.Messaging.persistence.MessageRepo;
 import com.Nexsta.Profile.application.ProfileQueryService;
-import com.Nexsta.Profile.application.cache.ProfileCacheManager;
 import com.Nexsta.Profile.domain.Profile;
 import com.Nexsta.Shared.CheckUserExistence;
 import com.Nexsta.SocialGraph.domain.Follow;
@@ -43,7 +42,7 @@ public class ChatSendingService {
     private final ChatRepo chatRepo;
     private final FollowRepo followRepo;
     private final ChatActivityTracker chatActivityTracker;
-    private final MessageDeliveringService messageDeliveringService;
+    private final RealTimeDeliveringService messageDeliveringService;
 
 
     @CheckUserExistence
@@ -86,10 +85,9 @@ public class ChatSendingService {
 
             chatRepo.save(newChat);
 
-      //  if(chatActivityTracker.isUserActiveInInbox(recipientId))messageDeliveringService.deliverMessage(null,null);
+        if(chatActivityTracker.isUserActiveInInbox(recipientId))messageDeliveringService.deliverInboxEvent(List.of(recipientId),InboxEvent.newMessage(id));
 
         }catch (Exception e){
-            log.error("sending message to user failed "+e.getMessage());
             throw new ChatMessagingException("could not send message to user");
         }
     }
@@ -100,21 +98,35 @@ public class ChatSendingService {
         chat.setLastMessageAt(message.getSentAt());
 
         if(!chat.getMembers().isEmpty()){
+
             List<String> activeUsersInChat=new ArrayList<>();
+            List<String> activeUsersInInbox=new ArrayList<>();
+
             for(ChatMember member:chat.getMembers()){
+
                 String memberId=member.getId().getUserId();
+
                 if(chatActivityTracker.isUserActiveInChat(memberId,chat.getId())){
-                    log.info("{} is active in chat",memberId);
                     activeUsersInChat.add(memberId);
+                }else if(chatActivityTracker.isUserActiveInInbox(memberId)){
+                    activeUsersInInbox.add(memberId);
                 }
-            }
-            if(!activeUsersInChat.isEmpty()) {
-                log.info("delevering message");
-                messageDeliveringService.deliverMessage(activeUsersInChat,message);
+
             }
 
             chatMemberRepo.incrementUnReadCount(chat.getId(),currentUserId,activeUsersInChat);
             chatMemberRepo.resetCountAndUpdateLastReadMessage(chat.getId(),currentUserId,message.getId());
+
+            if(!activeUsersInInbox.isEmpty()){
+                messageDeliveringService.deliverInboxEvent(activeUsersInInbox,InboxEvent.newMessage(chat.getId()));
+            }
+
+            if(!activeUsersInChat.isEmpty()) {
+                messageDeliveringService.deliverMessage(activeUsersInChat,message);
+                activeUsersInChat.removeIf(user->user.equals(currentUserId));
+                messageDeliveringService.deliverInboxEvent(List.of(currentUserId),InboxEvent.readReceipt(chat.getId(),activeUsersInChat));
+            }
+
     }
 
     }

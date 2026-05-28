@@ -32,7 +32,6 @@
         .ci.sel{background:var(--acc-dim);border-left:2px solid var(--acc)}
         .av-wrap{position:relative;flex-shrink:0;width:40px;height:40px}
         .av-wrap img{width:40px;height:40px;border-radius:50%;object-fit:cover}
-        .av-initials{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600}
         .online-dot{position:absolute;bottom:1px;right:1px;width:10px;height:10px;border-radius:50%;background:var(--acc);border:2px solid var(--bg)}
         .ci-body{flex:1;min-width:0}
         .ci-name{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -42,12 +41,7 @@
         .badge{background:var(--acc);color:white;font-size:10px;font-weight:600;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px}
         .main{flex:1;display:flex;flex-direction:column;min-width:0}
         .token-strip{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:0.5px solid var(--border);background:var(--bg2)}
-        .token-strip label{font-size:11px;color:var(--text2);white-space:nowrap;display:flex;align-items:center;gap:4px}
-        .token-strip input{flex:1;height:26px;border:0.5px solid var(--border);border-radius:6px;background:var(--bg);padding:0 8px;font-size:11px;color:var(--text);outline:none;font-family:monospace}
-        .conn-btn{height:26px;padding:0 12px;border:0.5px solid var(--acc);border-radius:6px;background:var(--acc-dim);color:var(--acc-dark);font-size:11px;cursor:pointer;font-weight:500;transition:background 0.12s}
-        .conn-btn:hover{background:#9FE1CB}
-        .conn-btn:disabled{opacity:0.5;cursor:not-allowed}
-        .conn-ok{display:none;align-items:center;gap:5px;font-size:11px;color:var(--acc-dark);white-space:nowrap}
+        .conn-ok{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--acc-dark);white-space:nowrap}
         .ws-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);transition:background .3s}
         .ws-dot.live{background:var(--acc)}
         .ws-dot.err{background:var(--danger)}
@@ -119,15 +113,15 @@
             </div>
         </div>
         <div class="chat-list" id="chatList">
-            <div style="padding:24px;text-align:center;font-size:12px;color:var(--text3)">Enter your token to load chats</div>
+            <div style="padding:24px;text-align:center;font-size:12px;color:var(--text3)">Loading…</div>
         </div>
     </div>
 
     <div class="main">
-        <div class="token-strip" id="tokenStrip" style="display:none">
-            <div class="conn-ok" id="connOk" style="display:flex">
+        <div class="token-strip" id="tokenStrip">
+            <div class="conn-ok" id="connOk">
                 <div class="ws-dot" id="wsDot"></div>
-                connected · <span id="wsStatus">connecting ws…</span>
+                <span id="wsStatus">connecting ws…</span>
             </div>
         </div>
         <div class="err-bar" id="errBar"></div>
@@ -145,473 +139,598 @@
     const SEND_BASE = '/api/v1/chats/send';
     const WS_URL    = '/ws';
 
-    /* extract token from ?token= then strip from address bar */
+    /* ── token from ?token= URL param ── */
     const _qs = new URLSearchParams(location.search);
     let token = _qs.get('token') || '';
     if (token) history.replaceState(null, '', location.pathname);
 
-    let activeChatId = null;
-    let activeChat   = null;
-    let allChats     = [];
-    let chatUsers    = {};
-    let msgCursors   = {};
+    let activeChatId  = null;
+    let activeChat    = null;
+    let allChats      = [];
+    let chatUsers     = {};
+    let msgCursors    = {};
+    let stompClient   = null;
+    let inboxHbTimer  = null;
+    let chatHbTimer   = null;
+    let isSending     = false;
+    let pendingEcho   = null;     /* { tempId } | '__handled__' | null */
+    let currentUserId = null;     /* set from first mine:true REST message */
 
-    /* ── STOMP ── */
-    let stompClient    = null;
-    let heartbeatTimer = null;
-    let isSending      = false;   /* guard: prevent double-send */
-    let pendingEcho    = null;    /* { tempId } | '__handled__' | null */
-    let currentUserId  = null;    /* set from first mine:true message; used for WS echo detection */
-
+    /* ═══════════════════════════════════════════════════════════════════
+       WS CONNECTION
+       onConnect:
+         1. subscribe /user/queue/messages  → incoming chat bubbles
+         2. subscribe /user/queue/preview   → InboxEvent (NEW_MESSAGE / READ_RECEIPT)
+         3. start inbox heartbeat immediately (/app/inbox.open every 10 s)
+         4. re-enter active chat if one was open when WS reconnected
+    ═══════════════════════════════════════════════════════════════════ */
     function connectWs(){
-      const dot    = document.getElementById('wsDot');
-      const status = document.getElementById('wsStatus');
-      dot.className='ws-dot'; status.textContent='connecting ws…';
+        const dot    = document.getElementById('wsDot');
+        const status = document.getElementById('wsStatus');
+        dot.className = 'ws-dot'; status.textContent = 'connecting…';
 
-      stompClient = new StompJs.Client({
-        webSocketFactory: ()=> new SockJS(WS_URL),
-        connectHeaders: { Authorization: `Bearer ${token}` },
-        reconnectDelay: 5000,
-        onConnect: ()=>{
-          dot.className='ws-dot live'; status.textContent='ws live';
-          stompClient.subscribe('/user/queue/messages', frame=>{
-            try{ handleIncomingMessage(JSON.parse(frame.body)); }
-            catch(e){ console.warn('WS parse error',e); }
-          });
-          if(activeChatId) sendChatEnter(activeChatId);
-        },
-        onDisconnect: ()=>{ dot.className='ws-dot err'; status.textContent='ws disconnected'; stopHeartbeat(); },
-        onStompError:  ()=>{ dot.className='ws-dot err'; status.textContent='ws error';        stopHeartbeat(); }
-      });
-      stompClient.activate();
+        stompClient = new StompJs.Client({
+            webSocketFactory: () => new SockJS(WS_URL),
+            connectHeaders:   { Authorization: `Bearer ${token}` },
+            reconnectDelay:   5000,
+            onConnect: () => {
+                dot.className = 'ws-dot live'; status.textContent = 'ws live';
+
+                /* 1. chat messages */
+                stompClient.subscribe('/user/queue/messages', frame => {
+                    try { handleIncomingMessage(JSON.parse(frame.body)); }
+                    catch(e) { console.warn('WS message parse error', e); }
+                });
+
+                /* 2. inbox events */
+                stompClient.subscribe('/user/queue/preview', frame => {
+                    try { handleInboxEvent(JSON.parse(frame.body)); }
+                    catch(e) { console.warn('WS preview parse error', e); }
+                });
+
+                /* 3. inbox heartbeat — marks user as "in inbox" server-side */
+                startInboxHeartbeat();
+
+                /* 4. re-enter chat on reconnect */
+                if (activeChatId) sendChatEnter(activeChatId);
+            },
+            onDisconnect: () => {
+                dot.className = 'ws-dot err'; status.textContent = 'disconnected';
+                stopInboxHeartbeat(); stopChatHeartbeat();
+            },
+            onStompError: () => {
+                dot.className = 'ws-dot err'; status.textContent = 'ws error';
+                stopInboxHeartbeat(); stopChatHeartbeat();
+            }
+        });
+        stompClient.activate();
     }
 
+    /* ── INBOX HEARTBEAT → /app/inbox.open (always on while WS is alive) ── */
+    function startInboxHeartbeat(){
+        stopInboxHeartbeat();
+        const fire = () => {
+            if (stompClient?.connected)
+                stompClient.publish({ destination: '/app/inbox.open' });
+        };
+        fire();                                   /* immediate first ping */
+        inboxHbTimer = setInterval(fire, 10000);  /* then every 10 s     */
+    }
+    function stopInboxHeartbeat(){
+        if (inboxHbTimer){ clearInterval(inboxHbTimer); inboxHbTimer = null; }
+    }
+
+    /* ── CHAT HEARTBEAT → /app/chat.enter/:chatId (only inside a chat) ── */
     function sendChatEnter(chatId){
-      if(!stompClient?.connected) return;
-      stompClient.publish({ destination: `/app/chat.enter/${chatId}` });
-      startHeartbeat(chatId);
+        if (!stompClient?.connected) return;
+        stompClient.publish({ destination: `/app/chat.enter/${chatId}` });
+        startChatHeartbeat(chatId);
     }
-
     function sendChatLeave(chatId){
-      if(!stompClient?.connected) return;
-      stompClient.publish({ destination: `/app/chat.leave/${chatId}` });
-      stopHeartbeat();
+        if (!stompClient?.connected) return;
+        stompClient.publish({ destination: `/app/chat.leave/${chatId}` });
+        stopChatHeartbeat();
+    }
+    function startChatHeartbeat(chatId){
+        stopChatHeartbeat();
+        chatHbTimer = setInterval(() => {
+            if (stompClient?.connected)
+                stompClient.publish({ destination: `/app/chat.enter/${chatId}` });
+        }, 10000);
+    }
+    function stopChatHeartbeat(){
+        if (chatHbTimer){ clearInterval(chatHbTimer); chatHbTimer = null; }
     }
 
-    function startHeartbeat(chatId){
-      stopHeartbeat();
-      heartbeatTimer = setInterval(()=>{
-        if(stompClient?.connected) stompClient.publish({ destination: `/app/chat.enter/${chatId}` });
-      }, 10000);
-    }
+    /* ═══════════════════════════════════════════════════════════════════
+       INBOX EVENT HANDLER  (/user/queue/preview)
 
-    function stopHeartbeat(){
-      if(heartbeatTimer){ clearInterval(heartbeatTimer); heartbeatTimer=null; }
-    }
+       InboxEvent shape (Java):
+         { type: 'NEW_MESSAGE' | 'READ_RECEIPT',
+           chatId: string,
+           readersId: string[]   // only for READ_RECEIPT
+         }
 
-    /* ── INCOMING WS MESSAGE ──────────────────────────────────────────────
-       HTTP POST returns void (204). The server pushes the message via WS
-       to ALL participants including the sender, so we always get an echo.
+       NEW_MESSAGE:
+         - Chat in allChats → increment unread, bump to top (even if user
+           is currently inside that chat — the list stays ordered)
+         - Chat NOT in allChats → fetch ChatUsers summary via
+           GET /api/v1/chats/view/{chatId}, build a minimal ChatSummary,
+           remove any stale entry at old position, prepend to top
 
-       Echo detection uses currentUserId (derived from mine:true messages)
-       rather than DOM queries — this is reliable regardless of whether the
-       WS echo arrives before or after the HTTP 204 response.
+       READ_RECEIPT:
+         - Update preview to SEEN with readersId list
+    ═══════════════════════════════════════════════════════════════════ */
+    async function handleInboxEvent(event){
+        const { type, chatId, readersId } = event;
 
-       Case A — WS after HTTP:  optimistic bubble already in DOM, upgrade it.
-       Case B — WS before HTTP: render mine bubble directly, flag __handled__
-                                so sendMessage skips adding a second bubble.  */
-    function handleIncomingMessage(msg){
-      const mc = document.getElementById('msgContainer');
+        if (type === 'NEW_MESSAGE'){
+            const idx = allChats.findIndex(c => c.chatId === chatId);
 
-      /* dedup by real server id */
-      if(msg.id && mc && mc.querySelector(`[data-msgid="${msg.id}"]`)) return;
-
-      const isOwnMsg = currentUserId && msg.senderId === currentUserId;
-
-      /* update sidebar preview */
-      const chat = allChats.find(c=>c.chatId===msg.chatId);
-      if(chat){
-        if(!isOwnMsg) chat.preview = { previewType:'RECEIVED', message: msg.content };
-        chat.lastMessageAt = msg.sentAt;
-        renderChatList(document.getElementById('searchInput').value);
-      }
-
-      if(msg.chatId !== activeChatId || !mc) return;
-
-      if(isOwnMsg){
-        /* Case A: HTTP already returned, optimistic bubble is in DOM */
-        if(pendingEcho && pendingEcho !== '__handled__'){
-          const bubble = mc.querySelector(`[data-tempid="${pendingEcho.tempId}"]`);
-          if(bubble){
-            bubble.dataset.msgid = msg.id || '';
-            delete bubble.dataset.tempid;
-            const icon = bubble.querySelector('.mtime i');
-            if(icon){ icon.className='ti ti-checks'; icon.style.color='var(--acc)'; }
-            const ts = bubble.querySelector('.mtime span');
-            if(ts) ts.textContent = timeAgo(msg.sentAt);
-            pendingEcho = null;
+            if (idx !== -1){
+                /* chat already loaded — compute new preview */
+                const chat = allChats[idx];
+                const newPreview = chatId !== activeChatId
+                    ? { previewType: 'UNREAD', unreadCount: (chat.preview?.previewType === 'UNREAD' ? chat.preview.unreadCount : 0) + 1 }
+                    : chat.preview;   /* inside chat — keep existing preview, just bump position */
+                bumpChatToTop(chatId, newPreview);
+            } else {
+                /* chat not in list: fetch and prepend */
+                await fetchAndPrependChat(chatId, true);
+            }
             return;
-          }
         }
-        /* Case B: WS beat HTTP — render mine bubble now, tell sendMessage to skip */
-        if(!pendingEcho){
-          const div = document.createElement('div');
-          div.className      = 'mrow mine';
-          div.dataset.msgid  = msg.id || '';
-          div.innerHTML = `<div class="mcol mine"><div class="bub mine">${escapeHtml(msg.content)}</div><div class="mtime"><i class="ti ti-checks" style="font-size:12px;color:var(--acc)"></i><span>${timeAgo(msg.sentAt)}</span></div></div><div style="width:26px;flex-shrink:0"></div>`;
-          mc.appendChild(div);
-          mc.scrollTop = mc.scrollHeight;
-          pendingEcho = '__handled__';
+
+        if (type === 'READ_RECEIPT'){
+            const chat = allChats.find(c => c.chatId === chatId);
+            if (chat && chat.preview?.previewType === 'SENT'){
+                /* readersId is a List<String> from Java */
+                chat.preview = {
+                    previewType:  'SEEN',
+                    seenByUserIds: readersId || [],
+                    seenAt:        new Date().toISOString()
+                };
+                renderChatList(document.getElementById('searchInput').value);
+            }
         }
-        return;
-      }
-
-      /* message from another user */
-      const uMap = {};
-      (chatUsers[activeChatId]||[]).forEach(u=>uMap[u.userId]=u);
-      const u   = uMap[msg.senderId];
-      const col = colorFor(msg.senderId);
-      const rows    = mc.querySelectorAll('.mrow:not(.mine)');
-      const lastRow = rows[rows.length-1];
-      const showAv  = !lastRow || lastRow.dataset.sender !== msg.senderId;
-
-      const div = document.createElement('div');
-      div.className      = 'mrow';
-      div.dataset.msgid  = msg.id || '';
-      div.dataset.sender = msg.senderId;
-      div.innerHTML = `
-        ${showAv
-          ? `<div class="mav" style="background:${col.bg};color:${col.fg}">${initials(u?.username||'?')}</div>`
-          : `<div style="width:26px;flex-shrink:0"></div>`}
-        <div class="mcol">
-          <div class="bub theirs">${escapeHtml(msg.content)}</div>
-          <div class="mtime"><span>${timeAgo(msg.sentAt)}</span></div>
-        </div>`;
-      const atBottom = mc.scrollHeight - mc.scrollTop <= mc.clientHeight + 60;
-      mc.appendChild(div);
-      if(atBottom) mc.scrollTop = mc.scrollHeight;
     }
 
-    /* ── REFRESH ── */
-    async function refreshChat(){
-      if(!activeChatId) return;
-      const btn = document.getElementById('refreshBtn');
-      if(btn){ btn.style.pointerEvents='none'; btn.querySelector('i').style.animation='spin .6s linear infinite'; }
-      await loadChatUsers(activeChatId);
-      await loadMessages(activeChatId);
-      if(btn){ btn.style.pointerEvents=''; btn.querySelector('i').style.animation=''; }
+    /* fetch a single chat summary and place it at the top of the list */
+    async function fetchAndPrependChat(chatId, incrementUnread = false){
+        const data = await api(`${VIEW_BASE}/${chatId}`);
+        if (!data) return;
+
+        /* data is ChatUsers (chatUsers[]); build a minimal ChatSummary */
+        const chatSummary = {
+            chatId,
+            chatName:      data.chatUsers?.[0]?.username || chatId,
+            chatAvatar:    data.chatUsers?.[0]?.avatarPath || null,
+            chatType:      'DIRECT',
+            active:        data.chatUsers?.some(u => u.isActive) || false,
+            lastMessageAt: new Date().toISOString(),
+            preview: incrementUnread
+                ? { previewType: 'UNREAD', unreadCount: 1 }
+                : null
+        };
+
+        /* remove stale entry (may be deeper in the list) */
+        allChats = allChats.filter(c => c.chatId !== chatId);
+
+        /* prepend */
+        allChats.unshift(chatSummary);
+        renderChatList(document.getElementById('searchInput').value);
     }
 
+    /* ═══════════════════════════════════════════════════════════════════
+       INCOMING MESSAGE HANDLER  (/user/queue/messages)
+
+       Server sends raw Message entity — no `mine` field on the WS path.
+       Echo detection: currentUserId (decoded from mine:true REST messages)
+       compared against msg.senderId.  Never relies on DOM state.
+
+       Case A — HTTP 204 returned first: optimistic bubble is in DOM,
+                 upgrade it (tempid → real msgid, single → double tick).
+       Case B — WS arrived before HTTP: render mine bubble directly,
+                 set pendingEcho='__handled__' so sendMessage skips it.
+    ═══════════════════════════════════════════════════════════════════ */
+    function handleIncomingMessage(msg){
+        const mc       = document.getElementById('msgContainer');
+        const isOwnMsg = currentUserId && msg.senderId === currentUserId;
+
+        /* dedup by server id */
+        if (msg.id && mc && mc.querySelector(`[data-msgid="${msg.id}"]`)) return;
+
+        /* only the message queue drives the chat DOM;
+           unread counter is driven by the preview queue */
+        if (msg.chatId !== activeChatId || !mc) return;
+
+        if (isOwnMsg){
+            /* Case A: optimistic bubble waiting */
+            if (pendingEcho && pendingEcho !== '__handled__'){
+                const bubble = mc.querySelector(`[data-tempid="${pendingEcho.tempId}"]`);
+                if (bubble){
+                    bubble.dataset.msgid = msg.id || '';
+                    delete bubble.dataset.tempid;
+                    const icon = bubble.querySelector('.mtime i');
+                    if (icon){ icon.className = 'ti ti-checks'; icon.style.color = 'var(--acc)'; }
+                    const ts = bubble.querySelector('.mtime span');
+                    if (ts) ts.textContent = timeAgo(msg.sentAt);
+                    pendingEcho = null;
+                    return;
+                }
+            }
+            /* Case B: WS beat HTTP */
+            if (!pendingEcho){
+                const div = document.createElement('div');
+                div.className     = 'mrow mine';
+                div.dataset.msgid = msg.id || '';
+                div.innerHTML     = `<div class="mcol mine"><div class="bub mine">${escapeHtml(msg.content)}</div><div class="mtime"><i class="ti ti-checks" style="font-size:12px;color:var(--acc)"></i><span>${timeAgo(msg.sentAt)}</span></div></div><div style="width:26px;flex-shrink:0"></div>`;
+                mc.appendChild(div);
+                mc.scrollTop  = mc.scrollHeight;
+                pendingEcho   = '__handled__';
+            }
+            return;
+        }
+
+        /* ── message from another user ── */
+        const uMap    = {};
+        (chatUsers[activeChatId]||[]).forEach(u => uMap[u.userId] = u);
+        const u       = uMap[msg.senderId];
+        const col     = colorFor(msg.senderId);
+        const rows    = mc.querySelectorAll('.mrow:not(.mine)');
+        const lastRow = rows[rows.length - 1];
+        const showAv  = !lastRow || lastRow.dataset.sender !== msg.senderId;
+
+        const div = document.createElement('div');
+        div.className      = 'mrow';
+        div.dataset.msgid  = msg.id || '';
+        div.dataset.sender = msg.senderId;
+        div.innerHTML = `
+            ${showAv
+                ? `<div class="mav" style="background:${col.bg};color:${col.fg}">${initials(u?.username||'?')}</div>`
+                : `<div style="width:26px;flex-shrink:0"></div>`}
+            <div class="mcol">
+                <div class="bub theirs">${escapeHtml(msg.content)}</div>
+                <div class="mtime"><span>${timeAgo(msg.sentAt)}</span></div>
+            </div>`;
+        const atBottom = mc.scrollHeight - mc.scrollTop <= mc.clientHeight + 60;
+        mc.appendChild(div);
+        if (atBottom) mc.scrollTop = mc.scrollHeight;
+    }
+
+    /* ── UTILITIES ── */
     const COLORS = [
-      {bg:'#E1F5EE',fg:'#0F6E56'},{bg:'#E6F1FB',fg:'#185FA5'},
-      {bg:'#FAECE7',fg:'#993C1D'},{bg:'#EEEDFE',fg:'#534AB7'},
-      {bg:'#FAEEDA',fg:'#854F0B'},{bg:'#FBEAF0',fg:'#993556'},
+        {bg:'#E1F5EE',fg:'#0F6E56'},{bg:'#E6F1FB',fg:'#185FA5'},
+        {bg:'#FAECE7',fg:'#993C1D'},{bg:'#EEEDFE',fg:'#534AB7'},
+        {bg:'#FAEEDA',fg:'#854F0B'},{bg:'#FBEAF0',fg:'#993556'},
     ];
     const colorFor = s => COLORS[(s||'').split('').reduce((a,c)=>a+c.charCodeAt(0),0)%COLORS.length];
     const initials = n => (n||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
     const timeAgo  = iso => {
-      if(!iso) return '';
-      const d=new Date(iso), diff=Date.now()-d;
-      if(diff<60000)    return 'now';
-      if(diff<3600000)  return Math.round(diff/60000)+'m';
-      if(diff<86400000) return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-      return d.toLocaleDateString([],{month:'short',day:'numeric'});
+        if (!iso) return '';
+        const d = new Date(iso), diff = Date.now() - d;
+        if (diff < 60000)    return 'now';
+        if (diff < 3600000)  return Math.round(diff/60000)+'m';
+        if (diff < 86400000) return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+        return d.toLocaleDateString([],{month:'short',day:'numeric'});
     };
-
     function escapeHtml(s){
-      return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
+    /* move a chat to the top of allChats and re-render the list */
+    function bumpChatToTop(chatId, preview){
+        const chat = allChats.find(c => c.chatId === chatId);
+        if (!chat) return;
+        chat.preview       = preview;
+        chat.lastMessageAt = new Date().toISOString();
+        allChats = allChats.filter(c => c.chatId !== chatId);
+        allChats.unshift(chat);
+        renderChatList(document.getElementById('searchInput').value);
+    }
     function showErr(msg){
-      const b=document.getElementById('errBar');
-      b.textContent=msg; b.style.display='block';
-      setTimeout(()=>b.style.display='none',5000);
+        const b = document.getElementById('errBar');
+        b.textContent = msg; b.style.display = 'block';
+        setTimeout(() => b.style.display = 'none', 5000);
     }
-
     async function api(url, opts={}, params={}){
-      try{
-        const qs=new URLSearchParams(params);
-        const full=qs.toString()?`${url}?${qs}`:url;
-        const r=await fetch(full,{
-          headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-          ...opts
-        });
-        if(!r.ok) throw new Error(`${r.status} ${r.statusText}`);
-        if(r.status===204) return null;
-        return r.json();
-      }catch(e){ showErr('Request failed: '+e.message); return null; }
+        try{
+            const qs   = new URLSearchParams(params);
+            const full = qs.toString() ? `${url}?${qs}` : url;
+            const r    = await fetch(full, {
+                headers: {'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+                ...opts
+            });
+            if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+            if (r.status === 204) return null;
+            return r.json();
+        } catch(e){ showErr('Request failed: '+e.message); return null; }
     }
 
-    /* auto-init using token from ?token= URL param */
+    /* ── BOOT ── */
     (async function init(){
-      if(!token){
-        document.getElementById('chatList').innerHTML=
-          '<div style="padding:20px;text-align:center;font-size:12px;color:var(--danger)">No token provided.<br>Open this page from the main UI.</div>';
-        return;
-      }
-      const ok = await loadChats();
-      if(ok) connectWs();
+        if (!token){
+            document.getElementById('chatList').innerHTML =
+                '<div style="padding:20px;text-align:center;font-size:12px;color:var(--danger)">No token provided.<br>Open this page from the main UI.</div>';
+            return;
+        }
+        const ok = await loadChats();
+        if (ok) connectWs();
     })();
 
     async function loadChats(cursor=null){
-      const list=document.getElementById('chatList');
-      list.innerHTML='<div style="display:flex;align-items:center;justify-content:center;padding:24px;gap:8px"><div class="spin"></div><span style="font-size:12px;color:var(--text2)">Loading...</span></div>';
-      const data=await api(VIEW_BASE,{},cursor?{cursor}:{});
-      if(!data){list.innerHTML='<div style="padding:16px;font-size:12px;color:var(--danger)">Failed to load chats</div>';return false;}
-      allChats=data.chats||[];
-      renderChatList();
-      return true;
+        const list = document.getElementById('chatList');
+        list.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;padding:24px;gap:8px"><div class="spin"></div><span style="font-size:12px;color:var(--text2)">Loading...</span></div>';
+        const data = await api(VIEW_BASE, {}, cursor ? {cursor} : {});
+        if (!data){ list.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--danger)">Failed to load chats</div>'; return false; }
+        allChats = data.chats||[];
+        renderChatList();
+        return true;
     }
 
     function avatarHtml(name, avatarUrl, size=40){
-      const col=colorFor(name);
-      if(avatarUrl){
-        return `<img src="${avatarUrl}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover" onerror="this.style.display='none';this.nextSibling.style.display='flex'" />
-                <div style="display:none;width:${size}px;height:${size}px;border-radius:50%;background:${col.bg};color:${col.fg};align-items:center;justify-content:center;font-size:${size*0.3}px;font-weight:600">${initials(name)}</div>`;
-      }
-      return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${col.bg};color:${col.fg};display:flex;align-items:center;justify-content:center;font-size:${size*0.3}px;font-weight:600">${initials(name)}</div>`;
+        const col = colorFor(name);
+        if (avatarUrl){
+            return `<img src="${avatarUrl}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover" onerror="this.style.display='none';this.nextSibling.style.display='flex'" />
+                    <div style="display:none;width:${size}px;height:${size}px;border-radius:50%;background:${col.bg};color:${col.fg};align-items:center;justify-content:center;font-size:${size*0.3}px;font-weight:600">${initials(name)}</div>`;
+        }
+        return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${col.bg};color:${col.fg};display:flex;align-items:center;justify-content:center;font-size:${size*0.3}px;font-weight:600">${initials(name)}</div>`;
     }
 
     function renderPreview(p){
-      if(!p) return {text:'', icon:'', color:'var(--text2)', badge:null};
-      switch(p.previewType){
-        case 'UNREAD':
-          return {
-            text: `${p.unreadCount} new message${p.unreadCount>1?'s':''}`,
-            icon: '',
-            color: 'var(--acc-dark)',
-            badge: `<span class="badge">${p.unreadCount>9?'9+':p.unreadCount}</span>`,
-            bold: true
-          };
-        case 'SENT':
-          return { text:'Sent', icon:'<i class="ti ti-check" style="font-size:12px;color:var(--text3)"></i>', color:'var(--text2)', badge:null };
-        case 'SEEN':{
-          const seenAvatars=(p.seenByUserIds||[]).map(id=>{
-            const col=colorFor(id);
-            return `<div style="width:12px;height:12px;border-radius:50%;background:${col.bg};color:${col.fg};display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:600">${initials(id)}</div>`;
-          }).join('');
-          const seenAtLabel=p.seenAt ? ' · '+timeAgo(p.seenAt) : '';
-          return { text:'Seen'+seenAtLabel, icon:`<i class="ti ti-checks" style="font-size:12px;color:var(--acc)"></i>${seenAvatars}`, color:'var(--text2)', badge:null };
+        if (!p) return {text:'', icon:'', color:'var(--text2)', badge:null};
+        switch(p.previewType){
+            case 'UNREAD':
+                return {
+                    text:  `${p.unreadCount} new message${p.unreadCount>1?'s':''}`,
+                    icon:  '',
+                    color: 'var(--acc-dark)',
+                    badge: `<span class="badge">${p.unreadCount>9?'9+':p.unreadCount}</span>`,
+                    bold:  true
+                };
+            case 'SENT':
+                return { text:'Sent', icon:'<i class="ti ti-check" style="font-size:12px;color:var(--text3)"></i>', color:'var(--text2)', badge:null };
+            case 'SEEN':{
+                /* readersId from Java maps to seenByUserIds in the preview object */
+                const avs = (p.seenByUserIds||[]).map(id => {
+                    const c = colorFor(id);
+                    return `<div style="width:12px;height:12px;border-radius:50%;background:${c.bg};color:${c.fg};display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:600">${initials(id)}</div>`;
+                }).join('');
+                const label = p.seenAt ? ' · '+timeAgo(p.seenAt) : '';
+                return { text:'Seen'+label, icon:`<i class="ti ti-checks" style="font-size:12px;color:var(--acc)"></i>${avs}`, color:'var(--text2)', badge:null };
+            }
+            case 'RECEIVED':
+                return { text: p.message||'', icon:'', color:'var(--text2)', badge:null };
+            default:
+                return {text:'', icon:'', color:'var(--text2)', badge:null};
         }
-        case 'RECEIVED':
-          return { text:p.message||'', icon:'', color:'var(--text2)', badge:null };
-        default:
-          return {text:'', icon:'', color:'var(--text2)', badge:null};
-      }
+    }
+
+    function renderChatRowHtml(c){
+        const prev    = renderPreview(c.preview);
+        const isGroup = c.chatType === 'GROUP';
+        return `<div class="ci${activeChatId===c.chatId?' sel':''}" data-chatid="${c.chatId}" onclick="openChat('${c.chatId}')">
+            <div class="av-wrap">
+                ${avatarHtml(c.chatName, c.chatAvatar, 40)}
+                ${!isGroup&&c.active?'<div class="online-dot"></div>':''}
+            </div>
+            <div class="ci-body">
+                <div class="ci-name">${c.chatName||'Unknown'}</div>
+                <div class="ci-prev" style="color:${prev.color};font-weight:${prev.bold?'500':'400'}">
+                    ${prev.icon}
+                    <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${prev.text}</span>
+                </div>
+                ${!isGroup&&!c.active&&c.lastSeen?`<div style="font-size:11px;color:var(--text3);margin-top:1px">${c.lastSeen}</div>`:''}
+            </div>
+            <div class="ci-meta">
+                <span class="ci-time">${timeAgo(c.lastMessageAt)}</span>
+                ${prev.badge||''}
+            </div>
+        </div>`;
     }
 
     function renderChatList(filter=''){
-      const list=document.getElementById('chatList');
-      const filtered=allChats.filter(c=>(c.chatName||'').toLowerCase().includes(filter.toLowerCase()));
-      if(!filtered.length){list.innerHTML='<div style="padding:20px;text-align:center;font-size:12px;color:var(--text3)">No results</div>';return;}
-      list.innerHTML=filtered.map(c=>{
-        const prev=renderPreview(c.preview);
-        const isGroup=c.chatType==='GROUP';
-        return `<div class="ci${activeChatId===c.chatId?' sel':''}" onclick="openChat('${c.chatId}')">
-          <div class="av-wrap">
-            ${avatarHtml(c.chatName, c.chatAvatar, 40)}
-            ${!isGroup&&c.active?'<div class="online-dot"></div>':''}
-          </div>
-          <div class="ci-body">
-            <div class="ci-name">${c.chatName||'Unknown'}</div>
-            <div class="ci-prev" style="color:${prev.color};font-weight:${prev.bold?'500':'400'}">
-              ${prev.icon}
-              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${prev.text}</span>
-            </div>
-            ${!isGroup&&!c.active&&c.lastSeen?`<div style="font-size:11px;color:var(--text3);margin-top:1px">${c.lastSeen}</div>`:''}
-          </div>
-          <div class="ci-meta">
-            <span class="ci-time">${timeAgo(c.lastMessageAt)}</span>
-            ${prev.badge||''}
-          </div>
-        </div>`;
-      }).join('');
+        const list     = document.getElementById('chatList');
+        const filtered = allChats.filter(c => (c.chatName||'').toLowerCase().includes(filter.toLowerCase()));
+        if (!filtered.length){ list.innerHTML = '<div style="padding:20px;text-align:center;font-size:12px;color:var(--text3)">No results</div>'; return; }
+        list.innerHTML = filtered.map(renderChatRowHtml).join('');
     }
 
     async function openChat(chatId){
-      if(activeChatId && activeChatId!==chatId) sendChatLeave(activeChatId);
-      activeChatId=chatId;
-      activeChat=allChats.find(c=>c.chatId===chatId);
-      renderChatList(document.getElementById('searchInput').value);
-      renderChatShell();
-      await loadChatUsers(chatId);
-      await loadMessages(chatId);
-      sendChatEnter(chatId);
+        if (activeChatId && activeChatId !== chatId) sendChatLeave(activeChatId);
+        activeChatId = chatId;
+        activeChat   = allChats.find(c => c.chatId === chatId);
+
+        /* clear unread locally when user opens the chat */
+        if (activeChat?.preview?.previewType === 'UNREAD')
+            activeChat.preview = { previewType: 'RECEIVED', message: '' };
+
+        renderChatList(document.getElementById('searchInput').value);
+        renderChatShell();
+        await loadChatUsers(chatId);
+        await loadMessages(chatId);
+        sendChatEnter(chatId);   /* heartbeat starts; tells server user is active here */
     }
 
     function renderChatShell(){
-      const c=activeChat;
-      document.getElementById('mainContent').innerHTML=`
-        <div class="ch-header">
-          <div class="av-wrap" style="width:36px;height:36px">
-            ${avatarHtml(c?.chatName, c?.chatAvatar, 36)}
-            ${c?.chatType!=='GROUP'&&c?.active?'<div class="online-dot"></div>':''}
-          </div>
-          <div style="flex:1">
-            <div class="ch-hname">${c?.chatName||'Chat'}</div>
-            <div class="ch-hsub" id="chatSub" style="color:var(--text3)">loading...</div>
-          </div>
-          <div class="ch-hbtns">
-            <button class="hbtn" id="refreshBtn" title="Refresh" onclick="refreshChat()"><i class="ti ti-refresh"></i></button>
-            <button class="hbtn" title="Search"><i class="ti ti-search"></i></button>
-            <button class="hbtn" title="Info"><i class="ti ti-info-circle"></i></button>
-            <button class="hbtn" title="More"><i class="ti ti-dots-vertical"></i></button>
-          </div>
-        </div>
-        <div id="msgArea" style="flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden">
-          <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:10px">
-            <div class="spin"></div><span style="font-size:12px;color:var(--text2)">Loading messages...</span>
-          </div>
-        </div>
-        <div class="inp-area">
-          <button class="iabtn" title="Attach"><i class="ti ti-paperclip"></i></button>
-          <input class="msg-input" type="text" id="msgInput" placeholder="Write a message..." />
-          <button class="iabtn" title="Emoji"><i class="ti ti-mood-smile"></i></button>
-          <button class="send-btn" id="sendBtn"><i class="ti ti-send-2"></i></button>
-        </div>
-      `;
-      document.getElementById('msgInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendMessage()});
-      document.getElementById('sendBtn').addEventListener('click',sendMessage);
+        const c = activeChat;
+        document.getElementById('mainContent').innerHTML = `
+            <div class="ch-header">
+                <div class="av-wrap" style="width:36px;height:36px">
+                    ${avatarHtml(c?.chatName, c?.chatAvatar, 36)}
+                    ${c?.chatType!=='GROUP'&&c?.active?'<div class="online-dot"></div>':''}
+                </div>
+                <div style="flex:1">
+                    <div class="ch-hname">${c?.chatName||'Chat'}</div>
+                    <div class="ch-hsub" id="chatSub" style="color:var(--text3)">loading...</div>
+                </div>
+                <div class="ch-hbtns">
+                    <button class="hbtn" id="refreshBtn" title="Refresh" onclick="refreshChat()"><i class="ti ti-refresh"></i></button>
+                    <button class="hbtn" title="Search"><i class="ti ti-search"></i></button>
+                    <button class="hbtn" title="Info"><i class="ti ti-info-circle"></i></button>
+                    <button class="hbtn" title="More"><i class="ti ti-dots-vertical"></i></button>
+                </div>
+            </div>
+            <div id="msgArea" style="flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden">
+                <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:10px">
+                    <div class="spin"></div><span style="font-size:12px;color:var(--text2)">Loading messages...</span>
+                </div>
+            </div>
+            <div class="inp-area">
+                <button class="iabtn" title="Attach"><i class="ti ti-paperclip"></i></button>
+                <input class="msg-input" type="text" id="msgInput" placeholder="Write a message..." />
+                <button class="iabtn" title="Emoji"><i class="ti ti-mood-smile"></i></button>
+                <button class="send-btn" id="sendBtn"><i class="ti ti-send-2"></i></button>
+            </div>`;
+        document.getElementById('msgInput').addEventListener('keydown', e => { if (e.key==='Enter') sendMessage(); });
+        document.getElementById('sendBtn').addEventListener('click', sendMessage);
+    }
+
+    async function refreshChat(){
+        if (!activeChatId) return;
+        const btn = document.getElementById('refreshBtn');
+        if (btn){ btn.style.pointerEvents='none'; btn.querySelector('i').style.animation='spin .6s linear infinite'; }
+        await loadChatUsers(activeChatId);
+        await loadMessages(activeChatId);
+        if (btn){ btn.style.pointerEvents=''; btn.querySelector('i').style.animation=''; }
     }
 
     async function loadChatUsers(chatId){
-      const data=await api(`${VIEW_BASE}/${chatId}`);
-      if(!data) return;
-      chatUsers[chatId]=data.chatUsers||[];
-      const sub=document.getElementById('chatSub');
-      if(sub){
-        const online=chatUsers[chatId].some(u=>u.isActive);
-        if(online){sub.textContent='● online';sub.style.color='var(--acc)';}
-        else{
-          const lu=chatUsers[chatId].find(u=>u.lastActivity);
-          sub.textContent=lu?.lastActivity?`last seen ${lu.lastActivity}`:'offline';
-          sub.style.color='var(--text3)';
+        const data = await api(`${VIEW_BASE}/${chatId}`);
+        if (!data) return;
+        chatUsers[chatId] = data.chatUsers||[];
+        const sub = document.getElementById('chatSub');
+        if (sub){
+            const online = chatUsers[chatId].some(u => u.isActive);
+            if (online){ sub.textContent = '● online'; sub.style.color = 'var(--acc)'; }
+            else {
+                const lu = chatUsers[chatId].find(u => u.lastActivity);
+                sub.textContent = lu?.lastActivity ? `last seen ${lu.lastActivity}` : 'offline';
+                sub.style.color = 'var(--text3)';
+            }
         }
-      }
     }
 
-    async function loadMessages(chatId,cursor=null){
-      const data=await api(`${VIEW_BASE}/${chatId}/messages`,{},cursor?{cursor}:{});
-      if(!data) return;
-      msgCursors[chatId]={oldest:data.oldestCursor,newest:data.newestCursor};
-      renderMessages(chatId,data.messages||[],!!cursor);
+    async function loadMessages(chatId, cursor=null){
+        const data = await api(`${VIEW_BASE}/${chatId}/messages`, {}, cursor ? {cursor} : {});
+        if (!data) return;
+        msgCursors[chatId] = {oldest: data.oldestCursor, newest: data.newestCursor};
+        renderMessages(chatId, data.messages||[], !!cursor);
     }
 
-    function renderMessages(chatId,msgs,isScroll=false){
-      const area=document.getElementById('msgArea');
-      if(!area) return;
-      const userMap={};
-      (chatUsers[chatId]||[]).forEach(u=>userMap[u.userId]=u);
+    function renderMessages(chatId, msgs, isScroll=false){
+        const area = document.getElementById('msgArea');
+        if (!area) return;
+        const userMap = {};
+        (chatUsers[chatId]||[]).forEach(u => userMap[u.userId] = u);
 
-      /* persist currentUserId across reloads */
-      const uid = msgs.find(m=>m.mine)?.senderId || null;
-      if(uid && !currentUserId) currentUserId = uid;
+        /* persist currentUserId from first mine:true message */
+        const uid = msgs.find(m => m.mine)?.senderId || null;
+        if (uid && !currentUserId) currentUserId = uid;
 
-      /* build seen map — exclude current user */
-      const seenAtMsg={};
-      (chatUsers[chatId]||[]).forEach(u=>{
-        if(u.lastSeenMessageId && u.userId!==currentUserId){
-          if(!seenAtMsg[u.lastSeenMessageId]) seenAtMsg[u.lastSeenMessageId]=[];
-          seenAtMsg[u.lastSeenMessageId].push(u);
-        }
-      });
+        /* seen map: messageId → [users who last saw at that message] */
+        const seenAtMsg = {};
+        (chatUsers[chatId]||[]).forEach(u => {
+            if (u.lastSeenMessageId && u.userId !== currentUserId){
+                if (!seenAtMsg[u.lastSeenMessageId]) seenAtMsg[u.lastSeenMessageId] = [];
+                seenAtMsg[u.lastSeenMessageId].push(u);
+            }
+        });
 
-      const hasMore=!!msgCursors[chatId]?.oldest;
+        const hasMore = !!msgCursors[chatId]?.oldest;
 
-      const html=msgs.map((m,i)=>{
-        const u=userMap[m.senderId];
-        const prev=msgs[i-1];
-        const showAv=!m.mine&&(!prev||prev.mine||prev.senderId!==m.senderId);
+        const html = msgs.map((m, i) => {
+            const u      = userMap[m.senderId];
+            const prev   = msgs[i-1];
+            const showAv = !m.mine && (!prev || prev.mine || prev.senderId !== m.senderId);
 
-        const seenUsers=seenAtMsg[m.id]||[];
-        const seenHtml=seenUsers.map(su=>{
-          const c2=colorFor(su.userId);
-          return `<div class="seen-dot" style="background:${c2.bg};color:${c2.fg}" title="Seen by ${su.username||su.userId}">${initials(su.username||su.userId)}</div>`;
+            const seenUsers = seenAtMsg[m.id]||[];
+            const seenHtml  = seenUsers.map(su => {
+                const c2 = colorFor(su.userId);
+                return `<div class="seen-dot" style="background:${c2.bg};color:${c2.fg}" title="Seen by ${su.username||su.userId}">${initials(su.username||su.userId)}</div>`;
+            }).join('');
+
+            return `<div class="mrow${m.mine?' mine':''}" data-msgid="${m.id}" data-sender="${m.senderId}">
+                ${!m.mine&&showAv?`<div class="mav" style="background:${colorFor(m.senderId).bg};color:${colorFor(m.senderId).fg}">${initials(u?.username||'?')}</div>`:''}
+                ${!m.mine&&!showAv?'<div style="width:26px;flex-shrink:0"></div>':''}
+                <div class="mcol${m.mine?' mine':''}">
+                    <div class="bub ${m.mine?'mine':'theirs'}">${escapeHtml(m.content)}</div>
+                    <div class="mtime">
+                        ${m.mine?`<i class="ti ti-checks" style="font-size:12px${seenHtml?';color:var(--acc)':''}"></i>`:''}
+                        <span>${timeAgo(m.sentAt)}</span>
+                    </div>
+                    ${seenHtml?`<div class="seen-row">${seenHtml}</div>`:''}
+                </div>
+                ${m.mine?'<div style="width:26px;flex-shrink:0"></div>':''}
+            </div>`;
         }).join('');
 
-        return `<div class="mrow${m.mine?' mine':''}" data-msgid="${m.id}" data-sender="${m.senderId}">
-          ${!m.mine&&showAv?`<div class="mav" style="background:${colorFor(m.senderId).bg};color:${colorFor(m.senderId).fg}">${initials(u?.username||'?')}</div>`:''}
-          ${!m.mine&&!showAv?'<div style="width:26px;flex-shrink:0"></div>':''}
-          <div class="mcol${m.mine?' mine':''}">
-            <div class="bub ${m.mine?'mine':'theirs'}">${escapeHtml(m.content)}</div>
-            <div class="mtime">
-              ${m.mine?`<i class="ti ti-checks" style="font-size:12px${seenHtml?';color:var(--acc)':''}"></i>`:''}
-              <span>${timeAgo(m.sentAt)}</span>
-            </div>
-            ${seenHtml?`<div class="seen-row">${seenHtml}</div>`:''}
-          </div>
-          ${m.mine?'<div style="width:26px;flex-shrink:0"></div>':''}
-        </div>`;
-      }).join('');
-
-      const prevH=area.querySelector('.msgs')?.scrollHeight||0;
-      area.innerHTML=`
-        <div class="msgs" id="msgContainer">
-          ${hasMore?`<button class="load-more-btn" id="loadMoreBtn"><i class="ti ti-arrow-up" style="font-size:13px"></i> load older</button>`:''}
-          ${html}
-        </div>
-      `;
-      const mc=document.getElementById('msgContainer');
-      mc.scrollTop=isScroll?mc.scrollHeight-prevH:mc.scrollHeight;
-      document.getElementById('loadMoreBtn')?.addEventListener('click',()=>loadMessages(chatId,msgCursors[chatId]?.oldest));
+        const prevH = area.querySelector('.msgs')?.scrollHeight||0;
+        area.innerHTML = `
+            <div class="msgs" id="msgContainer">
+                ${hasMore?`<button class="load-more-btn" id="loadMoreBtn"><i class="ti ti-arrow-up" style="font-size:13px"></i> load older</button>`:''}
+                ${html}
+            </div>`;
+        const mc = document.getElementById('msgContainer');
+        mc.scrollTop = isScroll ? mc.scrollHeight - prevH : mc.scrollHeight;
+        document.getElementById('loadMoreBtn')?.addEventListener('click', () => loadMessages(chatId, msgCursors[chatId]?.oldest));
     }
 
     async function sendMessage(){
-      if(isSending) return;
-      const input=document.getElementById('msgInput');
-      const content=input.value.trim();
-      if(!content||!activeChatId) return;
-      isSending=true;
-      input.value=''; input.disabled=true;
-      let ok=false;
-      try{
-        const r=await fetch(SEND_BASE,{
-          method:'POST',
-          headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-          body:JSON.stringify({chatId:activeChatId,content})
-        });
-        ok=r.ok||r.status===204;
-      }catch(e){showErr('Send failed: '+e.message)}
-      input.disabled=false; input.focus();
-      isSending=false;
-      if(ok){
-        /* Case B already handled: WS arrived before HTTP */
-        if(pendingEcho==='__handled__'){
-          pendingEcho=null;
-          const chat=allChats.find(c=>c.chatId===activeChatId);
-          if(chat) chat.preview={previewType:'SENT'};
-          renderChatList(document.getElementById('searchInput').value);
-          return;
-        }
-        /* Case A: add optimistic bubble, WS echo will upgrade it */
-        const mc=document.getElementById('msgContainer');
-        if(mc){
-          const tempId=`tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-          pendingEcho={ tempId };
-          const div=document.createElement('div');
-          div.className='mrow mine';
-          div.dataset.tempid=tempId;
-          div.innerHTML=`<div class="mcol mine"><div class="bub mine">${escapeHtml(content)}</div><div class="mtime"><i class="ti ti-check" style="font-size:12px;color:var(--text3)"></i><span>now</span></div></div><div style="width:26px;flex-shrink:0"></div>`;
-          mc.appendChild(div);
-          mc.scrollTop=mc.scrollHeight;
-          /* safety: if WS echo never arrives, clear state after 8s */
-          setTimeout(()=>{
-            if(pendingEcho && pendingEcho!=='__handled__' && pendingEcho.tempId===tempId){
-              const stale=mc.querySelector(`[data-tempid="${tempId}"]`);
-              if(stale) delete stale.dataset.tempid;
-              pendingEcho=null;
+        if (isSending) return;
+        const input   = document.getElementById('msgInput');
+        const content = input.value.trim();
+        if (!content || !activeChatId) return;
+        isSending = true;
+        input.value = ''; input.disabled = true;
+        let ok = false;
+        try{
+            const r = await fetch(SEND_BASE, {
+                method:  'POST',
+                headers: {'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+                body:    JSON.stringify({chatId: activeChatId, content})
+            });
+            ok = r.ok || r.status === 204;
+        } catch(e){ showErr('Send failed: '+e.message); }
+        input.disabled = false; input.focus();
+        isSending = false;
+
+        if (ok){
+            /* Case B: WS echo already rendered before HTTP returned */
+            if (pendingEcho === '__handled__'){
+                pendingEcho = null;
+                bumpChatToTop(activeChatId, { previewType: 'SENT' });
+                return;
             }
-          },8000);
+            /* Case A: render optimistic bubble; WS echo will upgrade it */
+            const mc = document.getElementById('msgContainer');
+            if (mc){
+                const tempId    = `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+                pendingEcho     = { tempId };
+                const div       = document.createElement('div');
+                div.className   = 'mrow mine';
+                div.dataset.tempid = tempId;
+                div.innerHTML   = `<div class="mcol mine"><div class="bub mine">${escapeHtml(content)}</div><div class="mtime"><i class="ti ti-check" style="font-size:12px;color:var(--text3)"></i><span>now</span></div></div><div style="width:26px;flex-shrink:0"></div>`;
+                mc.appendChild(div);
+                mc.scrollTop = mc.scrollHeight;
+                /* safety: clear stale state after 8 s if WS never arrives */
+                setTimeout(() => {
+                    if (pendingEcho?.tempId === tempId){
+                        const stale = mc.querySelector(`[data-tempid="${tempId}"]`);
+                        if (stale) delete stale.dataset.tempid;
+                        pendingEcho = null;
+                    }
+                }, 8000);
+            }
+            bumpChatToTop(activeChatId, { previewType: 'SENT' });
         }
-        const chat=allChats.find(c=>c.chatId===activeChatId);
-        if(chat) chat.preview={previewType:'SENT'};
-        renderChatList(document.getElementById('searchInput').value);
-      }
     }
 
-    window.addEventListener('beforeunload',()=>{ if(activeChatId) sendChatLeave(activeChatId); });
-    document.getElementById('searchInput').addEventListener('input',e=>renderChatList(e.target.value));
+    window.addEventListener('beforeunload', () => {
+        if (activeChatId) sendChatLeave(activeChatId);
+        stopInboxHeartbeat();
+    });
+    document.getElementById('searchInput').addEventListener('input', e => renderChatList(e.target.value));
 </script>
-
 </body>
 </html>

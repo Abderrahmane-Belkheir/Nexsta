@@ -21,7 +21,6 @@ public class ChatActivityTracker {
 
 
     public void userEnteredChat(String userId, String chatId) {
-        log.info("user : {} entered chat : {}",userId,chatId);
         redisTemplate.opsForValue().set(
                 CHAT_ACTIVE_KEY + chatId + ":" + userId,
                 "1",

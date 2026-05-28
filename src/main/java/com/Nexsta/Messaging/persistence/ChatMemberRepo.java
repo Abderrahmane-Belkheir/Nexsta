@@ -23,7 +23,7 @@ public interface ChatMemberRepo extends JpaRepository<ChatMember,UUID> {
     @Transactional
     @Modifying
     @Query("UPDATE ChatMember cm SET cm.unReadCount=cm.unReadCount+1 WHERE cm.id.chatId=:chatId AND cm.id.userId!=:userId AND cm.id.userId NOT IN (:usersId) ")
-    void incrementUnReadCount(@Param("chatId") String chatId,@Param("userId") String userId,@Param("usersId") List<String> usersId);
+    void incrementUnReadCount(@Param("chatId") String chatId,@Param("userId")String userId,@Param("usersId") List<String> usersId);
 
     @Query(value = "SELECT user_id As userId,chat_id As chatId FROM Chat_Member WHERE chat_id IN :chatsId AND user_id!=:userId AND un_read_count=0 ",nativeQuery = true)
     List<ChatMember> findMembersWhoSeenLastMessage(@Param("chatsId") List<String> chatsId,@Param("userId") String userId);

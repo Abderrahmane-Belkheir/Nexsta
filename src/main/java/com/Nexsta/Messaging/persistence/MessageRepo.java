@@ -10,9 +10,8 @@ import java.util.List;
 public interface MessageRepo extends MongoRepository<Message,String> {
 
 
-    Page<Message> findByChatId(String chatId, Pageable pageable);
 
-    List<Message> findByIdIn(List<String> lastmessageIds);
+    List<Message> findByIdIn(List<String> lastMessageIds);
 
     List<Message> findByChatIdOrderByIdDesc(String chatId, Pageable pageable);
 
