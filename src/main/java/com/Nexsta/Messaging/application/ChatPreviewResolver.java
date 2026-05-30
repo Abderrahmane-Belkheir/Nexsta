@@ -18,13 +18,13 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class ChatStatusResolver {
+public class ChatPreviewResolver {
 
     private final MessageRepo messageRepo;
     private final ChatMemberRepo chatMemberRepo;
 
 
-    public void computeStatus(Map<String,ChatAggregate> chatAggregateMap,String currentUserId){
+    public void resolvePreview(Map<String,ChatAggregate> chatAggregateMap, String currentUserId){
 
     List<ChatMemberRepo.ChatUnread> chatUnReads=chatMemberRepo.
             findUnreadCountsForUser(currentUserId,chatAggregateMap.values().stream().map(chatAggregate -> chatAggregate.getChat().getId()).toList());
@@ -80,5 +80,6 @@ public class ChatStatusResolver {
         });
 
 }
+
 }
 

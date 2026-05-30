@@ -31,4 +31,8 @@ public class RealTimeChatController {
         chatActivityTracker.userOpenedInbox(principal.getName());
     }
 
+    @MessageMapping("/typing/{chatId}")
+    public void typingIndicator(@DestinationVariable String chatId, Principal principal){
+        chatActivityTracker.deliverTyping(chatId,principal.getName());
+    }
 }

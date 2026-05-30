@@ -1,11 +1,18 @@
 package com.Nexsta.Messaging.application;
 
+import com.Nexsta.Content.Exceptions.ContentNotAvailableException;
+import com.Nexsta.Messaging.api.dto.InboxEvent;
+import com.Nexsta.Messaging.domain.Chat;
+import com.Nexsta.Messaging.domain.ChatMember;
+import com.Nexsta.Messaging.persistence.ChatRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Component
@@ -14,10 +21,11 @@ import java.time.Duration;
 public class ChatActivityTracker {
 
     private final RedisTemplate<String,String> redisTemplate;
-
+    private final RealTimeDeliveringService realTimeDeliveringService;
+    private final ChatRepo chatRepo;
     private static final String CHAT_ACTIVE_KEY = "chat:active:";
     private static final String INBOX_ACTIVE_KEY = "inbox:active";
-    private static final Duration TTL = Duration.ofSeconds(30);
+    private static final Duration TTL = Duration.ofSeconds(10);
 
 
     public void userEnteredChat(String userId, String chatId) {
@@ -52,6 +60,23 @@ public class ChatActivityTracker {
         return redisTemplate.hasKey(INBOX_ACTIVE_KEY + userId);
     }
 
+    public void deliverTyping(String chatId, String userId){
+    Chat chat=chatRepo.findChatById(userId,chatId).orElseThrow(()-> new ContentNotAvailableException("Chat Not Found"));
+        List<String> activeUsersInChat=new ArrayList<>();
+        List<String> activeUsersInInbox=new ArrayList<>();
+     for(ChatMember chatMember:chat.getMembers()){
+        String memberId=chatMember.getId().getUserId();
+         if(memberId.equals(userId)) continue;
+         if(isUserActiveInChat(memberId,chatId)){
+             activeUsersInChat.add(memberId);
+         }
+         if(isUserActiveInInbox(memberId)){
+          activeUsersInInbox.add(memberId);
+         }
+     }
+     realTimeDeliveringService.deliverInboxEvent(activeUsersInInbox, InboxEvent.typingMessage(chatId,userId));
+     realTimeDeliveringService.deliverTyping(activeUsersInChat,userId);
+    }
 
 }
 

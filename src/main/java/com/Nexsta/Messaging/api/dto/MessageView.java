@@ -14,6 +14,7 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MessageView {
     private String id;
+    private String chatId;
     private String senderId;
     private String content;
     private Instant sentAt;

@@ -1,9 +1,6 @@
 package com.Nexsta.Messaging.api.Controllers;
 
-import com.Nexsta.Messaging.api.dto.ChatPreview;
-import com.Nexsta.Messaging.api.dto.ChatUsers;
-import com.Nexsta.Messaging.api.dto.ChatPage;
-import com.Nexsta.Messaging.api.dto.MessagePage;
+import com.Nexsta.Messaging.api.dto.*;
 import com.Nexsta.Messaging.application.ChatViewService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,12 +25,12 @@ public class ChatViewController {
         return ResponseEntity.ok(chatViewService.getUserChats(cursor));
     }
 
-    @GetMapping("/{chatId}/v")
-    public ResponseEntity<ChatPreview> getChat(@PathVariable String chatId){
+    @GetMapping("/{chatId}")
+    public ResponseEntity<ChatSummary> getChat(@PathVariable String chatId){
         return ResponseEntity.ok(chatViewService.getUserChat(chatId));
     }
 
-    @GetMapping("/{chatId}")
+    @GetMapping("/{chatId}/details")
     public ResponseEntity<ChatUsers> getChatDetails(@PathVariable String chatId){
 
         return ResponseEntity.ok(chatViewService.getChatDetails(chatId));

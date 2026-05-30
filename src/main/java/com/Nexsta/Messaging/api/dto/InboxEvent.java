@@ -16,6 +16,13 @@ public class InboxEvent {
     private InboxEventType type;
     private String chatId;
 
+    // used for new chats
+    private  ChatSummary chatSummary;
+
+    private String message;
+
+    private String typerId;
+
     private List<String> readersId;
 
     private InboxEvent(InboxEventType type, String chatId) {
@@ -23,17 +30,50 @@ public class InboxEvent {
         this.chatId = chatId;
     }
 
+    private InboxEvent(InboxEventType type, String chatId,List<String> readersId){
+        this(type,chatId);
+        this.readersId=readersId;
+    }
+
+    private InboxEvent(InboxEventType type,ChatSummary chatSummary){
+        this(type, (String) null);
+        this.chatSummary=chatSummary;
+    }
+
+    private InboxEvent(InboxEventType type, String chatId,String message) {
+        this(type,chatId);
+        this.message=message;
+    }
+
+
+
     public static InboxEvent newMessage(String chatId){
         return new InboxEvent(InboxEventType.NEW_MESSAGE, chatId);
     }
 
     public static InboxEvent readReceipt(String chatId, List<String> readersId) {
-        InboxEvent e = new InboxEvent(InboxEventType.READ_RECEIPT, chatId);
-        e.readersId = readersId;
+        return new InboxEvent(InboxEventType.READ_RECEIPT,chatId,readersId);
+    }
+
+    public static InboxEvent newChat(ChatSummary chatSummary){
+        return new InboxEvent(InboxEventType.NEW_CHAT,chatSummary);
+    }
+
+    public static  InboxEvent sentMessage(String chatId){
+    return new InboxEvent(InboxEventType.SENT_MESSAGE,chatId);
+    }
+
+    public static InboxEvent receivedMessage(String chatId, String message){
+      return  new InboxEvent(InboxEventType.RECEIVED_MESSAGE, chatId,message);
+    }
+
+    public static InboxEvent typingMessage(String chatId,String typerId){
+       InboxEvent e=new InboxEvent(InboxEventType.TYPING_MESSAGE,chatId);
+       e.typerId=typerId;
         return e;
     }
 
     public enum InboxEventType{ NEW_MESSAGE,
-        READ_RECEIPT}
+        READ_RECEIPT,NEW_CHAT,SENT_MESSAGE,RECEIVED_MESSAGE,TYPING_MESSAGE}
 
 }

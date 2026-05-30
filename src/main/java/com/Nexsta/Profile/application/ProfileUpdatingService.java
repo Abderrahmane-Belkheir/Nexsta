@@ -32,8 +32,6 @@ public class ProfileUpdatingService {
     private final ProfileCacheManager profileCacheManager;
     private final UserRepo userRepo;
     private final ProfileQueryService profileQueryService;
-    private final UploadGatewayService uploadGatewayService;
-    private final StorageService storageService;
     private final FollowRepo followRepo;
     private final IdentityService identityService;
     private final Profilemapper profilemapper;

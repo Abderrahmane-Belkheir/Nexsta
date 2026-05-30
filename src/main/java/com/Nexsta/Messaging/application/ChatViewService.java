@@ -10,7 +10,9 @@ import com.Nexsta.Messaging.persistence.ChatMemberRepo;
 import com.Nexsta.Messaging.persistence.ChatRepo;
 import com.Nexsta.Messaging.persistence.MessageRepo;
 import com.Nexsta.Profile.api.dto.ProfileSummary;
+import com.Nexsta.Profile.application.ProfileQueryService;
 import com.Nexsta.Profile.application.ProfileSummaryBuilder;
+import com.Nexsta.Profile.domain.cache.ProfileInfo;
 import com.Nexsta.Shared.Mappers.Chatmapper;
 import com.Nexsta.User.application.AuthenticatedUserService;
 import com.Nexsta.User.application.UserActivityTracker;
@@ -33,9 +35,10 @@ public class ChatViewService {
     private final ChatMemberRepo chatMemberRepo;
     private final AuthenticatedUserService authenticatedUserService;
     private final ProfileSummaryBuilder profileSummaryBuilder;
+    private final ProfileQueryService profileQueryService;
     private final ChatRepo chatRepo;
     private final Chatmapper chatmapper;
-    private final ChatStatusResolver chatStatusResolver;
+    private final ChatPreviewResolver previewResolver;
     private final MessageRepo messageRepo;
     private final RealTimeDeliveringService realTimeDeliveringService;
     private final ChatActivityTracker chatActivityTracker;
@@ -104,19 +107,30 @@ public class ChatViewService {
     }).toList();
 
 
-    chatStatusResolver.computeStatus(aggregateMap, currentUserId);
+    previewResolver.resolvePreview(aggregateMap, currentUserId);
 
     return ChatPage.builder()
             .chats(chatSummaries)
             .build();
     }
 
-    public ChatPreview getUserChat(String chatId){
+    public ChatSummary getUserChat(String chatId){
         String currentUserId=authenticatedUserService.getCurrentUser();
-        Chat chat=chatRepo.findChatById(chatId,currentUserId).orElseThrow();
-
-
-        return null;
+        Chat chat=chatRepo.findChatById(chatId,currentUserId).orElseThrow(()->new ContentNotAvailableException("Chat Not Found"));
+        ChatSummary chatSummary=ChatSummary.builder().chatId(chat.getId()).chatType(chat.getType()).build();
+        if(chat.getType()== Chat.ChatType.DIRECT){
+           List<ChatMemberRepo.ChatMember> chatMembers= chatMemberRepo.findOtherChatMember(List.of(chatId),currentUserId);
+           if(chatMembers.size()==1){
+                ProfileInfo profileInfo=profileQueryService.getUserProfileInfo(chatMembers.get(0).getUserId());
+                chatSummary.setChatName(profileInfo.getUsername());
+                chatSummary.setChatAvatar(profileInfo.getAvatarPath());
+           }
+        }else{
+            chatSummary.setChatName(chat.getName());
+            chatSummary.setChatAvatar(chat.getAvatarUrl());
+        }
+        previewResolver.resolvePreview(Map.of(chatId,new ChatAggregate(chat,chatSummary)),currentUserId);
+        return chatSummary;
     }
 
     public ChatUsers getChatDetails(String chatId){
@@ -157,11 +171,17 @@ public class ChatViewService {
               messageRepo.save(latestMessage);
           }
 
-          String lastMessageSenderId =latestMessage.getSenderId();
-
-      if(chatActivityTracker.isUserActiveInInbox(lastMessageSenderId)){
-           realTimeDeliveringService.deliverInboxEvent(List.of(lastMessageSenderId),InboxEvent.readReceipt(chatId,List.of(currentUserId)));
-          }
+            String lastMessageSenderId =latestMessage.getSenderId();
+            if(!lastMessageSenderId.equals(currentUserId)){
+                realTimeDeliveringService.deliverInboxEvent(
+                        List.of(lastMessageSenderId),
+                        InboxEvent.readReceipt(chatId, List.of(currentUserId))
+                );
+                realTimeDeliveringService.deliverInboxEvent(
+                        List.of(currentUserId),
+                        InboxEvent.receivedMessage(chatId, latestMessage.getContent())
+                );
+            }
 
         }
 

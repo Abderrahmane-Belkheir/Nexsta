@@ -2,8 +2,7 @@ package com.Nexsta.Messaging.application;
 
 import com.Nexsta.Content.Exceptions.ContentNotAvailableException;
 import com.Nexsta.Messaging.Exceptions.ChatMessagingException;
-import com.Nexsta.Messaging.api.dto.InboxEvent;
-import com.Nexsta.Messaging.api.dto.SendMessage;
+import com.Nexsta.Messaging.api.dto.*;
 import com.Nexsta.Messaging.domain.Chat;
 import com.Nexsta.Messaging.domain.ChatMember;
 import com.Nexsta.Messaging.domain.Message;
@@ -12,6 +11,7 @@ import com.Nexsta.Messaging.persistence.ChatRepo;
 import com.Nexsta.Messaging.persistence.MessageRepo;
 import com.Nexsta.Profile.application.ProfileQueryService;
 import com.Nexsta.Profile.domain.Profile;
+import com.Nexsta.Profile.domain.cache.ProfileInfo;
 import com.Nexsta.Shared.CheckUserExistence;
 import com.Nexsta.SocialGraph.domain.Follow;
 import com.Nexsta.SocialGraph.persistence.BlocksRepo;
@@ -42,7 +42,7 @@ public class ChatSendingService {
     private final ChatRepo chatRepo;
     private final FollowRepo followRepo;
     private final ChatActivityTracker chatActivityTracker;
-    private final RealTimeDeliveringService messageDeliveringService;
+    private final RealTimeDeliveringService realTimeDeliveringService;
 
 
     @CheckUserExistence
@@ -85,7 +85,17 @@ public class ChatSendingService {
 
             chatRepo.save(newChat);
 
-        if(chatActivityTracker.isUserActiveInInbox(recipientId))messageDeliveringService.deliverInboxEvent(List.of(recipientId),InboxEvent.newMessage(id));
+        if(chatActivityTracker.isUserActiveInInbox(recipientId)){
+            ProfileInfo profileInfo=profileQueryService.getUserProfileInfo(currentUserId);
+            ChatSummary chatSummary=ChatSummary.builder().chatId(id).chatType(Chat.ChatType.DIRECT).chatName(profileInfo.getUsername()).chatAvatar(profileInfo.getAvatarPath()).preview(ChatPreview.unread(1)).build();
+            realTimeDeliveringService.deliverInboxEvent(List.of(recipientId),InboxEvent.newChat(chatSummary));
+        }
+
+        if(chatActivityTracker.isUserActiveInInbox(currentUserId)){
+            ProfileInfo profileInfo=profileQueryService.getUserProfileInfo(recipientId);
+            ChatSummary chatSummary=ChatSummary.builder().chatId(id).chatType(Chat.ChatType.DIRECT).chatName(profileInfo.getUsername()).chatAvatar(profileInfo.getAvatarPath()).preview(ChatPreview.sent(message.getSentAt())).build();
+            realTimeDeliveringService.deliverInboxEvent(List.of(currentUserId),InboxEvent.newChat(chatSummary));
+        }
 
         }catch (Exception e){
             throw new ChatMessagingException("could not send message to user");
@@ -118,13 +128,22 @@ public class ChatSendingService {
             chatMemberRepo.resetCountAndUpdateLastReadMessage(chat.getId(),currentUserId,message.getId());
 
             if(!activeUsersInInbox.isEmpty()){
-                messageDeliveringService.deliverInboxEvent(activeUsersInInbox,InboxEvent.newMessage(chat.getId()));
+                realTimeDeliveringService.deliverInboxEvent(activeUsersInInbox,InboxEvent.newMessage(chat.getId()));
             }
 
             if(!activeUsersInChat.isEmpty()) {
-                messageDeliveringService.deliverMessage(activeUsersInChat,message);
-                activeUsersInChat.removeIf(user->user.equals(currentUserId));
-                messageDeliveringService.deliverInboxEvent(List.of(currentUserId),InboxEvent.readReceipt(chat.getId(),activeUsersInChat));
+                activeUsersInChat=activeUsersInChat.stream().filter(user ->!user.equals(currentUserId)).toList();
+                MessageView messageView=new MessageView(message.getId(),message.getChatId(),message.getSenderId(),message.getContent(),message.getSentAt(),true,activeUsersInChat);
+                realTimeDeliveringService.deliverMessage(List.of(currentUserId),messageView);
+                messageView.setMine(false);
+                messageView.setSeenByUserIds(null);
+                if(!activeUsersInChat.isEmpty()){
+                    realTimeDeliveringService.deliverMessage(activeUsersInChat,messageView);
+                    realTimeDeliveringService.deliverInboxEvent(List.of(currentUserId),InboxEvent.readReceipt(chat.getId(),activeUsersInChat));
+                }else{
+                    realTimeDeliveringService.deliverInboxEvent(List.of(currentUserId),InboxEvent.sentMessage(chat.getId()));
+                }
+
             }
 
     }
