@@ -1,10 +1,13 @@
 package com.Nexsta.Messaging.api.Controllers;
 
 
+import com.Nexsta.Messaging.api.dto.TypingEvent;
+import com.Nexsta.Messaging.api.dto.TypingPayload;
 import com.Nexsta.Messaging.application.ChatActivityTracker;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
@@ -26,13 +29,15 @@ public class RealTimeChatController {
         chatActivityTracker.userLeftChat(principal.getName(),chatId);
     }
 
+    @MessageMapping("/chat.typing/{chatId}")
+    public void typingStart(@DestinationVariable String chatId, Principal principal, @Payload TypingPayload payload){
+        chatActivityTracker.deliverTypingEvent(chatId,principal.getName(), payload);
+    }
+
     @MessageMapping("/inbox.open")
     public void openInbox(Principal principal){
         chatActivityTracker.userOpenedInbox(principal.getName());
     }
 
-    @MessageMapping("/typing/{chatId}")
-    public void typingIndicator(@DestinationVariable String chatId, Principal principal){
-        chatActivityTracker.deliverTyping(chatId,principal.getName());
-    }
+
 }

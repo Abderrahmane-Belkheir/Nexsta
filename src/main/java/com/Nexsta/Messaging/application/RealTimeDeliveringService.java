@@ -2,7 +2,7 @@ package com.Nexsta.Messaging.application;
 
 import com.Nexsta.Messaging.api.dto.InboxEvent;
 import com.Nexsta.Messaging.api.dto.MessageView;
-import com.Nexsta.Messaging.domain.Message;
+import com.Nexsta.Messaging.api.dto.TypingEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -36,16 +36,14 @@ public class RealTimeDeliveringService {
         }
     }
 
-    public void deliverTyping(List<String> usersId,String typerId){
+    public void deliverTypingEvent(List<String> usersId, TypingEvent event){
         for(String userId:usersId){
             messagingTemplate.convertAndSendToUser(userId,
                     "/queue/typing"
-                    ,typerId
+                    ,event
             );
         }
     }
-
-
 
     }
 

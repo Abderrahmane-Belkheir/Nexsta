@@ -33,13 +33,6 @@ public interface ChatRepo extends JpaRepository<Chat,String> {
             """)
     List<Chat> findLastestChats(@Param("userId") String userId,Pageable pageable);
 
-    @Query("""
-    SELECT DISTINCT c FROM Chat c
-    JOIN FETCH c.members
-    WHERE c.id IN :chatIds
-    ORDER BY c.lastMessageAt DESC
-    """)
-    List<Chat> findChatsByIds(@Param("chatIds") List<String> chatIds);
 
     @Query("""
            SELECT c FROM Chat c

@@ -41,7 +41,6 @@ public class ChatViewService {
     private final ChatPreviewResolver previewResolver;
     private final MessageRepo messageRepo;
     private final RealTimeDeliveringService realTimeDeliveringService;
-    private final ChatActivityTracker chatActivityTracker;
     private final UserActivityTracker userActivityTracker;
 
     private final static int messagePageLimit=20;

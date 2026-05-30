@@ -1,7 +1,8 @@
 package com.Nexsta.Messaging.application;
 
 import com.Nexsta.Content.Exceptions.ContentNotAvailableException;
-import com.Nexsta.Messaging.api.dto.InboxEvent;
+import com.Nexsta.Messaging.api.dto.TypingEvent;
+import com.Nexsta.Messaging.api.dto.TypingPayload;
 import com.Nexsta.Messaging.domain.Chat;
 import com.Nexsta.Messaging.domain.ChatMember;
 import com.Nexsta.Messaging.persistence.ChatRepo;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -52,30 +54,35 @@ public class ChatActivityTracker {
         );
     }
 
-    public void userClosedInbox(String userId) {
-        redisTemplate.delete(INBOX_ACTIVE_KEY + userId);
-    }
-
     public boolean isUserActiveInInbox(String userId) {
         return redisTemplate.hasKey(INBOX_ACTIVE_KEY + userId);
     }
 
-    public void deliverTyping(String chatId, String userId){
-    Chat chat=chatRepo.findChatById(userId,chatId).orElseThrow(()-> new ContentNotAvailableException("Chat Not Found"));
+    @Transactional(readOnly = true)
+    public void deliverTypingEvent(String chatId, String userId, TypingPayload typingPayload){
+    Chat chat=chatRepo.findChatById(chatId,userId).orElseThrow(()-> new ContentNotAvailableException("Chat Not Found"));
+
+    if(chat.getType()!= Chat.ChatType.DIRECT) {
+        return;
+    }
+
         List<String> activeUsersInChat=new ArrayList<>();
-        List<String> activeUsersInInbox=new ArrayList<>();
+
      for(ChatMember chatMember:chat.getMembers()){
+
         String memberId=chatMember.getId().getUserId();
+
          if(memberId.equals(userId)) continue;
+
          if(isUserActiveInChat(memberId,chatId)){
              activeUsersInChat.add(memberId);
          }
-         if(isUserActiveInInbox(memberId)){
-          activeUsersInInbox.add(memberId);
-         }
      }
-     realTimeDeliveringService.deliverInboxEvent(activeUsersInInbox, InboxEvent.typingMessage(chatId,userId));
-     realTimeDeliveringService.deliverTyping(activeUsersInChat,userId);
+
+     TypingEvent typingEvent=typingPayload.getTypingEventType()== TypingEvent.TypingEventType.TYPING_START?
+             TypingEvent.start(chatId,userId):TypingEvent.stop(chatId,userId);
+
+     realTimeDeliveringService.deliverTypingEvent(activeUsersInChat, typingEvent);
     }
 
 }

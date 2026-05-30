@@ -159,6 +159,11 @@
     let stompClient    = null;
     let heartbeatTimer = null;
     let isSending      = false;
+    const typingUsers  = new Map(); /* userId → { timeoutId } */
+    let typingTimer    = null;      /* stop debounce timer */
+    let typingHeartbeat = null;     /* keepalive interval while typing */
+    let isTyping       = false;     /* whether we currently sent TYPING_START */
+    let keystrokesSinceLastPing = 0; /* activity guard for heartbeat */
 
     /* ─────────────────────────────────────────────────────────────────────
        HEARTBEAT
@@ -187,6 +192,78 @@
 
     function sendChatLeave(chatId){
       if(stompClient?.connected) stompClient.publish({ destination: `/app/chat.leave/${chatId}` });
+    }
+
+    /* ─────────────────────────────────────────────────────────────────────
+       TYPING — publish start/stop to server, handle incoming events
+    ───────────────────────────────────────────────────────────────────── */
+    function publishTypingStart(){
+      if(stompClient?.connected && activeChatId){
+        stompClient.publish({
+          destination: `/app/chat.typing/${activeChatId}`,
+          body: JSON.stringify({ typingEventType: 'TYPING_START' })
+        });
+      }
+    }
+
+    function publishTypingStop(){
+      if(stompClient?.connected && activeChatId){
+        stompClient.publish({
+          destination: `/app/chat.typing/${activeChatId}`,
+          body: JSON.stringify({ typingEventType: 'TYPING_STOP' })
+        });
+      }
+    }
+
+    function handleTypingEvent(event){
+      if(event.chatId !== activeChatId) return;
+      if(activeChat?.chatType !== 'DIRECT') return;
+
+      if(event.type === 'TYPING_START'){
+        const existing = typingUsers.get(event.userId);
+        if(existing) clearTimeout(existing.timeoutId);
+        /* auto-clear after 6s if no heartbeat arrives (4s interval + 2s buffer) */
+        const timeoutId = setTimeout(() => {
+          typingUsers.delete(event.userId);
+          renderTypingIndicator();
+        }, 6000);
+        typingUsers.set(event.userId, { timeoutId });
+
+      } else if(event.type === 'TYPING_STOP'){
+        const existing = typingUsers.get(event.userId);
+        if(existing) clearTimeout(existing.timeoutId);
+        typingUsers.delete(event.userId);
+      }
+
+      renderTypingIndicator();
+    }
+
+    function renderTypingIndicator(){
+      const el = document.getElementById('chatSub');
+      if(!el) return;
+      if(typingUsers.size === 0){
+        /* restore original online/offline status */
+        const online = (chatUsers[activeChatId]||[]).some(u => u.isActive);
+        if(online){ el.textContent='● online'; el.style.color='var(--acc)'; }
+        else{
+          const lu = (chatUsers[activeChatId]||[]).find(u => u.lastActivity);
+          el.textContent = lu?.lastActivity ? `last seen ${lu.lastActivity}` : 'offline';
+          el.style.color = 'var(--text3)';
+        }
+        return;
+      }
+      const count = typingUsers.size;
+      el.textContent = `${count === 1 ? 'typing' : `${count} people typing`}...`;
+      el.style.color = 'var(--acc)';
+    }
+
+    function clearTypingState(){
+      typingUsers.forEach(u => clearTimeout(u.timeoutId));
+      typingUsers.clear();
+      if(typingTimer){ clearTimeout(typingTimer); typingTimer = null; }
+      if(typingHeartbeat){ clearInterval(typingHeartbeat); typingHeartbeat = null; }
+      isTyping = false;
+      keystrokesSinceLastPing = 0;
     }
 
     /* ─────────────────────────────────────────────────────────────────────
@@ -235,6 +312,15 @@
             catch(e){ console.warn('WS preview parse error', e); }
           });
 
+          /* /queue/typing — TypingEvent payload:
+           *   { type: 'TYPING_START', chatId, userId }
+           *   { type: 'TYPING_STOP',  chatId, userId }
+           */
+          stompClient.subscribe('/user/queue/typing', frame => {
+            try { handleTypingEvent(JSON.parse(frame.body)); }
+            catch(e){ console.warn('WS typing parse error', e); }
+          });
+
           /* resume correct heartbeat after reconnect */
           if(activeChatId) startChatHeartbeat(activeChatId);
           else             startInboxHeartbeat();
@@ -249,67 +335,90 @@
        INBOX EVENT HANDLER
     ───────────────────────────────────────────────────────────────────── */
     async function handleInboxEvent(event){
-  const { type, chatId } = event;
+      const { type, chatId } = event;
 
-  const readerIds = event.readersId
-    ? (Array.isArray(event.readersId) ? event.readersId : [event.readersId])
-    : [];
+      /*
+       * Server sends "readersId" (plural). Normalise to an array regardless
+       * of whether the server serialises it as a single value or array.
+       */
+      const readerIds = event.readersId
+        ? (Array.isArray(event.readersId) ? event.readersId : [event.readersId])
+        : [];
 
-  if(type === 'NEW_MESSAGE'){
-    if(chatId === activeChatId) return;
-    const idx = allChats.findIndex(c => c.chatId === chatId);
-    if(idx !== -1){
-      const chat = allChats[idx];
-      if(chat.preview?.previewType === 'UNREAD'){
-        chat.preview.unreadCount = (chat.preview.unreadCount || 0) + 1;
-      } else {
-        chat.preview = { previewType: 'UNREAD', unreadCount: 1 };
+      if(type === 'NEW_MESSAGE'){
+        /*
+         * User is currently in the inbox (not viewing this chat).
+         * The server already incremented the unread count for this user
+         * server-side, so we just mirror that locally and re-sort.
+         */
+        if(chatId === activeChatId) return;
+
+        const idx = allChats.findIndex(c => c.chatId === chatId);
+        if(idx !== -1){
+          const chat = allChats[idx];
+          if(chat.preview?.previewType === 'UNREAD'){
+            chat.preview.unreadCount = (chat.preview.unreadCount || 0) + 1;
+          } else {
+            chat.preview = { previewType: 'UNREAD', unreadCount: 1 };
+          }
+          chat.lastMessageAt = new Date().toISOString();
+          allChats.splice(idx, 1);
+          allChats.unshift(chat);
+        }
+        renderChatList(document.getElementById('searchInput').value);
+
+      } else if(type === 'NEW_CHAT'){
+        /*
+         * Server sends this when sendMessageByUserId creates a brand-new chat
+         * (first-ever message between two users). The full ChatSummary is
+         * embedded directly in the event — no extra HTTP call needed.
+         * Just prepend it to the list.
+         */
+        const summary = event.chatSummary;
+        if(!summary) return;
+        /* guard: don't duplicate if it already exists */
+        if(allChats.some(c => c.chatId === summary.chatId)) return;
+        allChats.unshift(summary);
+        renderChatList(document.getElementById('searchInput').value);
+
+      } else if(type === 'SENT_MESSAGE'){
+        /*
+         * Server sends this to the sender when no other user is actively
+         * viewing the chat — meaning the message was sent but not yet seen.
+         */
+        const chat = allChats.find(c => c.chatId === chatId);
+        if(chat){
+          chat.preview = { previewType: 'SENT' };
+          chat.lastMessageAt = new Date().toISOString();
+          renderChatList(document.getElementById('searchInput').value);
+        }
+
+      } else if(type === 'READ_RECEIPT'){
+        /*
+         * Server tells the sender that readerIds have opened the chat and
+         * the latest message is now marked seen. "readersId" is the field
+         * name the server uses (see normalisation above).
+         */
+
+        /* 1. Update sidebar preview for this chat */
+        const chat = allChats.find(c => c.chatId === chatId);
+        if(chat){
+          chat.preview = {
+            previewType:   'SEEN',
+            seenByUserIds: readerIds,
+            seenAt:        new Date().toISOString()
+          };
+          renderChatList(document.getElementById('searchInput').value);
+        }
+
+        /* 2. If the user is currently viewing this chat, update the last
+              sent bubble's tick icon and add seen-avatar dots */
+        if(chatId === activeChatId){
+          applySeenReceiptToLastBubble(readerIds);
+        }
       }
-      chat.lastMessageAt = new Date().toISOString();
-      allChats.splice(idx, 1);
-      allChats.unshift(chat);
-    }
-    renderChatList(document.getElementById('searchInput').value);
-
-  } else if(type === 'NEW_CHAT'){
-    const summary = event.chatSummary;
-    if(!summary) return;
-    if(allChats.some(c => c.chatId === summary.chatId)) return;
-    allChats.unshift(summary);
-    renderChatList(document.getElementById('searchInput').value);
-
-  } else if(type === 'SENT_MESSAGE'){
-    const chat = allChats.find(c => c.chatId === chatId);
-    if(chat){
-      chat.preview = { previewType: 'SENT' };
-      chat.lastMessageAt = new Date().toISOString();
-      renderChatList(document.getElementById('searchInput').value);
     }
 
-  } else if(type === 'READ_RECEIPT'){
-    const chat = allChats.find(c => c.chatId === chatId);
-    if(chat){
-      chat.preview = {
-        previewType:   'SEEN',
-        seenByUserIds: readerIds,
-        seenAt:        new Date().toISOString()
-      };
-      chat.lastMessageAt = new Date().toISOString();
-      renderChatList(document.getElementById('searchInput').value);
-    }
-    if(chatId === activeChatId){
-      applySeenReceiptToLastBubble(readerIds);
-    }
-
-  } else if(type === 'RECEIVED_MESSAGE'){
-    const chat = allChats.find(c => c.chatId === chatId);
-    if(chat){
-      chat.preview = { previewType: 'RECEIVED', message: event.message };
-      chat.lastMessageAt = new Date().toISOString();
-      renderChatList(document.getElementById('searchInput').value);
-    }
-  }
-}
     /* ─────────────────────────────────────────────────────────────────────
        SEEN RECEIPT — move seen dots to the last mine bubble
        Strips the given readers from all previous mine bubbles so the
@@ -584,11 +693,17 @@
     async function openChat(chatId){
       if(activeChatId && activeChatId !== chatId){
         sendChatLeave(activeChatId);
+        clearTypingState();
         startInboxHeartbeat();
       }
 
       activeChatId = chatId;
       activeChat   = allChats.find(c => c.chatId === chatId);
+
+      /* optimistically clear unread badge */
+      if(activeChat?.preview?.previewType === 'UNREAD'){
+        activeChat.preview = null;
+      }
 
       renderChatList(document.getElementById('searchInput').value);
       renderChatShell();
@@ -630,6 +745,36 @@
         </div>
       `;
       document.getElementById('msgInput').addEventListener('keydown', e => { if(e.key==='Enter') sendMessage(); });
+      document.getElementById('msgInput').addEventListener('input', () => {
+        if(activeChat?.chatType !== 'DIRECT') return;
+
+        keystrokesSinceLastPing++;
+
+        /* send TYPING_START immediately on first keystroke */
+        if(!isTyping){
+          isTyping = true;
+          keystrokesSinceLastPing = 0;
+          publishTypingStart();
+          /* heartbeat: only re-send if user actually typed since last ping */
+          typingHeartbeat = setInterval(() => {
+            if(isTyping && keystrokesSinceLastPing > 0){
+              keystrokesSinceLastPing = 0;
+              publishTypingStart();
+            }
+          }, 4000);
+        }
+
+        /* reset stop timer on every keystroke */
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => {
+          isTyping = false;
+          typingTimer = null;
+          keystrokesSinceLastPing = 0;
+          clearInterval(typingHeartbeat);
+          typingHeartbeat = null;
+          publishTypingStop();
+        }, 3000);
+      });
       document.getElementById('sendBtn').addEventListener('click', sendMessage);
     }
 
@@ -763,6 +908,19 @@
         mc.scrollTop = mc.scrollHeight;
         document.getElementById('loadMoreBtn')?.addEventListener('click', () =>
           loadMessages(chatId, oldestMessageId[chatId]));
+
+        /* sync sidebar preview with actual seen state from server data */
+        const chat = allChats.find(c => c.chatId === chatId);
+        if(chat){
+          const lastMineMsg = [...msgs].reverse().find(m => m.mine);
+          if(lastMineMsg){
+            const seenUsers = seenAtMsg[lastMineMsg.id] || [];
+            chat.preview = seenUsers.length
+              ? { previewType: 'SEEN', seenByUserIds: seenUsers.map(u => u.userId), seenAt: new Date().toISOString() }
+              : { previewType: 'SENT' };
+            renderChatList(document.getElementById('searchInput').value);
+          }
+        }
       }
     }
 
@@ -779,6 +937,13 @@
       if(!content || !activeChatId) return;
       isSending = true;
       input.value = ''; input.disabled = true;
+
+      /* stop typing indicator when message is sent */
+      if(typingTimer){ clearTimeout(typingTimer); typingTimer = null; }
+      if(typingHeartbeat){ clearInterval(typingHeartbeat); typingHeartbeat = null; }
+      isTyping = false;
+      keystrokesSinceLastPing = 0;
+      publishTypingStop();
 
       try{
         const r = await fetch(SEND_BASE, {
