@@ -6,8 +6,10 @@ import com.Nexsta.Messaging.api.dto.TypingPayload;
 import com.Nexsta.Messaging.domain.Chat;
 import com.Nexsta.Messaging.domain.ChatMember;
 import com.Nexsta.Messaging.persistence.ChatRepo;
+import com.Nexsta.Shared.ServerInstance;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 
 @Component
@@ -28,7 +31,7 @@ public class ChatActivityTracker {
     private static final String CHAT_ACTIVE_KEY = "chat:active:";
     private static final String INBOX_ACTIVE_KEY = "inbox:active";
     private static final Duration TTL = Duration.ofSeconds(10);
-
+    private final ServerInstance serverInstance;
 
     public void userEnteredChat(String userId, String chatId) {
         redisTemplate.opsForValue().set(
@@ -49,13 +52,13 @@ public class ChatActivityTracker {
     public void userOpenedInbox(String userId) {
         redisTemplate.opsForValue().set(
                 INBOX_ACTIVE_KEY + userId,
-                "1",
+                serverInstance.getInstanceId(),
                 TTL
         );
     }
 
-    public boolean isUserActiveInInbox(String userId) {
-        return redisTemplate.hasKey(INBOX_ACTIVE_KEY + userId);
+    public Optional<String> isUserActiveInInbox(String userId) {
+        return Optional.ofNullable(redisTemplate.opsForValue().get(INBOX_ACTIVE_KEY + userId));
     }
 
     @Transactional(readOnly = true)

@@ -172,13 +172,13 @@ public class ChatViewService {
 
             String lastMessageSenderId =latestMessage.getSenderId();
             if(!lastMessageSenderId.equals(currentUserId)){
-                realTimeDeliveringService.deliverInboxEvent(
+                realTimeDeliveringService.deliverInboxEvent(new InboxDelivery(
                         List.of(lastMessageSenderId),
-                        InboxEvent.readReceipt(chatId, List.of(currentUserId))
+                        InboxEvent.readReceipt(chatId, List.of(currentUserId)))
                 );
-                realTimeDeliveringService.deliverInboxEvent(
+                realTimeDeliveringService.deliverInboxEvent(new InboxDelivery(
                         List.of(currentUserId),
-                        InboxEvent.receivedMessage(chatId, latestMessage.getContent())
+                        InboxEvent.receivedMessage(chatId, latestMessage.getContent()))
                 );
             }
 

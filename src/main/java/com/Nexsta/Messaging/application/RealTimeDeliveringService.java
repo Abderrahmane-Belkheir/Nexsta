@@ -1,8 +1,6 @@
 package com.Nexsta.Messaging.application;
 
-import com.Nexsta.Messaging.api.dto.InboxEvent;
-import com.Nexsta.Messaging.api.dto.MessageView;
-import com.Nexsta.Messaging.api.dto.TypingEvent;
+import com.Nexsta.Messaging.api.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -17,19 +15,21 @@ public class RealTimeDeliveringService {
 
     private final SimpMessagingTemplate messagingTemplate;
 
-    public void deliverMessage(List<String> usersId, MessageView messageView){
-        for (String userId : usersId) {
+    public void deliverMessage(MessageDelivery messageDelivery){
+        MessageView message=messageDelivery.getMessage();
+        for (String receiverId : messageDelivery.getReceiversId()) {
             messagingTemplate.convertAndSendToUser(
-                    userId,
+                   receiverId,
                     "/queue/messages",
-                    messageView
+                   message
             );
         }
     }
 
-    public void deliverInboxEvent(List<String> usersId, InboxEvent event){
-        for (String userId:usersId){
-            messagingTemplate.convertAndSendToUser(userId,
+    public void deliverInboxEvent(InboxDelivery inboxDelivery){
+        InboxEvent event=inboxDelivery.getEvent();
+        for (String receiverId:inboxDelivery.getReceiversId()){
+            messagingTemplate.convertAndSendToUser(receiverId,
                     "/queue/preview",
                     event
             );

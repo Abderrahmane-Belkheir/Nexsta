@@ -69,10 +69,9 @@ public class StorageService {
                     destinationBucket(bucketTransfer.getDestinationBucket()).build();
             log.info(request.toString());
 
-            try {
+           try{
                 ResponseEntity<MoveFolderResponse> response= webClient.post().uri(storageProperties.getBatchFileMoveEndpoint()).contentType(MediaType.APPLICATION_JSON).
                         bodyValue(request).retrieve().toEntity(MoveFolderResponse.class).block();
-
 
             }catch (Exception e){
 

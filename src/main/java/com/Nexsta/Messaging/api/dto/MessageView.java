@@ -20,4 +20,5 @@ public class MessageView {
     private Instant sentAt;
     private boolean mine;
     private List<String> seenByUserIds;
+
 }

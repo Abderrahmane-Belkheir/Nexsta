@@ -13,6 +13,7 @@ import com.Nexsta.Profile.application.ProfileQueryService;
 import com.Nexsta.Profile.domain.Profile;
 import com.Nexsta.Profile.domain.cache.ProfileInfo;
 import com.Nexsta.Shared.CheckUserExistence;
+import com.Nexsta.Shared.ServerInstance;
 import com.Nexsta.SocialGraph.domain.Follow;
 import com.Nexsta.SocialGraph.persistence.BlocksRepo;
 import com.Nexsta.SocialGraph.persistence.FollowRepo;
@@ -20,12 +21,11 @@ import com.Nexsta.User.application.AuthenticatedUserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 
 @Service
@@ -43,7 +43,8 @@ public class ChatSendingService {
     private final FollowRepo followRepo;
     private final ChatActivityTracker chatActivityTracker;
     private final RealTimeDeliveringService realTimeDeliveringService;
-
+    private final RedisTemplate<String,String> redisTemplate;
+    private final ServerInstance serverInstance;
 
     @CheckUserExistence
     public void sendMessageRouting(SendMessage messageDTO){
@@ -85,16 +86,18 @@ public class ChatSendingService {
 
             chatRepo.save(newChat);
 
-        if(chatActivityTracker.isUserActiveInInbox(recipientId)){
+            Optional<String> recipientInstanceId=chatActivityTracker.isUserActiveInInbox(recipientId);
+        if(recipientInstanceId.isPresent()){
             ProfileInfo profileInfo=profileQueryService.getUserProfileInfo(currentUserId);
             ChatSummary chatSummary=ChatSummary.builder().chatId(id).chatType(Chat.ChatType.DIRECT).chatName(profileInfo.getUsername()).chatAvatar(profileInfo.getAvatarPath()).preview(ChatPreview.unread(1)).build();
-            realTimeDeliveringService.deliverInboxEvent(List.of(recipientId),InboxEvent.newChat(chatSummary));
+            realTimeDeliveringService.deliverInboxEvent(new InboxDelivery(List.of(recipientId),InboxEvent.newChat(chatSummary)));
         }
 
-        if(chatActivityTracker.isUserActiveInInbox(currentUserId)){
+        Optional<String> senderInstanceId=chatActivityTracker.isUserActiveInInbox(currentUserId);
+        if(senderInstanceId.isPresent()){
             ProfileInfo profileInfo=profileQueryService.getUserProfileInfo(recipientId);
             ChatSummary chatSummary=ChatSummary.builder().chatId(id).chatType(Chat.ChatType.DIRECT).chatName(profileInfo.getUsername()).chatAvatar(profileInfo.getAvatarPath()).preview(ChatPreview.sent(message.getSentAt())).build();
-            realTimeDeliveringService.deliverInboxEvent(List.of(currentUserId),InboxEvent.newChat(chatSummary));
+            realTimeDeliveringService.deliverInboxEvent(new InboxDelivery(List.of(currentUserId),InboxEvent.newChat(chatSummary)));
         }
 
         }catch (Exception e){
@@ -109,46 +112,69 @@ public class ChatSendingService {
 
         if(!chat.getMembers().isEmpty()){
 
-            List<String> activeUsersInChat=new ArrayList<>();
-            List<String> activeUsersInInbox=new ArrayList<>();
-
-            for(ChatMember member:chat.getMembers()){
-
+            Map<String,List<String>> activeUsersInChatMap=new HashMap<>();
+            Map<String,List<String>> activeUsersInInboxMap =new HashMap<>();
+            List<ChatMember> members=chat.getMembers().stream().filter(chatMember -> !chatMember.getId().getUserId().equals(currentUserId)).toList();
+            log.info("chat members"+members.get(0).getId().getUserId());
+            for(ChatMember member:members){
                 String memberId=member.getId().getUserId();
+                Optional<String> memberInstanceId=chatActivityTracker.isUserActiveInInbox(memberId);
 
-                if(chatActivityTracker.isUserActiveInChat(memberId,chat.getId())){
-                    activeUsersInChat.add(memberId);
-                }else if(chatActivityTracker.isUserActiveInInbox(memberId)){
-                    activeUsersInInbox.add(memberId);
+                if(memberInstanceId.isPresent()){
+                    log.info("instance id "+memberInstanceId.get());
+                    if(chatActivityTracker.isUserActiveInChat(memberId,chat.getId())){
+                        activeUsersInChatMap.computeIfAbsent(memberInstanceId.get(), k -> new CopyOnWriteArrayList<>()).add(memberId);
+                    }else{
+                        activeUsersInInboxMap.computeIfAbsent(memberInstanceId.get(), k -> new CopyOnWriteArrayList<>()).add(memberId);
+                    }
+                }else{
+                    log.info("instance id is null");
                 }
-
             }
 
+            List<String> activeUsersInChat=activeUsersInChatMap.values().stream().flatMap(List::stream).toList();
             chatMemberRepo.incrementUnReadCount(chat.getId(),currentUserId,activeUsersInChat);
             chatMemberRepo.resetCountAndUpdateLastReadMessage(chat.getId(),currentUserId,message.getId());
 
-            if(!activeUsersInInbox.isEmpty()){
-                realTimeDeliveringService.deliverInboxEvent(activeUsersInInbox,InboxEvent.newMessage(chat.getId()));
+            if(!activeUsersInInboxMap.isEmpty()){
+                InboxEvent event=InboxEvent.newMessage(chat.getId());
+                for(Map.Entry<String,List<String>> entry:activeUsersInInboxMap.entrySet()){
+                    String membersInstanceId=entry.getKey();
+                    InboxDelivery inboxDelivery=new InboxDelivery(entry.getValue(),event);
+                    if(membersInstanceId.equals(serverInstance.getInstanceId())){
+                        realTimeDeliveringService.deliverInboxEvent(inboxDelivery);
+                    }else {
+                        redisTemplate.convertAndSend(membersInstanceId,inboxDelivery);
+                    }
+                }
             }
 
-            if(!activeUsersInChat.isEmpty()) {
-                activeUsersInChat=activeUsersInChat.stream().filter(user ->!user.equals(currentUserId)).toList();
-                MessageView messageView=new MessageView(message.getId(),message.getChatId(),message.getSenderId(),message.getContent(),message.getSentAt(),true,activeUsersInChat);
-                realTimeDeliveringService.deliverMessage(List.of(currentUserId),messageView);
+            MessageView messageView=new MessageView(message.getId(),message.getChatId(),message.getSenderId(),message.getContent(),message.getSentAt(),true, activeUsersInChat);
+            realTimeDeliveringService.deliverMessage(new MessageDelivery(List.of(currentUserId),messageView));
+
+            if(!activeUsersInChatMap.isEmpty()) {
                 messageView.setMine(false);
                 messageView.setSeenByUserIds(null);
-                if(!activeUsersInChat.isEmpty()){
-                    realTimeDeliveringService.deliverMessage(activeUsersInChat,messageView);
-                    realTimeDeliveringService.deliverInboxEvent(List.of(currentUserId),InboxEvent.readReceipt(chat.getId(),activeUsersInChat));
+                for(Map.Entry<String,List<String>> entry:activeUsersInChatMap.entrySet()){
+                    String membersInstanceId=entry.getKey();
+                    MessageDelivery messageDelivery=new MessageDelivery(entry.getValue(),messageView);
+                    if(membersInstanceId.equals(serverInstance.getInstanceId())){
+                        realTimeDeliveringService.deliverMessage(messageDelivery);
+                    }else {
+                        log.info("sending message to "+messageDelivery);
+                        redisTemplate.convertAndSend(membersInstanceId,messageDelivery);
+                    }
+                }
+
+                realTimeDeliveringService.deliverInboxEvent(new InboxDelivery(List.of(currentUserId),InboxEvent.readReceipt(chat.getId(), activeUsersInChat)));
                 }else{
-                    realTimeDeliveringService.deliverInboxEvent(List.of(currentUserId),InboxEvent.sentMessage(chat.getId()));
+                    realTimeDeliveringService.deliverInboxEvent(new InboxDelivery(List.of(currentUserId),InboxEvent.sentMessage(chat.getId())));
                 }
 
             }
 
     }
 
-    }
 
     private void sendMessageByChatId(SendMessage messageDTO){
         String currentUserId=authenticatedUserService.getCurrentUser();
