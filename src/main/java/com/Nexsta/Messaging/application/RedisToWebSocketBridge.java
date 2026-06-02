@@ -1,9 +1,6 @@
 package com.Nexsta.Messaging.application;
 
-import com.Nexsta.Messaging.api.dto.BaseDelivery;
-import com.Nexsta.Messaging.api.dto.InboxDelivery;
-import com.Nexsta.Messaging.api.dto.MessageDelivery;
-import com.Nexsta.Messaging.api.dto.MessageView;
+import com.Nexsta.Messaging.api.dto.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
@@ -28,11 +25,11 @@ public class RedisToWebSocketBridge implements MessageListener {
                 BaseDelivery baseDelivery =objectMapper.readValue(body,BaseDelivery.class);
 
                 if (baseDelivery instanceof MessageDelivery m) {
-                    log.info("message {}", m);
                     realTimeDeliveringService.deliverMessage(m);
                 }else if(baseDelivery instanceof InboxDelivery i){
-                    log.info("inbox {}", i);
                     realTimeDeliveringService.deliverInboxEvent(i);
+                } else if (baseDelivery instanceof TypingDelivery t) {
+                    realTimeDeliveringService.deliverTypingEvent(t);
                 }
 
             } catch (JsonProcessingException e) {

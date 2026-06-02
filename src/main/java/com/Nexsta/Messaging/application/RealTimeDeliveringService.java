@@ -36,8 +36,9 @@ public class RealTimeDeliveringService {
         }
     }
 
-    public void deliverTypingEvent(List<String> usersId, TypingEvent event){
-        for(String userId:usersId){
+        public void deliverTypingEvent(TypingDelivery typingDelivery){
+        TypingEvent event=typingDelivery.getEvent();
+        for(String userId:typingDelivery.getReceivers()){
             messagingTemplate.convertAndSendToUser(userId,
                     "/queue/typing"
                     ,event

@@ -4,128 +4,615 @@
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Chat</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>
     <style>
-        *{box-sizing:border-box;margin:0;padding:0}
-        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f0;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
-        :root{--acc:#1D9E75;--acc-dim:#E1F5EE;--acc-dark:#0F6E56;--bg:#ffffff;--bg2:#f8f8f6;--bg3:#f1efe8;--text:#1a1a1a;--text2:#6b6b6b;--text3:#9b9b9b;--border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.15);--danger:#dc2626;--dangerbg:#fef2f2}
-        @media(prefers-color-scheme:dark){:root{--bg:#1c1c1e;--bg2:#2c2c2e;--bg3:#3a3a3c;--text:#f2f2f7;--text2:#aeaeb2;--text3:#636366;--border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.15);--acc-dim:#0a3d2b;--acc-dark:#5DCAA5}}
-        .shell{display:flex;height:680px;width:900px;max-width:100%;border:0.5px solid var(--border);border-radius:12px;overflow:hidden;background:var(--bg);box-shadow:0 4px 24px rgba(0,0,0,0.08)}
-        .left{width:64px;min-width:64px;border-right:0.5px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:6px;background:var(--bg2)}
-        .nav-btn{width:38px;height:38px;border-radius:8px;border:none;background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:background 0.12s,color 0.12s}
-        .nav-btn:hover{background:var(--bg);color:var(--text)}
-        .nav-btn.active{background:var(--acc-dim);color:var(--acc-dark)}
-        .nav-spacer{flex:1}
-        .sidebar{width:270px;min-width:270px;border-right:0.5px solid var(--border);display:flex;flex-direction:column}
-        .sb-top{padding:16px;border-bottom:0.5px solid var(--border)}
-        .sb-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
-        .sb-search{display:flex;align-items:center;gap:8px;background:var(--bg2);border:0.5px solid var(--border);border-radius:8px;padding:0 10px;height:34px}
-        .sb-search input{background:transparent;border:none;outline:none;font-size:13px;color:var(--text);flex:1;font-family:inherit}
-        .sb-search input::placeholder{color:var(--text3)}
-        .chat-list{flex:1;overflow-y:auto}
-        .chat-list::-webkit-scrollbar{width:4px}
-        .chat-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-        .ci{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;border-bottom:0.5px solid var(--border);transition:background 0.1s}
-        .ci:hover{background:var(--bg2)}
-        .ci.sel{background:var(--acc-dim);border-left:2px solid var(--acc)}
-        .av-wrap{position:relative;flex-shrink:0;width:40px;height:40px}
-        .av-wrap img{width:40px;height:40px;border-radius:50%;object-fit:cover}
-        .online-dot{position:absolute;bottom:1px;right:1px;width:10px;height:10px;border-radius:50%;background:var(--acc);border:2px solid var(--bg)}
-        .ci-body{flex:1;min-width:0}
-        .ci-name{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .ci-prev{font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;display:flex;align-items:center;gap:4px}
-        .ci-meta{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
-        .ci-time{font-size:11px;color:var(--text3)}
-        .badge{background:var(--acc);color:white;font-size:10px;font-weight:600;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px}
-        .main{flex:1;display:flex;flex-direction:column;min-width:0}
-        .token-strip{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:0.5px solid var(--border);background:var(--bg2)}
-        .conn-ok{display:none;align-items:center;gap:5px;font-size:11px;color:var(--acc-dark);white-space:nowrap}
-        .ws-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);transition:background .3s}
-        .ws-dot.live{background:var(--acc)}
-        .ws-dot.err{background:var(--danger)}
-        .err-bar{padding:8px 16px;background:var(--dangerbg);border-bottom:0.5px solid var(--danger);font-size:12px;color:var(--danger);display:none}
-        .ch-header{display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:0.5px solid var(--border)}
-        .ch-hname{font-size:14px;font-weight:500;color:var(--text)}
-        .ch-hsub{font-size:12px;margin-top:1px}
-        .ch-hbtns{display:flex;gap:6px;margin-left:auto}
-        .hbtn{width:32px;height:32px;border-radius:8px;border:0.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:background 0.12s}
-        .hbtn:hover{background:var(--bg2);color:var(--text)}
-        .msgs{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
-        .msgs::-webkit-scrollbar{width:4px}
-        .msgs::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-        .mrow{display:flex;align-items:flex-end;gap:8px}
-        .mrow.mine{flex-direction:row-reverse}
-        .mav{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;flex-shrink:0}
-        .mcol{display:flex;flex-direction:column;max-width:65%}
-        .mcol.mine{align-items:flex-end}
-        .bub{padding:9px 13px;border-radius:16px;font-size:13px;line-height:1.5;word-break:break-word}
-        .bub.theirs{background:var(--bg2);color:var(--text);border:0.5px solid var(--border);border-bottom-left-radius:4px}
-        .bub.mine{background:var(--acc);color:white;border-bottom-right-radius:4px}
-        .mtime{font-size:10px;color:var(--text3);margin-top:3px;padding:0 2px;display:flex;align-items:center;gap:3px}
-        .seen-row{display:flex;gap:2px;margin-top:3px;justify-content:flex-end}
-        .seen-dot{width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:600}
-        .inp-area{display:flex;align-items:center;gap:10px;padding:12px 18px;border-top:0.5px solid var(--border)}
-        .msg-input{flex:1;height:40px;border:0.5px solid var(--border);border-radius:20px;background:var(--bg2);padding:0 16px;font-size:13px;color:var(--text);outline:none;transition:border-color 0.15s;font-family:inherit}
-        .msg-input:focus{border-color:var(--acc)}
-        .send-btn{width:40px;height:40px;border-radius:50%;background:var(--acc);border:none;color:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s,transform 0.1s;flex-shrink:0}
-        .send-btn:hover{background:var(--acc-dark)}
-        .send-btn:active{transform:scale(0.93)}
-        .iabtn{width:34px;height:34px;border-radius:8px;border:0.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:background 0.12s}
-        .iabtn:hover{background:var(--bg2)}
-        .empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text3)}
-        .empty-state i{font-size:40px}
-        .empty-state p{font-size:13px}
-        .spin{width:22px;height:22px;border:2px solid var(--border2);border-top-color:var(--acc);border-radius:50%;animation:spin 0.7s linear infinite}
-        @keyframes spin{to{transform:rotate(360deg)}}
-        .load-more-btn{margin:0 auto;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);background:var(--bg2);border:0.5px solid var(--border);border-radius:20px;padding:5px 14px;cursor:pointer;transition:background 0.12s}
-        .load-more-btn:hover{background:var(--bg)}
-        @keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-        .mrow{animation:msgIn 0.18s ease forwards}
-        .bub{transition:box-shadow 0.15s}
-        .bub:hover{box-shadow:0 2px 8px rgba(0,0,0,0.10)}
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --acc: #5B7FFF;
+            --acc2: #8B5CF6;
+            --acc-glow: rgba(91,127,255,0.18);
+            --acc-dim: rgba(91,127,255,0.10);
+            --bg: #0D0D12;
+            --bg2: #13131A;
+            --bg3: #1A1A24;
+            --bg4: #21212E;
+            --glass: rgba(255,255,255,0.04);
+            --glass2: rgba(255,255,255,0.07);
+            --text: #F0F0FA;
+            --text2: #8888A8;
+            --text3: #44445A;
+            --border: rgba(255,255,255,0.06);
+            --border2: rgba(255,255,255,0.10);
+            --danger: #FF5E6C;
+            --dangerbg: rgba(255,94,108,0.12);
+            --radius: 16px;
+            --sidebar-w: 280px;
+            --nav-w: 62px;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 24px;
+            background-image:
+                radial-gradient(ellipse 60% 50% at 10% 0%, rgba(91,127,255,0.07) 0%, transparent 70%),
+                radial-gradient(ellipse 40% 40% at 90% 100%, rgba(139,92,246,0.06) 0%, transparent 70%);
+        }
+
+        .shell {
+            display: flex;
+            height: 700px;
+            width: 960px;
+            max-width: 100%;
+            border-radius: 20px;
+            overflow: hidden;
+            background: var(--bg2);
+            border: 1px solid var(--border2);
+            box-shadow:
+                0 0 0 1px rgba(255,255,255,0.03),
+                0 32px 80px rgba(0,0,0,0.6),
+                0 0 80px rgba(91,127,255,0.06);
+        }
+
+        .left {
+            width: var(--nav-w);
+            min-width: var(--nav-w);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 18px 0;
+            gap: 4px;
+            background: var(--bg);
+        }
+
+        .nav-logo {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--acc), var(--acc2));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: white;
+            margin-bottom: 14px;
+            box-shadow: 0 4px 16px rgba(91,127,255,0.35);
+        }
+
+        .nav-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            color: var(--text3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            transition: all 0.15s ease;
+            position: relative;
+        }
+        .nav-btn:hover { background: var(--glass2); color: var(--text2); }
+        .nav-btn.active {
+            background: var(--acc-dim);
+            color: var(--acc);
+        }
+        .nav-btn.active::before {
+            content: '';
+            position: absolute;
+            left: -1px;
+            width: 3px;
+            height: 18px;
+            background: var(--acc);
+            border-radius: 0 3px 3px 0;
+        }
+
+        .nav-spacer { flex: 1; }
+
+        .nav-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #5B7FFF22, #8B5CF622);
+            border: 1.5px solid var(--border2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text2);
+            margin-top: 8px;
+            cursor: pointer;
+            transition: border-color 0.15s;
+        }
+        .nav-avatar:hover { border-color: var(--acc); color: var(--acc); }
+
+        .sidebar {
+            width: var(--sidebar-w);
+            min-width: var(--sidebar-w);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            background: var(--bg);
+        }
+
+        .sb-top {
+            padding: 18px 16px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sb-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            letter-spacing: -0.01em;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sb-title span { color: var(--text2); font-size: 12px; font-weight: 400; }
+
+        .new-btn {
+            width: 28px; height: 28px;
+            border-radius: 8px;
+            border: 1px solid var(--border2);
+            background: var(--glass);
+            color: var(--text2);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px;
+            transition: all 0.15s;
+        }
+        .new-btn:hover { background: var(--acc-dim); color: var(--acc); border-color: var(--acc); }
+
+        .sb-search {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0 12px;
+            height: 36px;
+            transition: border-color 0.15s;
+        }
+        .sb-search:focus-within { border-color: var(--acc); background: var(--bg4); }
+        .sb-search i { font-size: 13px; color: var(--text3); flex-shrink: 0; }
+        .sb-search input {
+            background: transparent;
+            border: none;
+            outline: none;
+            font-size: 13px;
+            color: var(--text);
+            flex: 1;
+            font-family: inherit;
+        }
+        .sb-search input::placeholder { color: var(--text3); }
+
+        .chat-list { flex: 1; overflow-y: auto; padding: 6px; }
+        .chat-list::-webkit-scrollbar { width: 3px; }
+        .chat-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+        .ci {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 10px;
+            cursor: pointer;
+            border-radius: 12px;
+            margin-bottom: 2px;
+            transition: all 0.12s ease;
+            position: relative;
+        }
+        .ci:hover { background: var(--glass2); }
+        .ci.sel {
+            background: var(--acc-dim);
+            border: 1px solid rgba(91,127,255,0.15);
+        }
+        .ci.sel .ci-name { color: var(--text); }
+
+        .av-wrap { position: relative; flex-shrink: 0; width: 42px; height: 42px; }
+        .av-wrap img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; }
+
+        .online-dot {
+            position: absolute;
+            bottom: 1px; right: 1px;
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: #3EE8A0;
+            border: 2px solid var(--bg);
+            box-shadow: 0 0 6px rgba(62,232,160,0.5);
+        }
+
+        .ci-body { flex: 1; min-width: 0; }
+        .ci-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            letter-spacing: -0.01em;
+        }
+        .ci-prev {
+            font-size: 11.5px;
+            color: var(--text2);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .ci-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+        .ci-time { font-size: 10.5px; color: var(--text3); font-family: 'DM Mono', monospace; }
+
+        .badge {
+            background: linear-gradient(135deg, var(--acc), var(--acc2));
+            color: white;
+            font-size: 10px;
+            font-weight: 600;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 5px;
+            box-shadow: 0 2px 8px rgba(91,127,255,0.4);
+        }
+
+        .main { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg2); }
+
+        .token-strip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+            min-height: 40px;
+        }
+
+        .ws-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-size: 11px;
+            color: var(--text2);
+            font-family: 'DM Mono', monospace;
+        }
+
+        .ws-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--text3);
+            transition: all 0.3s;
+        }
+        .ws-dot.live {
+            background: #3EE8A0;
+            box-shadow: 0 0 6px rgba(62,232,160,0.6);
+        }
+        .ws-dot.err { background: var(--danger); }
+
+        .err-bar {
+            padding: 8px 18px;
+            background: var(--dangerbg);
+            border-bottom: 1px solid rgba(255,94,108,0.2);
+            font-size: 12px;
+            color: var(--danger);
+            display: none;
+        }
+
+        .ch-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg);
+        }
+        .ch-hname { font-size: 14px; font-weight: 600; color: var(--text); letter-spacing: -0.02em; }
+        .ch-hsub { font-size: 11.5px; margin-top: 2px; }
+        .ch-hbtns { display: flex; gap: 6px; margin-left: auto; }
+
+        .hbtn {
+            width: 32px; height: 32px;
+            border-radius: 9px;
+            border: 1px solid var(--border);
+            background: var(--glass);
+            color: var(--text3);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 15px;
+            transition: all 0.12s;
+        }
+        .hbtn:hover { background: var(--glass2); color: var(--text2); border-color: var(--border2); }
+
+        .msgs {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .msgs::-webkit-scrollbar { width: 3px; }
+        .msgs::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+        .mrow {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            animation: msgIn 0.2s cubic-bezier(0.34,1.56,0.64,1) forwards;
+        }
+        .mrow.mine { flex-direction: row-reverse; }
+        .mrow + .mrow { margin-top: 2px; }
+
+        @keyframes msgIn {
+            from { opacity: 0; transform: translateY(10px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .mav {
+            width: 26px; height: 26px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 9px;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-bottom: 2px;
+        }
+
+        .mcol { display: flex; flex-direction: column; max-width: 62%; }
+        .mcol.mine { align-items: flex-end; }
+
+        .bub {
+            padding: 10px 14px;
+            border-radius: 18px;
+            font-size: 13.5px;
+            line-height: 1.55;
+            word-break: break-word;
+            transition: box-shadow 0.15s;
+        }
+        .bub.theirs {
+            background: var(--bg3);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 5px;
+        }
+        .bub.mine {
+            background: linear-gradient(135deg, var(--acc), #6E8FFF);
+            color: white;
+            border-bottom-right-radius: 5px;
+            box-shadow: 0 4px 20px rgba(91,127,255,0.3);
+        }
+        .bub:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        .bub.mine:hover { box-shadow: 0 6px 24px rgba(91,127,255,0.4); }
+
+        .mtime {
+            font-size: 10px;
+            color: var(--text3);
+            margin-top: 4px;
+            padding: 0 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-family: 'DM Mono', monospace;
+        }
+
+        .seen-row { display: flex; gap: 3px; margin-top: 4px; justify-content: flex-end; }
+        .seen-dot {
+            width: 15px; height: 15px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 7px;
+            font-weight: 700;
+            border: 1.5px solid var(--bg2);
+        }
+
+        .inp-area {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            border-top: 1px solid var(--border);
+            background: var(--bg);
+        }
+
+        .msg-input {
+            flex: 1;
+            height: 42px;
+            border: 1px solid var(--border2);
+            border-radius: 12px;
+            background: var(--bg3);
+            padding: 0 16px;
+            font-size: 13.5px;
+            color: var(--text);
+            outline: none;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+        .msg-input:focus {
+            border-color: var(--acc);
+            background: var(--bg4);
+            box-shadow: 0 0 0 3px var(--acc-glow);
+        }
+        .msg-input::placeholder { color: var(--text3); }
+
+        .send-btn {
+            width: 42px; height: 42px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--acc), #6E8FFF);
+            border: none;
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s;
+            flex-shrink: 0;
+            box-shadow: 0 4px 16px rgba(91,127,255,0.35);
+        }
+        .send-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(91,127,255,0.45); }
+        .send-btn:active { transform: scale(0.94); }
+
+        .iabtn {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text3);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            transition: all 0.12s;
+        }
+        .iabtn:hover { background: var(--glass2); color: var(--text2); }
+
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            color: var(--text3);
+        }
+        .empty-icon {
+            width: 60px; height: 60px;
+            border-radius: 20px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 26px;
+            margin-bottom: 4px;
+        }
+        .empty-state h3 { font-size: 14px; font-weight: 500; color: var(--text2); }
+        .empty-state p { font-size: 12px; color: var(--text3); }
+
+        .spin {
+            width: 20px; height: 20px;
+            border: 2px solid var(--border2);
+            border-top-color: var(--acc);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .load-more-btn {
+            margin: 0 auto 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11.5px;
+            color: var(--text2);
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 5px 14px;
+            cursor: pointer;
+            transition: all 0.12s;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .load-more-btn:hover { background: var(--acc-dim); color: var(--acc); border-color: rgba(91,127,255,0.2); }
+
+        .av-fallback {
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            border: 1.5px solid var(--border);
+        }
+
+        .date-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            color: var(--text3);
+            font-size: 11px;
+            font-family: 'DM Mono', monospace;
+        }
+        .date-divider::before, .date-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .conn-ok { display: flex; }
     </style>
 </head>
 <body>
 <div class="shell">
     <div class="left">
+        <div class="nav-logo"><i class="ti ti-bolt"></i></div>
         <button class="nav-btn active" title="Chats"><i class="ti ti-message-2"></i></button>
         <button class="nav-btn" title="Contacts"><i class="ti ti-users"></i></button>
         <button class="nav-btn" title="Calls"><i class="ti ti-phone"></i></button>
         <div class="nav-spacer"></div>
         <button class="nav-btn" title="Settings"><i class="ti ti-settings"></i></button>
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--acc-dim);color:var(--acc-dark);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;margin-top:8px">Me</div>
+        <div class="nav-avatar">Me</div>
     </div>
 
     <div class="sidebar">
         <div class="sb-top">
             <div class="sb-title">
                 Messages
-                <button class="hbtn" title="New"><i class="ti ti-edit"></i></button>
+                <button class="new-btn" title="New chat"><i class="ti ti-edit"></i></button>
             </div>
             <div class="sb-search">
-                <i class="ti ti-search" style="font-size:14px;color:var(--text3)"></i>
-                <input type="text" id="searchInput" placeholder="Search conversations..." />
+                <i class="ti ti-search"></i>
+                <input type="text" id="searchInput" placeholder="Search…" />
             </div>
         </div>
         <div class="chat-list" id="chatList">
-            <div style="padding:24px;text-align:center;font-size:12px;color:var(--text3)">Enter your token to load chats</div>
+            <div style="padding:32px 16px;text-align:center;font-size:12px;color:var(--text3)">Open from the main UI to load chats</div>
         </div>
     </div>
 
     <div class="main">
-        <div class="token-strip" style="display:flex">
-            <div class="conn-ok" id="connOk" style="display:flex">
-                <div class="ws-dot" id="wsDot"></div>
-                connected · <span id="wsStatus">connecting ws…</span>
+        <div class="token-strip">
+            <div class="conn-ok" id="connOk">
+                <div class="ws-pill">
+                    <div class="ws-dot" id="wsDot"></div>
+                    <span id="wsStatus">connecting…</span>
+                </div>
             </div>
         </div>
         <div class="err-bar" id="errBar"></div>
         <div id="mainContent" style="flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden">
             <div class="empty-state">
-                <i class="ti ti-messages"></i>
-                <p>Select a conversation</p>
+                <div class="empty-icon"><i class="ti ti-messages"></i></div>
+                <h3>No conversation selected</h3>
+                <p>Pick a chat from the sidebar to get started</p>
             </div>
         </div>
     </div>
@@ -133,836 +620,591 @@
 
 <script>
     const VIEW_BASE = '/api/v1/chats/view';
-    const SEND_BASE = '/api/v1/chats/send';
-    const WS_URL    = '/ws';
+      const SEND_BASE = '/api/v1/chats/send';
+      const WS_URL    = '/ws';
 
-    const _qs = new URLSearchParams(location.search);
-    let token = _qs.get('token') || '';
-    if (token) history.replaceState(null, '', location.pathname);
+      const _qs = new URLSearchParams(location.search);
+      let token = _qs.get('token') || '';
+      if (token) history.replaceState(null, '', location.pathname);
 
-    let activeChatId  = null;
-    let activeChat    = null;
-    let allChats      = [];
-    let chatUsers     = {};
-    let currentUserId = null;
+      let activeChatId  = null;
+      let activeChat    = null;
+      let allChats      = [];
+      let chatUsers     = {};
+      let currentUserId = null;
 
-    /*
-     * oldestMessageId[chatId] — the ID of the oldest loaded message for that chat.
-     * Used as the cursor when the user clicks "load older".
-     * The backend returns null for oldestCursor/newestCursor, so we derive
-     * this ourselves from the first message in each page (messages arrive
-     * oldest-first after Collections.reverse() on the server).
-     */
-    let oldestMessageId = {};
+      let oldestMessageId = {};
 
-    /* ── STOMP state ── */
-    let stompClient    = null;
-    let heartbeatTimer = null;
-    let isSending      = false;
-    const typingUsers  = new Map(); /* userId → { timeoutId } */
-    let typingTimer    = null;      /* stop debounce timer */
-    let typingHeartbeat = null;     /* keepalive interval while typing */
-    let isTyping       = false;     /* whether we currently sent TYPING_START */
-    let keystrokesSinceLastPing = 0; /* activity guard for heartbeat */
+      let stompClient    = null;
+      let heartbeatTimer = null;
+      let isSending      = false;
+      const typingUsers  = new Map();
+      let typingTimer    = null;
+      let typingHeartbeat = null;
+      let isTyping       = false;
+      let keystrokesSinceLastPing = 0;
 
-    /* ─────────────────────────────────────────────────────────────────────
-       HEARTBEAT
-       Two modes driven by server-side ChatActivityTracker:
-         inbox → /app/inbox.open          (user browsing chat list)
-         chat  → /app/chat.enter/{chatId} (user inside a conversation)
-       Only one timer runs at a time.
-    ───────────────────────────────────────────────────────────────────── */
-    function startInboxHeartbeat(){
-      stopHeartbeat();
-      const beat = () => { if(stompClient?.connected) stompClient.publish({ destination: '/app/inbox.open' }); };
-      beat();
-      heartbeatTimer = setInterval(beat, 10000);
-    }
-
-    function startChatHeartbeat(chatId){
-      stopHeartbeat();
-      const beat = () => { if(stompClient?.connected) stompClient.publish({ destination: `/app/chat.enter/${chatId}` }); };
-      beat();
-      heartbeatTimer = setInterval(beat, 10000);
-    }
-
-    function stopHeartbeat(){
-      if(heartbeatTimer){ clearInterval(heartbeatTimer); heartbeatTimer = null; }
-    }
-
-    function sendChatLeave(chatId){
-      if(stompClient?.connected) stompClient.publish({ destination: `/app/chat.leave/${chatId}` });
-    }
-
-    /* ─────────────────────────────────────────────────────────────────────
-       TYPING — publish start/stop to server, handle incoming events
-    ───────────────────────────────────────────────────────────────────── */
-    function publishTypingStart(){
-      if(stompClient?.connected && activeChatId){
-        stompClient.publish({
-          destination: `/app/chat.typing/${activeChatId}`,
-          body: JSON.stringify({ typingEventType: 'TYPING_START' })
-        });
-      }
-    }
-
-    function publishTypingStop(){
-      if(stompClient?.connected && activeChatId){
-        stompClient.publish({
-          destination: `/app/chat.typing/${activeChatId}`,
-          body: JSON.stringify({ typingEventType: 'TYPING_STOP' })
-        });
-      }
-    }
-
-    function handleTypingEvent(event){
-      if(event.chatId !== activeChatId) return;
-      if(activeChat?.chatType !== 'DIRECT') return;
-
-      if(event.type === 'TYPING_START'){
-        const existing = typingUsers.get(event.userId);
-        if(existing) clearTimeout(existing.timeoutId);
-        /* auto-clear after 6s if no heartbeat arrives (4s interval + 2s buffer) */
-        const timeoutId = setTimeout(() => {
-          typingUsers.delete(event.userId);
-          renderTypingIndicator();
-        }, 6000);
-        typingUsers.set(event.userId, { timeoutId });
-
-      } else if(event.type === 'TYPING_STOP'){
-        const existing = typingUsers.get(event.userId);
-        if(existing) clearTimeout(existing.timeoutId);
-        typingUsers.delete(event.userId);
+      function startInboxHeartbeat(){
+        stopHeartbeat();
+        const beat = () => { if(stompClient?.connected) stompClient.publish({ destination: '/app/inbox.open' }); };
+        beat();
+        heartbeatTimer = setInterval(beat, 10000);
       }
 
-      renderTypingIndicator();
-    }
-
-    function renderTypingIndicator(){
-      const el = document.getElementById('chatSub');
-      if(!el) return;
-      if(typingUsers.size === 0){
-        /* restore original online/offline status */
-        const online = (chatUsers[activeChatId]||[]).some(u => u.isActive);
-        if(online){ el.textContent='● online'; el.style.color='var(--acc)'; }
-        else{
-          const lu = (chatUsers[activeChatId]||[]).find(u => u.lastActivity);
-          el.textContent = lu?.lastActivity ? `last seen ${lu.lastActivity}` : 'offline';
-          el.style.color = 'var(--text3)';
-        }
-        return;
-      }
-      const count = typingUsers.size;
-      el.textContent = `${count === 1 ? 'typing' : `${count} people typing`}...`;
-      el.style.color = 'var(--acc)';
-    }
-
-    function clearTypingState(){
-      typingUsers.forEach(u => clearTimeout(u.timeoutId));
-      typingUsers.clear();
-      if(typingTimer){ clearTimeout(typingTimer); typingTimer = null; }
-      if(typingHeartbeat){ clearInterval(typingHeartbeat); typingHeartbeat = null; }
-      isTyping = false;
-      keystrokesSinceLastPing = 0;
-    }
-
-    /* ─────────────────────────────────────────────────────────────────────
-       WS CONNECT
-    ───────────────────────────────────────────────────────────────────── */
-    function connectWs(){
-      const dot    = document.getElementById('wsDot');
-      const status = document.getElementById('wsStatus');
-      dot.className = 'ws-dot'; status.textContent = 'connecting ws…';
-
-      stompClient = new StompJs.Client({
-        webSocketFactory: () => new SockJS(WS_URL),
-        connectHeaders: { Authorization: `Bearer ${token}` },
-        reconnectDelay: 5000,
-        onConnect: () => {
-          dot.className = 'ws-dot live'; status.textContent = 'ws live';
-
-          /* /queue/messages — delivered to all active chat members including sender */
-          stompClient.subscribe('/user/queue/messages', frame => {
-            try { handleIncomingMessage(JSON.parse(frame.body)); }
-            catch(e){ console.warn('WS msg parse error', e); }
-          });
-
-          /*
-           * /queue/preview — InboxEvent payload:
-           *   { type: 'NEW_MESSAGE',  chatId }
-           *     → sent to users active in inbox when a new message arrives in a chat
-           *       they are NOT currently viewing. Server has already incremented
-           *       their unread count.
-           *
-           *   { type: 'NEW_CHAT', chatId, chatSummary: { chatId, chatType, chatName,
-           *       chatAvatar, preview: { previewType:'UNREAD', unreadCount:1 } } }
-           *     → sent to the recipient when the very first message to them is sent
-           *       (sendMessageByUserId path). The full ChatSummary is embedded so
-           *       the client can prepend the chat without an extra HTTP request.
-           *
-           *   { type: 'READ_RECEIPT', chatId, readersId: [userId, …] }
-           *     → sent to the message sender when recipients open the chat
-           *       (getChatMessages cursor=null). Tells the sender who has now seen
-           *       the latest message.
-           *
-           * NOTE: the server field is "readersId" (plural). normalise to an array.
-           */
-          stompClient.subscribe('/user/queue/preview', frame => {
-            try { handleInboxEvent(JSON.parse(frame.body)); }
-            catch(e){ console.warn('WS preview parse error', e); }
-          });
-
-          /* /queue/typing — TypingEvent payload:
-           *   { type: 'TYPING_START', chatId, userId }
-           *   { type: 'TYPING_STOP',  chatId, userId }
-           */
-          stompClient.subscribe('/user/queue/typing', frame => {
-            try { handleTypingEvent(JSON.parse(frame.body)); }
-            catch(e){ console.warn('WS typing parse error', e); }
-          });
-
-          /* resume correct heartbeat after reconnect */
-          if(activeChatId) startChatHeartbeat(activeChatId);
-          else             startInboxHeartbeat();
-        },
-        onDisconnect: () => { dot.className='ws-dot err'; status.textContent='ws disconnected'; stopHeartbeat(); },
-        onStompError:  () => { dot.className='ws-dot err'; status.textContent='ws error';        stopHeartbeat(); }
-      });
-      stompClient.activate();
-    }
-
-    /* ─────────────────────────────────────────────────────────────────────
-       INBOX EVENT HANDLER
-    ───────────────────────────────────────────────────────────────────── */
-    async function handleInboxEvent(event){
-      const { type, chatId } = event;
-
-      /*
-       * Server sends "readersId" (plural). Normalise to an array regardless
-       * of whether the server serialises it as a single value or array.
-       */
-      const readerIds = event.readersId
-        ? (Array.isArray(event.readersId) ? event.readersId : [event.readersId])
-        : [];
-
-      if(type === 'NEW_MESSAGE'){
-        /*
-         * User is currently in the inbox (not viewing this chat).
-         * The server already incremented the unread count for this user
-         * server-side, so we just mirror that locally and re-sort.
-         */
-        if(chatId === activeChatId) return;
-
-        const idx = allChats.findIndex(c => c.chatId === chatId);
-        if(idx !== -1){
-          const chat = allChats[idx];
-          if(chat.preview?.previewType === 'UNREAD'){
-            chat.preview.unreadCount = (chat.preview.unreadCount || 0) + 1;
-          } else {
-            chat.preview = { previewType: 'UNREAD', unreadCount: 1 };
+      function startChatHeartbeat(chatId){
+        stopHeartbeat();
+        const beat = () => {
+          if(stompClient?.connected){
+            stompClient.publish({ destination: `/app/chat.enter/${chatId}` });
+            stompClient.publish({ destination: '/app/inbox.open' });
           }
-          chat.lastMessageAt = new Date().toISOString();
-          allChats.splice(idx, 1);
-          allChats.unshift(chat);
-        }
-        renderChatList(document.getElementById('searchInput').value);
+        };
+        beat();
+        heartbeatTimer = setInterval(beat, 10000);
+      }
 
-      } else if(type === 'NEW_CHAT'){
-        /*
-         * Server sends this when sendMessageByUserId creates a brand-new chat
-         * (first-ever message between two users). The full ChatSummary is
-         * embedded directly in the event — no extra HTTP call needed.
-         * Just prepend it to the list.
-         */
-        const summary = event.chatSummary;
-        if(!summary) return;
-        /* guard: don't duplicate if it already exists */
-        if(allChats.some(c => c.chatId === summary.chatId)) return;
-        allChats.unshift(summary);
-        renderChatList(document.getElementById('searchInput').value);
+      function stopHeartbeat(){
+        if(heartbeatTimer){ clearInterval(heartbeatTimer); heartbeatTimer = null; }
+      }
 
-      } else if(type === 'SENT_MESSAGE'){
-        /*
-         * Server sends this to the sender when no other user is actively
-         * viewing the chat — meaning the message was sent but not yet seen.
-         */
-        const chat = allChats.find(c => c.chatId === chatId);
-        if(chat){
-          chat.preview = { previewType: 'SENT' };
-          chat.lastMessageAt = new Date().toISOString();
-          renderChatList(document.getElementById('searchInput').value);
-        }
+      function sendChatLeave(chatId){
+        if(stompClient?.connected) stompClient.publish({ destination: `/app/chat.leave/${chatId}` });
+      }
 
-      } else if(type === 'READ_RECEIPT'){
-        /*
-         * Server tells the sender that readerIds have opened the chat and
-         * the latest message is now marked seen. "readersId" is the field
-         * name the server uses (see normalisation above).
-         */
-
-        /* 1. Update sidebar preview for this chat */
-        const chat = allChats.find(c => c.chatId === chatId);
-        if(chat){
-          chat.preview = {
-            previewType:   'SEEN',
-            seenByUserIds: readerIds,
-            seenAt:        new Date().toISOString()
-          };
-          renderChatList(document.getElementById('searchInput').value);
-        }
-
-        /* 2. If the user is currently viewing this chat, update the last
-              sent bubble's tick icon and add seen-avatar dots */
-        if(chatId === activeChatId){
-          applySeenReceiptToLastBubble(readerIds);
+      function publishTypingStart(){
+        if(stompClient?.connected && activeChatId){
+          stompClient.publish({ destination: `/app/chat.typing/${activeChatId}`, body: JSON.stringify({ typingEventType: 'TYPING_START' }) });
         }
       }
-    }
 
-    /* ─────────────────────────────────────────────────────────────────────
-       SEEN RECEIPT — move seen dots to the last mine bubble
-       Strips the given readers from all previous mine bubbles so the
-       seen indicator always sits on the most recent message only.
-    ───────────────────────────────────────────────────────────────────── */
-    function applySeenReceiptToLastBubble(readerIds){
-      if(!readerIds?.length) return;
-      const mc = document.getElementById('msgContainer');
-      if(!mc) return;
-
-      const mineBubbles = mc.querySelectorAll('.mrow.mine[data-msgid]');
-      if(!mineBubbles.length) return;
-      const lastMine = mineBubbles[mineBubbles.length - 1];
-
-      /* remove these readers from all other mine bubbles */
-      mineBubbles.forEach(bubble => {
-        if(bubble === lastMine) return;
-        readerIds.forEach(rid => {
-          bubble.querySelector(`[data-reader="${rid}"]`)?.remove();
-        });
-        /* clean up empty seen-row */
-        const row = bubble.querySelector('.seen-row');
-        if(row && !row.children.length) row.remove();
-      });
-
-      /* apply to last bubble */
-      const icon = lastMine.querySelector('.mtime i');
-      if(icon){ icon.className = 'ti ti-checks'; icon.style.color = 'var(--acc)'; }
-
-      let seenRow = lastMine.querySelector('.seen-row');
-      if(!seenRow){
-        seenRow = document.createElement('div');
-        seenRow.className = 'seen-row';
-        lastMine.querySelector('.mcol').appendChild(seenRow);
-      }
-      const uMap = {};
-      (chatUsers[activeChatId]||[]).forEach(u => uMap[u.userId] = u);
-      readerIds.forEach(rid => {
-        if(seenRow.querySelector(`[data-reader="${rid}"]`)) return;
-        const col = colorFor(rid);
-        const u   = uMap[rid];
-        const dot = document.createElement('div');
-        dot.className        = 'seen-dot';
-        dot.dataset.reader   = rid;
-        dot.title            = `Seen by ${u?.username || rid}`;
-        dot.style.background = col.bg;
-        dot.style.color      = col.fg;
-        dot.textContent      = initials(u?.username || rid);
-        seenRow.appendChild(dot);
-      });
-    }
-
-    /* ─────────────────────────────────────────────────────────────────────
-       INCOMING MESSAGE HANDLER  (/user/queue/messages)
-       Delivered to all active chat members including the sender (for
-       cross-device sync). Uses msg.mine to decide bubble side.
-       msg.seenByUserIds (sender only) allows immediately showing seen
-       state when recipients were already viewing the chat.
-    ───────────────────────────────────────────────────────────────────── */
-    function handleIncomingMessage(msg){
-      const mc = document.getElementById('msgContainer');
-      if(!mc || msg.chatId !== activeChatId) return;
-
-      /* deduplicate by real server id */
-      if(msg.id && mc.querySelector(`[data-msgid="${msg.id}"]`)) return;
-
-      const isMine = msg.mine;
-      const uMap   = {};
-      (chatUsers[activeChatId]||[]).forEach(u => uMap[u.userId] = u);
-      const u   = uMap[msg.senderId];
-      const col = colorFor(msg.senderId);
-
-      /* derive currentUserId as fallback if not yet known */
-      if(isMine && !currentUserId) currentUserId = msg.senderId;
-
-      const div = document.createElement('div');
-      div.className      = `mrow${isMine ? ' mine' : ''}`;
-      div.dataset.msgid  = msg.id || '';
-      div.dataset.sender = msg.senderId;
-
-      if(isMine){
-        div.innerHTML = `
-          <div class="mcol mine">
-            <div class="bub mine">${escapeHtml(msg.content)}</div>
-            <div class="mtime">
-              <i class="ti ti-checks" style="font-size:12px"></i>
-              <span>${timeAgo(msg.sentAt)}</span>
-            </div>
-          </div>
-          <div style="width:26px;flex-shrink:0"></div>`;
-      } else {
-        const rows    = mc.querySelectorAll('.mrow:not(.mine)');
-        const lastRow = rows[rows.length - 1];
-        const showAv  = !lastRow || lastRow.dataset.sender !== msg.senderId;
-        div.innerHTML = `
-          ${showAv
-            ? `<div class="mav" style="background:${col.bg};color:${col.fg}">${initials(u?.username||'?')}</div>`
-            : `<div style="width:26px;flex-shrink:0"></div>`}
-          <div class="mcol">
-            <div class="bub theirs">${escapeHtml(msg.content)}</div>
-            <div class="mtime"><span>${timeAgo(msg.sentAt)}</span></div>
-          </div>`;
-      }
-
-      const atBottom = mc.scrollHeight - mc.scrollTop <= mc.clientHeight + 60;
-      mc.appendChild(div);
-      if(atBottom) mc.scrollTop = mc.scrollHeight;
-
-      /* immediately show seen state if recipients were already in the chat */
-      if(isMine && msg.seenByUserIds?.length){
-        applySeenReceiptToLastBubble(msg.seenByUserIds);
-      }
-
-      /* update sidebar preview — only for incoming (theirs) messages.
-         sender preview is handled by SENT_MESSAGE / READ_RECEIPT inbox events. */
-      const chat = allChats.find(c => c.chatId === msg.chatId);
-      if(chat && !isMine){
-        chat.lastMessageAt = new Date().toISOString();
-        chat.preview = { previewType: 'RECEIVED', message: msg.content };
-        renderChatList(document.getElementById('searchInput').value);
-      }
-    }
-
-    /* ─────────────────────────────────────────────────────────────────────
-       REFRESH
-    ───────────────────────────────────────────────────────────────────── */
-    async function refreshChat(){
-      if(!activeChatId) return;
-      const btn = document.getElementById('refreshBtn');
-      if(btn){ btn.style.pointerEvents='none'; btn.querySelector('i').style.animation='spin .6s linear infinite'; }
-      await loadChatUsers(activeChatId);
-      await loadMessages(activeChatId);
-      if(btn){ btn.style.pointerEvents=''; btn.querySelector('i').style.animation=''; }
-    }
-
-    /* ─────────────────────────────────────────────────────────────────────
-       UTILITIES
-    ───────────────────────────────────────────────────────────────────── */
-    const COLORS = [
-      {bg:'#E1F5EE',fg:'#0F6E56'},{bg:'#E6F1FB',fg:'#185FA5'},
-      {bg:'#FAECE7',fg:'#993C1D'},{bg:'#EEEDFE',fg:'#534AB7'},
-      {bg:'#FAEEDA',fg:'#854F0B'},{bg:'#FBEAF0',fg:'#993556'},
-    ];
-    const colorFor = s => COLORS[(s||'').split('').reduce((a,c)=>a+c.charCodeAt(0),0)%COLORS.length];
-    const initials = n => (n||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
-    const timeAgo  = iso => {
-      if(!iso) return '';
-      const d=new Date(iso), diff=Date.now()-d;
-      if(diff<60000)    return 'now';
-      if(diff<3600000)  return Math.round(diff/60000)+'m';
-      if(diff<86400000) return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-      return d.toLocaleDateString([],{month:'short',day:'numeric'});
-    };
-
-    function escapeHtml(s){
-      return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
-
-    function showErr(msg){
-      const b = document.getElementById('errBar');
-      b.textContent = msg; b.style.display = 'block';
-      setTimeout(() => b.style.display = 'none', 5000);
-    }
-
-    async function api(url, opts={}, params={}){
-      try{
-        const qs   = new URLSearchParams(params);
-        const full = qs.toString() ? `${url}?${qs}` : url;
-        const r    = await fetch(full, {
-          headers: {'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-          ...opts
-        });
-        if(!r.ok) throw new Error(`${r.status} ${r.statusText}`);
-        if(r.status===204) return null;
-        return r.json();
-      }catch(e){ showErr('Request failed: '+e.message); return null; }
-    }
-
-    /* ─────────────────────────────────────────────────────────────────────
-       INIT — token from ?token= query param
-    ───────────────────────────────────────────────────────────────────── */
-    (async function init(){
-      if(!token){
-        document.getElementById('chatList').innerHTML =
-          '<div style="padding:20px;text-align:center;font-size:12px;color:var(--danger)">No token provided.<br>Open this page from the main UI.</div>';
-        return;
-      }
-      const ok = await loadChats();
-      if(ok) connectWs();
-    })();
-
-    async function loadChats(cursor=null){
-      const list = document.getElementById('chatList');
-      list.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;padding:24px;gap:8px"><div class="spin"></div><span style="font-size:12px;color:var(--text2)">Loading...</span></div>';
-      const data = await api(VIEW_BASE, {}, cursor ? {cursor} : {});
-      if(!data){ list.innerHTML='<div style="padding:16px;font-size:12px;color:var(--danger)">Failed to load chats</div>'; return false; }
-      allChats = data.chats || [];
-      renderChatList();
-      return true;
-    }
-
-    function avatarHtml(name, avatarUrl, size=40){
-      const col = colorFor(name);
-      if(avatarUrl){
-        return `<img src="${avatarUrl}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover" onerror="this.style.display='none';this.nextSibling.style.display='flex'" />
-                <div style="display:none;width:${size}px;height:${size}px;border-radius:50%;background:${col.bg};color:${col.fg};align-items:center;justify-content:center;font-size:${size*0.3}px;font-weight:600">${initials(name)}</div>`;
-      }
-      return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${col.bg};color:${col.fg};display:flex;align-items:center;justify-content:center;font-size:${size*0.3}px;font-weight:600">${initials(name)}</div>`;
-    }
-
-    function renderPreview(p){
-      if(!p) return {text:'', icon:'', color:'var(--text2)', badge:null};
-      switch(p.previewType){
-        case 'UNREAD':
-          return {
-            text:  `${p.unreadCount} new message${p.unreadCount>1?'s':''}`,
-            icon:  '',
-            color: 'var(--acc-dark)',
-            badge: `<span class="badge">${p.unreadCount>9?'9+':p.unreadCount}</span>`,
-            bold:  true
-          };
-        case 'SENT':
-          return { text:'Sent', icon:'<i class="ti ti-check" style="font-size:12px;color:var(--text3)"></i>', color:'var(--text2)', badge:null };
-        case 'SEEN':{
-          const seenAvatars = (p.seenByUserIds||[]).map(id => {
-            const col = colorFor(id);
-            return `<div style="width:12px;height:12px;border-radius:50%;background:${col.bg};color:${col.fg};display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:600">${initials(id)}</div>`;
-          }).join('');
-          const seenAtLabel = p.seenAt ? ' · '+timeAgo(p.seenAt) : '';
-          return { text:'Seen'+seenAtLabel, icon:`<i class="ti ti-checks" style="font-size:12px;color:var(--acc)"></i>${seenAvatars}`, color:'var(--text2)', badge:null };
+      function publishTypingStop(){
+        if(stompClient?.connected && activeChatId){
+          stompClient.publish({ destination: `/app/chat.typing/${activeChatId}`, body: JSON.stringify({ typingEventType: 'TYPING_STOP' }) });
         }
-        case 'RECEIVED':
-          return { text:p.message||'', icon:'', color:'var(--text2)', badge:null };
-        default:
-          return {text:'', icon:'', color:'var(--text2)', badge:null};
-      }
-    }
-
-    function renderChatList(filter=''){
-      const list     = document.getElementById('chatList');
-      const filtered = allChats.filter(c => (c.chatName||'').toLowerCase().includes(filter.toLowerCase()));
-      if(!filtered.length){ list.innerHTML='<div style="padding:20px;text-align:center;font-size:12px;color:var(--text3)">No results</div>'; return; }
-      list.innerHTML = filtered.map(c => {
-        const prev    = renderPreview(c.preview);
-        const isGroup = c.chatType === 'GROUP';
-        return `<div class="ci${activeChatId===c.chatId?' sel':''}" onclick="openChat('${c.chatId}')">
-          <div class="av-wrap">
-            ${avatarHtml(c.chatName, c.chatAvatar, 40)}
-            ${!isGroup&&c.active?'<div class="online-dot"></div>':''}
-          </div>
-          <div class="ci-body">
-            <div class="ci-name">${c.chatName||'Unknown'}</div>
-            <div class="ci-prev" style="color:${prev.color};font-weight:${prev.bold?'500':'400'}">
-              ${prev.icon}
-              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${prev.text}</span>
-            </div>
-            ${!isGroup&&!c.active&&c.lastSeen?`<div style="font-size:11px;color:var(--text3);margin-top:1px">${c.lastSeen}</div>`:''}
-          </div>
-          <div class="ci-meta">
-            <span class="ci-time">${timeAgo(c.lastMessageAt)}</span>
-            ${prev.badge||''}
-          </div>
-        </div>`;
-      }).join('');
-    }
-
-    /* ─────────────────────────────────────────────────────────────────────
-       OPEN CHAT
-       Server resets unread count when getChatMessages is called (cursor=null).
-       We clear the badge optimistically here so it's instant for the user.
-    ───────────────────────────────────────────────────────────────────── */
-    async function openChat(chatId){
-      if(activeChatId && activeChatId !== chatId){
-        sendChatLeave(activeChatId);
-        clearTypingState();
-        startInboxHeartbeat();
       }
 
-      activeChatId = chatId;
-      activeChat   = allChats.find(c => c.chatId === chatId);
-
-      /* optimistically clear unread badge */
-      if(activeChat?.preview?.previewType === 'UNREAD'){
-        activeChat.preview = null;
-      }
-
-      renderChatList(document.getElementById('searchInput').value);
-      renderChatShell();
-      await loadChatUsers(chatId);
-      await loadMessages(chatId);
-
-      startChatHeartbeat(chatId);
-    }
-
-    function renderChatShell(){
-      const c = activeChat;
-      document.getElementById('mainContent').innerHTML = `
-        <div class="ch-header">
-          <div class="av-wrap" style="width:36px;height:36px">
-            ${avatarHtml(c?.chatName, c?.chatAvatar, 36)}
-            ${c?.chatType!=='GROUP'&&c?.active?'<div class="online-dot"></div>':''}
-          </div>
-          <div style="flex:1">
-            <div class="ch-hname">${c?.chatName||'Chat'}</div>
-            <div class="ch-hsub" id="chatSub" style="color:var(--text3)">loading...</div>
-          </div>
-          <div class="ch-hbtns">
-            <button class="hbtn" id="refreshBtn" title="Refresh" onclick="refreshChat()"><i class="ti ti-refresh"></i></button>
-            <button class="hbtn" title="Search"><i class="ti ti-search"></i></button>
-            <button class="hbtn" title="Info"><i class="ti ti-info-circle"></i></button>
-            <button class="hbtn" title="More"><i class="ti ti-dots-vertical"></i></button>
-          </div>
-        </div>
-        <div id="msgArea" style="flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden">
-          <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:10px">
-            <div class="spin"></div><span style="font-size:12px;color:var(--text2)">Loading messages...</span>
-          </div>
-        </div>
-        <div class="inp-area">
-          <button class="iabtn" title="Attach"><i class="ti ti-paperclip"></i></button>
-          <input class="msg-input" type="text" id="msgInput" placeholder="Write a message..." />
-          <button class="iabtn" title="Emoji"><i class="ti ti-mood-smile"></i></button>
-          <button class="send-btn" id="sendBtn"><i class="ti ti-send-2"></i></button>
-        </div>
-      `;
-      document.getElementById('msgInput').addEventListener('keydown', e => { if(e.key==='Enter') sendMessage(); });
-      document.getElementById('msgInput').addEventListener('input', () => {
+      function handleTypingEvent(event){
+        if(event.chatId !== activeChatId) return;
         if(activeChat?.chatType !== 'DIRECT') return;
+        if(event.type === 'TYPING_START'){
+          const existing = typingUsers.get(event.userId);
+          if(existing) clearTimeout(existing.timeoutId);
+          const timeoutId = setTimeout(() => { typingUsers.delete(event.userId); renderTypingIndicator(); }, 6000);
+          typingUsers.set(event.userId, { timeoutId });
+        } else if(event.type === 'TYPING_STOP'){
+          const existing = typingUsers.get(event.userId);
+          if(existing) clearTimeout(existing.timeoutId);
+          typingUsers.delete(event.userId);
+        }
+        renderTypingIndicator();
+      }
 
-        keystrokesSinceLastPing++;
+      function renderTypingIndicator(){
+        const el = document.getElementById('chatSub');
+        if(!el) return;
+        if(typingUsers.size === 0){
+          const online = (chatUsers[activeChatId]||[]).some(u => u.isActive);
+          if(online){ el.textContent='● online'; el.style.color='#3EE8A0'; }
+          else{
+            const lu = (chatUsers[activeChatId]||[]).find(u => u.lastActivity);
+            el.textContent = lu?.lastActivity ? `last seen ${lu.lastActivity}` : 'offline';
+            el.style.color = 'var(--text3)';
+          }
+          return;
+        }
+        el.textContent = `${typingUsers.size === 1 ? 'typing' : `${typingUsers.size} typing`}…`;
+        el.style.color = 'var(--acc)';
+      }
 
-        /* send TYPING_START immediately on first keystroke */
-        if(!isTyping){
-          isTyping = true;
-          keystrokesSinceLastPing = 0;
-          publishTypingStart();
-          /* heartbeat: only re-send if user actually typed since last ping */
-          typingHeartbeat = setInterval(() => {
-            if(isTyping && keystrokesSinceLastPing > 0){
-              keystrokesSinceLastPing = 0;
-              publishTypingStart();
+      function clearTypingState(){
+        typingUsers.forEach(u => clearTimeout(u.timeoutId));
+        typingUsers.clear();
+        if(typingTimer){ clearTimeout(typingTimer); typingTimer = null; }
+        if(typingHeartbeat){ clearInterval(typingHeartbeat); typingHeartbeat = null; }
+        isTyping = false;
+        keystrokesSinceLastPing = 0;
+      }
+
+      function connectWs(){
+        const dot    = document.getElementById('wsDot');
+        const status = document.getElementById('wsStatus');
+        dot.className = 'ws-dot'; status.textContent = 'connecting…';
+
+        stompClient = new StompJs.Client({
+          webSocketFactory: () => new SockJS(WS_URL),
+          connectHeaders: { Authorization: `Bearer ${token}` },
+          reconnectDelay: 5000,
+          onConnect: () => {
+            dot.className = 'ws-dot live'; status.textContent = 'connected';
+            stompClient.subscribe('/user/queue/messages', frame => {
+              try { handleIncomingMessage(JSON.parse(frame.body)); } catch(e){ console.warn('WS msg parse error', e); }
+            });
+            stompClient.subscribe('/user/queue/preview', frame => {
+              try { handleInboxEvent(JSON.parse(frame.body)); } catch(e){ console.warn('WS preview parse error', e); }
+            });
+            stompClient.subscribe('/user/queue/typing', frame => {
+              try { handleTypingEvent(JSON.parse(frame.body)); } catch(e){ console.warn('WS typing parse error', e); }
+            });
+            if(activeChatId) startChatHeartbeat(activeChatId);
+            else             startInboxHeartbeat();
+          },
+          onDisconnect: () => { dot.className='ws-dot err'; status.textContent='disconnected'; stopHeartbeat(); },
+          onStompError:  () => { dot.className='ws-dot err'; status.textContent='error';        stopHeartbeat(); }
+        });
+        stompClient.activate();
+      }
+
+      async function handleInboxEvent(event){
+        const { type, chatId } = event;
+        const readerIds = event.readersId ? (Array.isArray(event.readersId) ? event.readersId : [event.readersId]) : [];
+
+        if(type === 'NEW_MESSAGE'){
+          if(chatId === activeChatId) return;
+          const idx = allChats.findIndex(c => c.chatId === chatId);
+          if(idx !== -1){
+            const chat = allChats[idx];
+            if(chat.preview?.previewType === 'UNREAD'){
+              chat.preview.unreadCount = (chat.preview.unreadCount || 0) + 1;
+            } else {
+              chat.preview = { previewType: 'UNREAD', unreadCount: 1 };
             }
-          }, 4000);
-        }
-
-        /* reset stop timer on every keystroke */
-        clearTimeout(typingTimer);
-        typingTimer = setTimeout(() => {
-          isTyping = false;
-          typingTimer = null;
-          keystrokesSinceLastPing = 0;
-          clearInterval(typingHeartbeat);
-          typingHeartbeat = null;
-          publishTypingStop();
-        }, 3000);
-      });
-      document.getElementById('sendBtn').addEventListener('click', sendMessage);
-    }
-
-    async function loadChatUsers(chatId){
-      const data = await api(`${VIEW_BASE}/${chatId}/details`);
-      if(!data) return;
-      chatUsers[chatId] = data.chatUsers || [];
-      const sub = document.getElementById('chatSub');
-      if(sub){
-        const online = chatUsers[chatId].some(u => u.isActive);
-        if(online){ sub.textContent='● online'; sub.style.color='var(--acc)'; }
-        else{
-          const lu = chatUsers[chatId].find(u => u.lastActivity);
-          sub.textContent = lu?.lastActivity ? `last seen ${lu.lastActivity}` : 'offline';
-          sub.style.color = 'var(--text3)';
-        }
-      }
-    }
-
-    /*
-     * loadMessages — calls GET /api/v1/chats/view/{chatId}/messages
-     *
-     * cursor param:
-     *   null  → first load (no ?cursor). Server resets unread count, marks
-     *           seen, and sends READ_RECEIPT to the last message sender.
-     *   string → the ID of the oldest currently-displayed message, passed as
-     *            ?cursor=<id>. Server returns the next older page using
-     *            findByChatIdAndIdLessThanOrderByIdDesc.
-     *
-     * The backend always returns oldestCursor:null and newestCursor:null, so
-     * we track the oldest visible message ID ourselves in oldestMessageId[chatId].
-     * A "load more" button is shown only when the last page returned a full page
-     * (indicating more messages exist older than what we have).
-     */
-    async function loadMessages(chatId, cursor=null){
-      const data = await api(
-        `${VIEW_BASE}/${chatId}/messages`,
-        {},
-        cursor ? { cursor } : {}
-      );
-      if(!data) return;
-      renderMessages(chatId, data.messages||[], !!cursor, data.messages?.length > 0);
-    }
-
-    function renderMessages(chatId, msgs, isLoadMore=false, pageHadResults=false){
-      const area = document.getElementById('msgArea');
-      if(!area) return;
-      const userMap = {};
-      (chatUsers[chatId]||[]).forEach(u => userMap[u.userId] = u);
-
-      /* derive currentUserId from the first mine:true message we see */
-      const uid = msgs.find(m => m.mine)?.senderId || null;
-      if(uid && !currentUserId) currentUserId = uid;
-
-      /*
-       * Track the oldest message ID for pagination.
-       * Messages arrive oldest-first (server calls Collections.reverse()).
-       * The first element of the array is the oldest on this page.
-       */
-      if(msgs.length > 0){
-        oldestMessageId[chatId] = msgs[0].id;
-      }
-
-      /*
-       * Show "load older" only when the page was non-empty.
-       * (Backend doesn't signal hasMore, so we rely on a non-empty page
-       *  as a proxy; an empty response means we've reached the beginning.)
-       */
-      const canLoadMore = pageHadResults && msgs.length > 0;
-
-      /* build seen-at map: lastSeenMessageId per non-self user */
-      const seenAtMsg = {};
-      (chatUsers[chatId]||[]).forEach(u => {
-        if(u.lastSeenMessageId && u.userId !== currentUserId){
-          if(!seenAtMsg[u.lastSeenMessageId]) seenAtMsg[u.lastSeenMessageId] = [];
-          seenAtMsg[u.lastSeenMessageId].push(u);
-        }
-      });
-
-      const html = msgs.map((m, i) => {
-        const u      = userMap[m.senderId];
-        const prev   = msgs[i-1];
-        const showAv = !m.mine && (!prev || prev.mine || prev.senderId !== m.senderId);
-
-        const seenUsers = seenAtMsg[m.id] || [];
-        const seenHtml  = seenUsers.map(su => {
-          const c2 = colorFor(su.userId);
-          return `<div class="seen-dot" data-reader="${su.userId}" style="background:${c2.bg};color:${c2.fg}" title="Seen by ${su.username||su.userId}">${initials(su.username||su.userId)}</div>`;
-        }).join('');
-
-        return `<div class="mrow${m.mine?' mine':''}" data-msgid="${m.id}" data-sender="${m.senderId}">
-          ${!m.mine&&showAv?`<div class="mav" style="background:${colorFor(m.senderId).bg};color:${colorFor(m.senderId).fg}">${initials(u?.username||'?')}</div>`:''}
-          ${!m.mine&&!showAv?'<div style="width:26px;flex-shrink:0"></div>':''}
-          <div class="mcol${m.mine?' mine':''}">
-            <div class="bub ${m.mine?'mine':'theirs'}">${escapeHtml(m.content)}</div>
-            <div class="mtime">
-              ${m.mine?`<i class="ti ti-checks" style="font-size:12px${seenHtml?';color:var(--acc)':''}"></i>`:''}
-              <span>${timeAgo(m.sentAt)}</span>
-            </div>
-            ${seenHtml?`<div class="seen-row">${seenHtml}</div>`:''}
-          </div>
-          ${m.mine?'<div style="width:26px;flex-shrink:0"></div>':''}
-        </div>`;
-      }).join('');
-
-      if(isLoadMore){
-        /* prepend older messages above the existing ones */
-        const mc = document.getElementById('msgContainer');
-        if(!mc) return;
-        const prevScrollHeight = mc.scrollHeight;
-        const oldLoadBtn = mc.querySelector('.load-more-btn');
-        if(oldLoadBtn) oldLoadBtn.remove();
-        const frag = document.createElement('div');
-        frag.innerHTML = (canLoadMore
-          ? `<button class="load-more-btn" id="loadMoreBtn"><i class="ti ti-arrow-up" style="font-size:13px"></i> load older</button>`
-          : '') + html;
-        while(frag.firstChild) mc.insertBefore(frag.firstChild, mc.firstChild);
-        /* keep scroll position stable after prepend */
-        mc.scrollTop = mc.scrollHeight - prevScrollHeight;
-        document.getElementById('loadMoreBtn')?.addEventListener('click', () =>
-          loadMessages(chatId, oldestMessageId[chatId]));
-      } else {
-        /* fresh render */
-        area.innerHTML = `
-          <div class="msgs" id="msgContainer">
-            ${canLoadMore?`<button class="load-more-btn" id="loadMoreBtn"><i class="ti ti-arrow-up" style="font-size:13px"></i> load older</button>`:''}
-            ${html}
-          </div>
-        `;
-        const mc = document.getElementById('msgContainer');
-        mc.scrollTop = mc.scrollHeight;
-        document.getElementById('loadMoreBtn')?.addEventListener('click', () =>
-          loadMessages(chatId, oldestMessageId[chatId]));
-
-        /* sync sidebar preview with actual seen state from server data */
-        const chat = allChats.find(c => c.chatId === chatId);
-        if(chat){
-          const lastMineMsg = [...msgs].reverse().find(m => m.mine);
-          if(lastMineMsg){
-            const seenUsers = seenAtMsg[lastMineMsg.id] || [];
-            chat.preview = seenUsers.length
-              ? { previewType: 'SEEN', seenByUserIds: seenUsers.map(u => u.userId), seenAt: new Date().toISOString() }
-              : { previewType: 'SENT' };
+            chat.lastMessageAt = new Date().toISOString();
+            allChats.splice(idx, 1);
+            allChats.unshift(chat);
+          }
+          renderChatList(document.getElementById('searchInput').value);
+        } else if(type === 'NEW_CHAT'){
+          const summary = event.chatSummary;
+          if(!summary) return;
+          if(allChats.some(c => c.chatId === summary.chatId)) return;
+          allChats.unshift(summary);
+          renderChatList(document.getElementById('searchInput').value);
+        } else if(type === 'SENT_MESSAGE'){
+          const chat = allChats.find(c => c.chatId === chatId);
+          if(chat){
+            chat.preview = { previewType: 'SENT' };
+            chat.lastMessageAt = new Date().toISOString();
+            renderChatList(document.getElementById('searchInput').value);
+          }
+        } else if(type === 'READ_RECEIPT'){
+          const otherReaders = readerIds.filter(id => id !== currentUserId);
+          if(!otherReaders.length) return;
+          const chat = allChats.find(c => c.chatId === chatId);
+          if(chat){
+            chat.preview = { previewType: 'SEEN', seenByUserIds: otherReaders, seenAt: new Date().toISOString() };
+            renderChatList(document.getElementById('searchInput').value);
+          }
+          if(chatId === activeChatId){ applySeenReceiptToLastBubble(otherReaders); }
+        } else if(type === 'RECEIVED_MESSAGE'){
+          const chat = allChats.find(c => c.chatId === chatId);
+          if(chat){
+            chat.preview = { previewType: 'RECEIVED', message: event.message || '' };
+            chat.lastMessageAt = new Date().toISOString();
             renderChatList(document.getElementById('searchInput').value);
           }
         }
       }
-    }
 
-    /* ─────────────────────────────────────────────────────────────────────
-       SEND MESSAGE
-       POST /api/v1/chats/send  { chatId, content }
-       Server responds 204. The message is rendered via WS echo on
-       /user/queue/messages — no optimistic bubble.
-    ───────────────────────────────────────────────────────────────────── */
-    async function sendMessage(){
-      if(isSending) return;
-      const input   = document.getElementById('msgInput');
-      const content = input.value.trim();
-      if(!content || !activeChatId) return;
-      isSending = true;
-      input.value = ''; input.disabled = true;
-
-      /* stop typing indicator when message is sent */
-      if(typingTimer){ clearTimeout(typingTimer); typingTimer = null; }
-      if(typingHeartbeat){ clearInterval(typingHeartbeat); typingHeartbeat = null; }
-      isTyping = false;
-      keystrokesSinceLastPing = 0;
-      publishTypingStop();
-
-      try{
-        const r = await fetch(SEND_BASE, {
-          method:  'POST',
-          headers: {'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-          body:    JSON.stringify({ chatId: activeChatId, content })
+      function applySeenReceiptToLastBubble(readerIds){
+        if(!readerIds?.length) return;
+        const mc = document.getElementById('msgContainer');
+        if(!mc) return;
+        const mineBubbles = mc.querySelectorAll('.mrow.mine[data-msgid]');
+        if(!mineBubbles.length) return;
+        const lastMine = mineBubbles[mineBubbles.length - 1];
+        mineBubbles.forEach(bubble => {
+          if(bubble === lastMine) return;
+          readerIds.forEach(rid => { bubble.querySelector(`[data-reader="${rid}"]`)?.remove(); });
+          const row = bubble.querySelector('.seen-row');
+          if(row && !row.children.length) row.remove();
         });
-        if(!r.ok && r.status !== 204) showErr('Send failed');
-      }catch(e){
-        showErr('Send failed: '+e.message);
-        input.value = content; /* restore on failure */
+        const icon = lastMine.querySelector('.mtime i');
+        if(icon){ icon.className = 'ti ti-checks'; icon.style.color = '#3EE8A0'; }
+        let seenRow = lastMine.querySelector('.seen-row');
+        if(!seenRow){ seenRow = document.createElement('div'); seenRow.className = 'seen-row'; lastMine.querySelector('.mcol').appendChild(seenRow); }
+        const uMap = {};
+        (chatUsers[activeChatId]||[]).forEach(u => uMap[u.userId] = u);
+        readerIds.forEach(rid => {
+          if(seenRow.querySelector(`[data-reader="${rid}"]`)) return;
+          const col = colorFor(rid);
+          const u   = uMap[rid];
+          const dot = document.createElement('div');
+          dot.className = 'seen-dot';
+          dot.dataset.reader = rid;
+          dot.title = `Seen by ${u?.username || rid}`;
+          dot.style.background = col.bg;
+          dot.style.color = col.fg;
+          dot.textContent = initials(u?.username || rid);
+          seenRow.appendChild(dot);
+        });
       }
 
-      input.disabled = false; input.focus();
-      isSending = false;
-    }
+      function handleIncomingMessage(msg){
+        const mc = document.getElementById('msgContainer');
+        if(!mc || msg.chatId !== activeChatId) return;
+        if(msg.id && mc.querySelector(`[data-msgid="${msg.id}"]`)) return;
+        const isMine = msg.mine;
+        const uMap   = {};
+        (chatUsers[activeChatId]||[]).forEach(u => uMap[u.userId] = u);
+        const u   = uMap[msg.senderId];
+        const col = colorFor(msg.senderId);
+        if(isMine && !currentUserId) currentUserId = msg.senderId;
+        const div = document.createElement('div');
+        div.className = `mrow${isMine ? ' mine' : ''}`;
+        div.dataset.msgid  = msg.id || '';
+        div.dataset.sender = msg.senderId;
+        if(isMine){
+          div.innerHTML = `
+            <div class="mcol mine">
+              <div class="bub mine">${escapeHtml(msg.content)}</div>
+              <div class="mtime">
+                <i class="ti ti-checks" style="font-size:11px"></i>
+                <span>${timeAgo(msg.sentAt)}</span>
+              </div>
+            </div>
+            <div style="width:26px;flex-shrink:0"></div>`;
+        } else {
+          const rows    = mc.querySelectorAll('.mrow:not(.mine)');
+          const lastRow = rows[rows.length - 1];
+          const showAv  = !lastRow || lastRow.dataset.sender !== msg.senderId;
+          div.innerHTML = `
+            ${showAv ? `<div class="mav" style="background:${col.bg};color:${col.fg}">${initials(u?.username||'?')}</div>` : `<div style="width:26px;flex-shrink:0"></div>`}
+            <div class="mcol">
+              <div class="bub theirs">${escapeHtml(msg.content)}</div>
+              <div class="mtime"><span>${timeAgo(msg.sentAt)}</span></div>
+            </div>`;
+        }
+        const atBottom = mc.scrollHeight - mc.scrollTop <= mc.clientHeight + 60;
+        mc.appendChild(div);
+        if(atBottom) mc.scrollTop = mc.scrollHeight;
+        if(isMine && msg.seenByUserIds?.length){ applySeenReceiptToLastBubble(msg.seenByUserIds); }
+        const chat = allChats.find(c => c.chatId === msg.chatId);
+        if(chat && !isMine){
+          chat.lastMessageAt = new Date().toISOString();
+          chat.preview = { previewType: 'RECEIVED', message: msg.content };
+          renderChatList(document.getElementById('searchInput').value);
+        }
+      }
 
-    window.addEventListener('beforeunload', () => { if(activeChatId) sendChatLeave(activeChatId); });
-    document.getElementById('searchInput').addEventListener('input', e => renderChatList(e.target.value));
+      async function refreshChat(){
+        if(!activeChatId) return;
+        const btn = document.getElementById('refreshBtn');
+        if(btn){ btn.style.pointerEvents='none'; btn.querySelector('i').style.animation='spin .6s linear infinite'; }
+        await loadChatUsers(activeChatId);
+        await loadMessages(activeChatId);
+        if(btn){ btn.style.pointerEvents=''; btn.querySelector('i').style.animation=''; }
+      }
+
+      const COLORS = [
+        {bg:'rgba(91,127,255,0.18)',fg:'#8BADFF'},
+        {bg:'rgba(139,92,246,0.18)',fg:'#C4A0FF'},
+        {bg:'rgba(236,72,153,0.18)',fg:'#F490CB'},
+        {bg:'rgba(20,184,166,0.18)',fg:'#5DD8CC'},
+        {bg:'rgba(245,158,11,0.18)',fg:'#FBC35A'},
+        {bg:'rgba(239,68,68,0.18)',fg:'#F98080'},
+      ];
+      const colorFor = s => COLORS[(s||'').split('').reduce((a,c)=>a+c.charCodeAt(0),0)%COLORS.length];
+      const initials = n => (n||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+      const timeAgo  = iso => {
+        if(!iso) return '';
+        const d=new Date(iso), diff=Date.now()-d;
+        if(diff<60000)    return 'now';
+        if(diff<3600000)  return Math.round(diff/60000)+'m';
+        if(diff<86400000) return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+        return d.toLocaleDateString([],{month:'short',day:'numeric'});
+      };
+
+      function escapeHtml(s){
+        return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      }
+
+      function showErr(msg){
+        const b = document.getElementById('errBar');
+        b.textContent = msg; b.style.display = 'block';
+        setTimeout(() => b.style.display = 'none', 5000);
+      }
+
+      async function api(url, opts={}, params={}){
+        try{
+          const qs   = new URLSearchParams(params);
+          const full = qs.toString() ? `${url}?${qs}` : url;
+          const r    = await fetch(full, { headers: {'Content-Type':'application/json','Authorization':`Bearer ${token}`}, ...opts });
+          if(!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+          if(r.status===204) return null;
+          return r.json();
+        }catch(e){ showErr('Request failed: '+e.message); return null; }
+      }
+
+      (async function init(){
+        if(!token){
+          document.getElementById('chatList').innerHTML = '<div style="padding:20px;text-align:center;font-size:12px;color:var(--danger)">No token provided.<br>Open this page from the main UI.</div>';
+          return;
+        }
+        const ok = await loadChats();
+        if(ok) connectWs();
+      })();
+
+      async function loadChats(cursor=null){
+        const list = document.getElementById('chatList');
+        list.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;padding:24px;gap:10px"><div class="spin"></div><span style="font-size:12px;color:var(--text2)">Loading…</span></div>';
+        const data = await api(VIEW_BASE, {}, cursor ? {cursor} : {});
+        if(!data){ list.innerHTML='<div style="padding:16px;font-size:12px;color:var(--danger)">Failed to load chats</div>'; return false; }
+        allChats = data.chats || [];
+        renderChatList();
+        return true;
+      }
+
+      function avatarHtml(name, avatarUrl, size=42){
+        const col = colorFor(name);
+        const fs = Math.round(size * 0.32);
+        if(avatarUrl){
+          return `<img src="${avatarUrl}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover" onerror="this.style.display='none';this.nextSibling.style.display='flex'" />
+                  <div style="display:none;width:${size}px;height:${size}px;border-radius:50%;background:${col.bg};color:${col.fg};align-items:center;justify-content:center;font-size:${fs}px;font-weight:700;border:1.5px solid var(--border)">${initials(name)}</div>`;
+        }
+        return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${col.bg};color:${col.fg};display:flex;align-items:center;justify-content:center;font-size:${fs}px;font-weight:700;border:1.5px solid var(--border)">${initials(name)}</div>`;
+      }
+
+      function renderPreview(p){
+        if(!p) return {text:'', icon:'', color:'var(--text2)', badge:null};
+        switch(p.previewType){
+          case 'UNREAD':
+            return { text:`${p.unreadCount} new`, icon:'', color:'var(--text)', badge:`<span class="badge">${p.unreadCount>9?'9+':p.unreadCount}</span>`, bold:true };
+          case 'SENT':
+            return { text:'Sent', icon:`<i class="ti ti-check" style="font-size:11px;color:var(--text3)"></i>`, color:'var(--text2)', badge:null };
+          case 'SEEN':{
+            const seenAtLabel = p.seenAt ? ' · '+timeAgo(p.seenAt) : '';
+            return { text:'Seen'+seenAtLabel, icon:`<i class="ti ti-checks" style="font-size:11px;color:#3EE8A0"></i>`, color:'var(--text2)', badge:null };
+          }
+          case 'RECEIVED':
+            return { text:p.message||'', icon:'', color:'var(--text2)', badge:null };
+          default:
+            return {text:'', icon:'', color:'var(--text2)', badge:null};
+        }
+      }
+
+      function renderChatList(filter=''){
+        const list     = document.getElementById('chatList');
+        const filtered = allChats.filter(c => (c.chatName||'').toLowerCase().includes(filter.toLowerCase()));
+        if(!filtered.length){ list.innerHTML='<div style="padding:24px;text-align:center;font-size:12px;color:var(--text3)">No results</div>'; return; }
+        list.innerHTML = filtered.map(c => {
+          const prev    = renderPreview(c.preview);
+          const isGroup = c.chatType === 'GROUP';
+          return `<div class="ci${activeChatId===c.chatId?' sel':''}" onclick="openChat('${c.chatId}')">
+            <div class="av-wrap" style="width:42px;height:42px">
+              ${avatarHtml(c.chatName, c.chatAvatar, 42)}
+              ${!isGroup&&c.active?'<div class="online-dot"></div>':''}
+            </div>
+            <div class="ci-body">
+              <div class="ci-name">${c.chatName||'Unknown'}</div>
+              <div class="ci-prev" style="color:${prev.color};font-weight:${prev.bold?'500':'400'}">
+                ${prev.icon}
+                <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${prev.text}</span>
+              </div>
+            </div>
+            <div class="ci-meta">
+              <span class="ci-time">${timeAgo(c.lastMessageAt)}</span>
+              ${prev.badge||''}
+            </div>
+          </div>`;
+        }).join('');
+      }
+
+      async function openChat(chatId){
+        if(activeChatId && activeChatId !== chatId){
+          sendChatLeave(activeChatId);
+          clearTypingState();
+          startInboxHeartbeat();
+        }
+        activeChatId = chatId;
+        activeChat   = allChats.find(c => c.chatId === chatId);
+        if(activeChat?.preview?.previewType === 'UNREAD'){ activeChat.preview = null; }
+        renderChatList(document.getElementById('searchInput').value);
+        renderChatShell();
+        await loadChatUsers(chatId);
+        await loadMessages(chatId);
+        startChatHeartbeat(chatId);
+      }
+
+      function renderChatShell(){
+        const c = activeChat;
+        document.getElementById('mainContent').innerHTML = `
+          <div class="ch-header">
+            <div class="av-wrap" style="width:38px;height:38px">
+              ${avatarHtml(c?.chatName, c?.chatAvatar, 38)}
+              ${c?.chatType!=='GROUP'&&c?.active?'<div class="online-dot"></div>':''}
+            </div>
+            <div style="flex:1">
+              <div class="ch-hname">${c?.chatName||'Chat'}</div>
+              <div class="ch-hsub" id="chatSub" style="color:var(--text3)">loading…</div>
+            </div>
+            <div class="ch-hbtns">
+              <button class="hbtn" id="refreshBtn" title="Refresh" onclick="refreshChat()"><i class="ti ti-refresh"></i></button>
+              <button class="hbtn" title="Search"><i class="ti ti-search"></i></button>
+              <button class="hbtn" title="Info"><i class="ti ti-info-circle"></i></button>
+              <button class="hbtn" title="More"><i class="ti ti-dots-vertical"></i></button>
+            </div>
+          </div>
+          <div id="msgArea" style="flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden">
+            <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:10px">
+              <div class="spin"></div><span style="font-size:12px;color:var(--text2)">Loading messages…</span>
+            </div>
+          </div>
+          <div class="inp-area">
+            <button class="iabtn" title="Attach"><i class="ti ti-paperclip"></i></button>
+            <input class="msg-input" type="text" id="msgInput" placeholder="Write a message…" />
+            <button class="iabtn" title="Emoji"><i class="ti ti-mood-smile"></i></button>
+            <button class="send-btn" id="sendBtn"><i class="ti ti-send-2"></i></button>
+          </div>
+        `;
+        document.getElementById('msgInput').addEventListener('keydown', e => { if(e.key==='Enter') sendMessage(); });
+        document.getElementById('msgInput').addEventListener('input', () => {
+          if(activeChat?.chatType !== 'DIRECT') return;
+          keystrokesSinceLastPing++;
+          if(!isTyping){
+            isTyping = true;
+            keystrokesSinceLastPing = 0;
+            publishTypingStart();
+            typingHeartbeat = setInterval(() => {
+              if(isTyping && keystrokesSinceLastPing > 0){ keystrokesSinceLastPing = 0; publishTypingStart(); }
+            }, 4000);
+          }
+          clearTimeout(typingTimer);
+          typingTimer = setTimeout(() => {
+            isTyping = false; typingTimer = null; keystrokesSinceLastPing = 0;
+            clearInterval(typingHeartbeat); typingHeartbeat = null;
+            publishTypingStop();
+          }, 3000);
+        });
+        document.getElementById('sendBtn').addEventListener('click', sendMessage);
+      }
+
+      async function loadChatUsers(chatId){
+        const data = await api(`${VIEW_BASE}/${chatId}/details`);
+        if(!data) return;
+        chatUsers[chatId] = data.chatUsers || [];
+        const sub = document.getElementById('chatSub');
+        if(sub){
+          const online = chatUsers[chatId].some(u => u.isActive);
+          if(online){ sub.textContent='● online'; sub.style.color='#3EE8A0'; }
+          else{
+            const lu = chatUsers[chatId].find(u => u.lastActivity);
+            sub.textContent = lu?.lastActivity ? `last seen ${lu.lastActivity}` : 'offline';
+            sub.style.color = 'var(--text3)';
+          }
+        }
+      }
+
+      async function loadMessages(chatId, cursor=null){
+        const data = await api(`${VIEW_BASE}/${chatId}/messages`, {}, cursor ? { cursor } : {});
+        if(!data) return;
+        renderMessages(chatId, data.messages||[], !!cursor, data.messages?.length > 0);
+      }
+
+      function renderMessages(chatId, msgs, isLoadMore=false, pageHadResults=false){
+        const area = document.getElementById('msgArea');
+        if(!area) return;
+        const userMap = {};
+        (chatUsers[chatId]||[]).forEach(u => userMap[u.userId] = u);
+        const uid = msgs.find(m => m.mine)?.senderId || null;
+        if(uid && !currentUserId) currentUserId = uid;
+        if(msgs.length > 0){ oldestMessageId[chatId] = msgs[0].id; }
+        const canLoadMore = pageHadResults && msgs.length > 0;
+        const seenAtMsg = {};
+        (chatUsers[chatId]||[]).forEach(u => {
+          if(u.lastSeenMessageId && u.userId !== currentUserId){
+            if(!seenAtMsg[u.lastSeenMessageId]) seenAtMsg[u.lastSeenMessageId] = [];
+            seenAtMsg[u.lastSeenMessageId].push(u);
+          }
+        });
+        const html = msgs.map((m, i) => {
+          const u      = userMap[m.senderId];
+          const prev   = msgs[i-1];
+          const showAv = !m.mine && (!prev || prev.mine || prev.senderId !== m.senderId);
+          const seenUsers = seenAtMsg[m.id] || [];
+          const seenHtml  = seenUsers.map(su => {
+            const c2 = colorFor(su.userId);
+            return `<div class="seen-dot" data-reader="${su.userId}" style="background:${c2.bg};color:${c2.fg}" title="Seen by ${su.username||su.userId}">${initials(su.username||su.userId)}</div>`;
+          }).join('');
+          return `<div class="mrow${m.mine?' mine':''}" data-msgid="${m.id}" data-sender="${m.senderId}">
+            ${!m.mine&&showAv?`<div class="mav" style="background:${colorFor(m.senderId).bg};color:${colorFor(m.senderId).fg}">${initials(u?.username||'?')}</div>`:''}
+            ${!m.mine&&!showAv?'<div style="width:26px;flex-shrink:0"></div>':''}
+            <div class="mcol${m.mine?' mine':''}">
+              <div class="bub ${m.mine?'mine':'theirs'}">${escapeHtml(m.content)}</div>
+              <div class="mtime">
+                ${m.mine?`<i class="ti ti-checks" style="font-size:11px${seenHtml?';color:#3EE8A0':''}"></i>`:''}
+                <span>${timeAgo(m.sentAt)}</span>
+              </div>
+              ${seenHtml?`<div class="seen-row">${seenHtml}</div>`:''}
+            </div>
+            ${m.mine?'<div style="width:26px;flex-shrink:0"></div>':''}
+          </div>`;
+        }).join('');
+
+        if(isLoadMore){
+          const mc = document.getElementById('msgContainer');
+          if(!mc) return;
+          const prevScrollHeight = mc.scrollHeight;
+          const oldLoadBtn = mc.querySelector('.load-more-btn');
+          if(oldLoadBtn) oldLoadBtn.remove();
+          const frag = document.createElement('div');
+          frag.innerHTML = (canLoadMore ? `<button class="load-more-btn" id="loadMoreBtn"><i class="ti ti-arrow-up" style="font-size:12px"></i> load older</button>` : '') + html;
+          while(frag.firstChild) mc.insertBefore(frag.firstChild, mc.firstChild);
+          mc.scrollTop = mc.scrollHeight - prevScrollHeight;
+          document.getElementById('loadMoreBtn')?.addEventListener('click', () => loadMessages(chatId, oldestMessageId[chatId]));
+        } else {
+          area.innerHTML = `
+            <div class="msgs" id="msgContainer">
+              ${canLoadMore?`<button class="load-more-btn" id="loadMoreBtn"><i class="ti ti-arrow-up" style="font-size:12px"></i> load older</button>`:''}
+              ${html}
+            </div>
+          `;
+          const mc = document.getElementById('msgContainer');
+          mc.scrollTop = mc.scrollHeight;
+          document.getElementById('loadMoreBtn')?.addEventListener('click', () => loadMessages(chatId, oldestMessageId[chatId]));
+          const chat = allChats.find(c => c.chatId === chatId);
+          if(chat && msgs.length > 0){
+            const last = msgs[msgs.length - 1];
+            if(!last.mine){
+              chat.preview = { previewType: 'RECEIVED', message: last.content || '' };
+            } else {
+              const seenUsers = seenAtMsg[last.id] || [];
+              chat.preview = seenUsers.length
+                ? { previewType: 'SEEN', seenByUserIds: seenUsers.map(u => u.userId), seenAt: new Date().toISOString() }
+                : { previewType: 'SENT' };
+            }
+            renderChatList(document.getElementById('searchInput').value);
+          }
+        }
+      }
+
+      async function sendMessage(){
+        if(isSending) return;
+        const input   = document.getElementById('msgInput');
+        const content = input.value.trim();
+        if(!content || !activeChatId) return;
+        isSending = true;
+        input.value = ''; input.disabled = true;
+        if(typingTimer){ clearTimeout(typingTimer); typingTimer = null; }
+        if(typingHeartbeat){ clearInterval(typingHeartbeat); typingHeartbeat = null; }
+        isTyping = false; keystrokesSinceLastPing = 0;
+        publishTypingStop();
+        try{
+          const r = await fetch(SEND_BASE, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+            body: JSON.stringify({ chatId: activeChatId, content })
+          });
+          if(!r.ok && r.status !== 204) showErr('Send failed');
+        }catch(e){
+          showErr('Send failed: '+e.message);
+          input.value = content;
+        }
+        input.disabled = false; input.focus();
+        isSending = false;
+      }
+
+      window.addEventListener('beforeunload', () => { if(activeChatId) sendChatLeave(activeChatId); });
+      document.getElementById('searchInput').addEventListener('input', e => renderChatList(e.target.value));
 </script>
 </body>
 </html>

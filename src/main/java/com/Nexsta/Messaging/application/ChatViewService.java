@@ -14,12 +14,14 @@ import com.Nexsta.Profile.application.ProfileQueryService;
 import com.Nexsta.Profile.application.ProfileSummaryBuilder;
 import com.Nexsta.Profile.domain.cache.ProfileInfo;
 import com.Nexsta.Shared.Mappers.Chatmapper;
+import com.Nexsta.Shared.ServerInstance;
 import com.Nexsta.User.application.AuthenticatedUserService;
 import com.Nexsta.User.application.UserActivityTracker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -42,6 +44,7 @@ public class ChatViewService {
     private final MessageRepo messageRepo;
     private final RealTimeDeliveringService realTimeDeliveringService;
     private final UserActivityTracker userActivityTracker;
+    private final InstanceRouter instanceRouter;
 
     private final static int messagePageLimit=20;
     private final static int chatPageLimit=10;
@@ -163,6 +166,7 @@ public class ChatViewService {
         }
 
         if(cursor==null){
+
             Message latestMessage=messages.get(0);
           chatMemberRepo.resetCountAndUpdateLastReadMessage(chatId,currentUserId,latestMessage.getId());
           if(latestMessage.getSeenAt()==null&&!latestMessage.getSenderId().equals(currentUserId)&&chat.getType()== Chat.ChatType.DIRECT){
@@ -171,15 +175,23 @@ public class ChatViewService {
           }
 
             String lastMessageSenderId =latestMessage.getSenderId();
+
             if(!lastMessageSenderId.equals(currentUserId)){
-                realTimeDeliveringService.deliverInboxEvent(new InboxDelivery(
-                        List.of(lastMessageSenderId),
-                        InboxEvent.readReceipt(chatId, List.of(currentUserId)))
+                instanceRouter.routeToSingle(
+                        lastMessageSenderId,
+                        new InboxDelivery(
+                                List.of(lastMessageSenderId),
+                                InboxEvent.readReceipt(chatId, List.of(currentUserId))
+                        )
                 );
-                realTimeDeliveringService.deliverInboxEvent(new InboxDelivery(
-                        List.of(currentUserId),
-                        InboxEvent.receivedMessage(chatId, latestMessage.getContent()))
-                );
+
+
+                    InboxDelivery inboxDelivery=new InboxDelivery(
+                            List.of(currentUserId),
+                            InboxEvent.receivedMessage(chatId, latestMessage.getContent()));
+
+                        realTimeDeliveringService.deliverInboxEvent(inboxDelivery);
+
             }
 
         }
