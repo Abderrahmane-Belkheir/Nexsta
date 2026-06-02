@@ -14,14 +14,12 @@ import com.Nexsta.Profile.application.ProfileQueryService;
 import com.Nexsta.Profile.application.ProfileSummaryBuilder;
 import com.Nexsta.Profile.domain.cache.ProfileInfo;
 import com.Nexsta.Shared.Mappers.Chatmapper;
-import com.Nexsta.Shared.ServerInstance;
 import com.Nexsta.User.application.AuthenticatedUserService;
 import com.Nexsta.User.application.UserActivityTracker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -200,8 +198,7 @@ public class ChatViewService {
 
         return MessagePage.builder().
                 messages(messagesView).
-                oldestCursor(null).
-                newestCursor(null).
+                oldestCursor(messagesView.get(0).getId()).
                 build();
     }
 

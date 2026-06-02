@@ -754,57 +754,115 @@
         stompClient.activate();
       }
 
-      async function handleInboxEvent(event){
-        const { type, chatId } = event;
-        const readerIds = event.readersId ? (Array.isArray(event.readersId) ? event.readersId : [event.readersId]) : [];
+  async function handleInboxEvent(event){
+  const { type, chatId } = event;
 
-        if(type === 'NEW_MESSAGE'){
-          if(chatId === activeChatId) return;
-          const idx = allChats.findIndex(c => c.chatId === chatId);
-          if(idx !== -1){
-            const chat = allChats[idx];
-            if(chat.preview?.previewType === 'UNREAD'){
-              chat.preview.unreadCount = (chat.preview.unreadCount || 0) + 1;
-            } else {
-              chat.preview = { previewType: 'UNREAD', unreadCount: 1 };
-            }
-            chat.lastMessageAt = new Date().toISOString();
-            allChats.splice(idx, 1);
-            allChats.unshift(chat);
-          }
-          renderChatList(document.getElementById('searchInput').value);
-        } else if(type === 'NEW_CHAT'){
-          const summary = event.chatSummary;
-          if(!summary) return;
-          if(allChats.some(c => c.chatId === summary.chatId)) return;
-          allChats.unshift(summary);
-          renderChatList(document.getElementById('searchInput').value);
-        } else if(type === 'SENT_MESSAGE'){
-          const chat = allChats.find(c => c.chatId === chatId);
-          if(chat){
-            chat.preview = { previewType: 'SENT' };
-            chat.lastMessageAt = new Date().toISOString();
-            renderChatList(document.getElementById('searchInput').value);
-          }
-        } else if(type === 'READ_RECEIPT'){
-          const otherReaders = readerIds.filter(id => id !== currentUserId);
-          if(!otherReaders.length) return;
-          const chat = allChats.find(c => c.chatId === chatId);
-          if(chat){
-            chat.preview = { previewType: 'SEEN', seenByUserIds: otherReaders, seenAt: new Date().toISOString() };
-            renderChatList(document.getElementById('searchInput').value);
-          }
-          if(chatId === activeChatId){ applySeenReceiptToLastBubble(otherReaders); }
-        } else if(type === 'RECEIVED_MESSAGE'){
-          const chat = allChats.find(c => c.chatId === chatId);
-          if(chat){
-            chat.preview = { previewType: 'RECEIVED', message: event.message || '' };
-            chat.lastMessageAt = new Date().toISOString();
-            renderChatList(document.getElementById('searchInput').value);
-          }
-        }
+  const readerIds = event.readersId
+    ? (Array.isArray(event.readersId) ? event.readersId : [event.readersId])
+    : [];
+
+  if(type === 'NEW_MESSAGE'){
+    if(chatId === activeChatId) return;
+
+    const idx = allChats.findIndex(c => c.chatId === chatId);
+    if(idx !== -1){
+      const chat = allChats[idx];
+
+      if(chat.preview?.previewType === 'UNREAD'){
+        chat.preview.unreadCount = (chat.preview.unreadCount || 0) + 1;
+      } else {
+        chat.preview = { previewType: 'UNREAD', unreadCount: 1 };
       }
 
+      chat._savedPreview = null;
+      chat.lastMessageAt = new Date().toISOString();
+
+      allChats.splice(idx, 1);
+      allChats.unshift(chat);
+    }
+
+    renderChatList(document.getElementById('searchInput').value);
+
+  } else if(type === 'NEW_CHAT'){
+
+    const summary = event.chatSummary;
+    if(!summary) return;
+    if(allChats.some(c => c.chatId === summary.chatId)) return;
+
+    allChats.unshift(summary);
+    renderChatList(document.getElementById('searchInput').value);
+
+  } else if(type === 'SENT_MESSAGE'){
+
+    const chat = allChats.find(c => c.chatId === chatId);
+    if(chat){
+      chat.preview = { previewType: 'SENT' };
+      chat.lastMessageAt = new Date().toISOString();
+      renderChatList(document.getElementById('searchInput').value);
+    }
+
+  } else if(type === 'READ_RECEIPT'){
+
+    const otherReaders = readerIds.filter(id => id !== currentUserId);
+    if(!otherReaders.length) return;
+
+    const chat = allChats.find(c => c.chatId === chatId);
+    if(chat){
+      chat.preview = {
+        previewType: 'SEEN',
+        seenByUserIds: otherReaders,
+        seenAt: new Date().toISOString()
+      };
+      renderChatList(document.getElementById('searchInput').value);
+    }
+
+    if(chatId === activeChatId){
+      applySeenReceiptToLastBubble(otherReaders);
+    }
+
+  } else if(type === 'RECEIVED_MESSAGE'){
+
+    const chat = allChats.find(c => c.chatId === chatId);
+    if(chat){
+      chat.preview = {
+        previewType: 'RECEIVED',
+        message: event.message || ''
+      };
+      chat.lastMessageAt = new Date().toISOString();
+      chat._savedPreview = null;
+      renderChatList(document.getElementById('searchInput').value);
+    }
+
+ } else if(type === 'TYPING_MESSAGE_STARTED'){
+  const chat = allChats.find(c => c.chatId === chatId);
+  if(!chat) return;
+
+  // FIX 1: prevent overwriting existing saved preview
+  if(chat._savedPreview === undefined || chat._savedPreview === null){
+    chat._savedPreview = chat.preview ? { ...chat.preview } : null;
+  }
+
+  chat.preview = {
+    previewType: 'TYPING',
+    typerId: event.typerId
+  };
+
+  renderChatList(document.getElementById('searchInput').value);
+
+} else if(type === 'TYPING_MESSAGE_STOPPED'){
+  const chat = allChats.find(c => c.chatId === chatId);
+  if(!chat) return;
+
+  // FIX 2: restore safely only if current state is typing
+  if(chat.preview?.previewType === 'TYPING'){
+    chat.preview = chat._savedPreview || null;
+  }
+
+  chat._savedPreview = null;
+
+  renderChatList(document.getElementById('searchInput').value);
+}
+}
       function applySeenReceiptToLastBubble(readerIds){
         if(!readerIds?.length) return;
         const mc = document.getElementById('msgContainer');
@@ -977,6 +1035,8 @@
           }
           case 'RECEIVED':
             return { text:p.message||'', icon:'', color:'var(--text2)', badge:null };
+          case 'TYPING':
+            return { text: 'typing…',icon: '<i class="ti ti-dots" style="font-size:12px;color:var(--acc)"></i>',color: 'var(--acc)', badge: null,bold: false };
           default:
             return {text:'', icon:'', color:'var(--text2)', badge:null};
         }
@@ -1150,7 +1210,6 @@
           frag.innerHTML = (canLoadMore ? `<button class="load-more-btn" id="loadMoreBtn"><i class="ti ti-arrow-up" style="font-size:12px"></i> load older</button>` : '') + html;
           while(frag.firstChild) mc.insertBefore(frag.firstChild, mc.firstChild);
           mc.scrollTop = mc.scrollHeight - prevScrollHeight;
-          document.getElementById('loadMoreBtn')?.addEventListener('click', () => loadMessages(chatId, oldestMessageId[chatId]));
         } else {
           area.innerHTML = `
             <div class="msgs" id="msgContainer">
@@ -1160,7 +1219,6 @@
           `;
           const mc = document.getElementById('msgContainer');
           mc.scrollTop = mc.scrollHeight;
-          document.getElementById('loadMoreBtn')?.addEventListener('click', () => loadMessages(chatId, oldestMessageId[chatId]));
           const chat = allChats.find(c => c.chatId === chatId);
           if(chat && msgs.length > 0){
             const last = msgs[msgs.length - 1];
@@ -1205,6 +1263,15 @@
 
       window.addEventListener('beforeunload', () => { if(activeChatId) sendChatLeave(activeChatId); });
       document.getElementById('searchInput').addEventListener('input', e => renderChatList(e.target.value));
+   document.addEventListener('click', (e) => {
+  const btn = e.target.closest('#loadMoreBtn');
+  if (!btn) return;
+
+  const chatId = activeChatId;
+  if (!chatId) return;
+
+  loadMessages(chatId, oldestMessageId[chatId]);
+});
 </script>
 </body>
 </html>

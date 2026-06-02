@@ -13,5 +13,4 @@ import java.util.List;
 public class MessagePage {
    private List<MessageView> messages;
     private String oldestCursor;
-    private String newestCursor;
 }

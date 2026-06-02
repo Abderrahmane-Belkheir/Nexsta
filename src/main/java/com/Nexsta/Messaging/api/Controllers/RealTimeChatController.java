@@ -4,6 +4,7 @@ package com.Nexsta.Messaging.api.Controllers;
 import com.Nexsta.Messaging.api.dto.TypingEvent;
 import com.Nexsta.Messaging.api.dto.TypingPayload;
 import com.Nexsta.Messaging.application.ChatActivityTracker;
+import com.Nexsta.Messaging.application.TypingEventRelay;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -17,6 +18,7 @@ import java.security.Principal;
 public class RealTimeChatController {
 
     private final ChatActivityTracker chatActivityTracker;
+    private final TypingEventRelay typingEventRelay;
 
 
     @MessageMapping("/chat.enter/{chatId}")
@@ -31,7 +33,7 @@ public class RealTimeChatController {
 
     @MessageMapping("/chat.typing/{chatId}")
     public void typingStart(@DestinationVariable String chatId, Principal principal, @Payload TypingPayload payload){
-        chatActivityTracker.deliverTypingEvent(chatId,principal.getName(), payload);
+        typingEventRelay.deliverTypingEvent(chatId,principal.getName(), payload);
     }
 
     @MessageMapping("/inbox.open")

@@ -1,9 +1,6 @@
 package com.Nexsta.Messaging.application;
 
-import com.Nexsta.Messaging.api.dto.ActivityMaps;
-import com.Nexsta.Messaging.api.dto.BaseDelivery;
-import com.Nexsta.Messaging.api.dto.InboxDelivery;
-import com.Nexsta.Messaging.api.dto.MessageDelivery;
+import com.Nexsta.Messaging.api.dto.*;
 import com.Nexsta.Shared.ServerInstance;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -67,6 +64,7 @@ public class InstanceRouter {
     public void deliverLocally(BaseDelivery delivery) {
         if (delivery instanceof MessageDelivery m) realTimeDeliveringService.deliverMessage(m);
         else if (delivery instanceof InboxDelivery i) realTimeDeliveringService.deliverInboxEvent(i);
+        else if (delivery instanceof TypingDelivery t) realTimeDeliveringService.deliverTypingEvent(t);
         else log.warn("Unknown delivery type: {}", delivery.getClass().getSimpleName());
     }
 

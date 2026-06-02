@@ -13,7 +13,6 @@ import com.Nexsta.Profile.application.ProfileQueryService;
 import com.Nexsta.Profile.domain.Profile;
 import com.Nexsta.Profile.domain.cache.ProfileInfo;
 import com.Nexsta.Shared.CheckUserExistence;
-import com.Nexsta.Shared.ServerInstance;
 import com.Nexsta.SocialGraph.domain.Follow;
 import com.Nexsta.SocialGraph.persistence.BlocksRepo;
 import com.Nexsta.SocialGraph.persistence.FollowRepo;
@@ -21,7 +20,6 @@ import com.Nexsta.User.application.AuthenticatedUserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -89,14 +87,14 @@ public class ChatSendingService {
         if(recipientInstanceId.isPresent()){
             ProfileInfo profileInfo=profileQueryService.getUserProfileInfo(currentUserId);
             ChatSummary chatSummary=ChatSummary.builder().chatId(id).chatType(Chat.ChatType.DIRECT).chatName(profileInfo.getUsername()).chatAvatar(profileInfo.getAvatarPath()).preview(ChatPreview.unread(1)).build();
-            realTimeDeliveringService.deliverInboxEvent(new InboxDelivery(List.of(recipientId),InboxEvent.newChat(chatSummary)));
+            instanceRouter.routeToSingle(recipientId,new InboxDelivery(List.of(recipientId),InboxEvent.newChat(chatSummary)));
         }
 
         Optional<String> senderInstanceId=chatActivityTracker.isUserActiveInInbox(currentUserId);
         if(senderInstanceId.isPresent()){
             ProfileInfo profileInfo=profileQueryService.getUserProfileInfo(recipientId);
             ChatSummary chatSummary=ChatSummary.builder().chatId(id).chatType(Chat.ChatType.DIRECT).chatName(profileInfo.getUsername()).chatAvatar(profileInfo.getAvatarPath()).preview(ChatPreview.sent(message.getSentAt())).build();
-            realTimeDeliveringService.deliverInboxEvent(new InboxDelivery(List.of(currentUserId),InboxEvent.newChat(chatSummary)));
+            instanceRouter.routeToSingle(currentUserId,new InboxDelivery(List.of(recipientId),InboxEvent.newChat(chatSummary)));
         }
 
         }catch (Exception e){

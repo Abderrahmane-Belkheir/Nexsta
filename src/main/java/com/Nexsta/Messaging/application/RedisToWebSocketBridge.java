@@ -36,5 +36,7 @@ public class RedisToWebSocketBridge implements MessageListener {
                 log.error("Failed to parse chat message", e);
             }
         }
+
+
     }
 

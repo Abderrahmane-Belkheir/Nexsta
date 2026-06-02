@@ -62,40 +62,6 @@ public class ChatActivityTracker {
         return Optional.ofNullable(redisTemplate.opsForValue().get(INBOX_ACTIVE_KEY + userId));
     }
 
-    @Transactional(readOnly = true)
-    public void deliverTypingEvent(String chatId, String userId, TypingPayload typingPayload){
-    Chat chat=chatRepo.findChatById(chatId,userId).orElseThrow(()-> new ContentNotAvailableException("Chat Not Found"));
-
-    if(chat.getType()!= Chat.ChatType.DIRECT) {
-        return;
-    }
-
-        List<String> activeUsersInChat=new ArrayList<>();
-    Map<String,List<String>> activeUsersInChatMap=new HashMap<>();
-        List<ChatMember> members=chat.getMembers().stream().filter(chatMember -> !chatMember.getId().getUserId().equals(userId)).toList();
-        for(ChatMember member:members){
-            String memberId=member.getId().getUserId();
-            Optional<String> memberInChatInstanceId =isUserActiveInChat(memberId,chat.getId());
-            memberInChatInstanceId.ifPresent(s -> activeUsersInChatMap.computeIfAbsent(s, k -> new CopyOnWriteArrayList<>()).add(memberId));
-            }
-
-     if(activeUsersInChatMap.isEmpty()){
-         return;
-     }
-
-     TypingEvent event=typingPayload.getTypingEventType()== TypingEvent.TypingEventType.TYPING_START?
-             TypingEvent.start(chatId,userId):TypingEvent.stop(chatId,userId);
-        for(Map.Entry<String,List<String>> entry:activeUsersInChatMap.entrySet()){
-            String membersInstanceId=entry.getKey();
-            TypingDelivery typingDelivery=new TypingDelivery(new ArrayList<>(entry.getValue()),event);
-            if(membersInstanceId.equals(serverInstance.getInstanceId())){
-                realTimeDeliveringService.deliverTypingEvent(typingDelivery);
-            }else {
-                objectRedisTemplate.convertAndSend(membersInstanceId,typingDelivery);
-            }
-    }
-
-}
 
 }
 

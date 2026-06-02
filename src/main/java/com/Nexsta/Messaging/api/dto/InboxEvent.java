@@ -67,13 +67,19 @@ public class InboxEvent {
       return  new InboxEvent(InboxEventType.RECEIVED_MESSAGE, chatId,message);
     }
 
-    public static InboxEvent typingMessage(String chatId,String typerId){
-       InboxEvent e=new InboxEvent(InboxEventType.TYPING_MESSAGE,chatId);
+    public static InboxEvent typingMessageStarted(String chatId,String typerId){
+       InboxEvent e=new InboxEvent(InboxEventType.TYPING_MESSAGE_STARTED,chatId);
        e.typerId=typerId;
         return e;
     }
 
+    public static InboxEvent typingMessageStopped(String chatId,String typerId){
+        InboxEvent e=new InboxEvent(InboxEventType.TYPING_MESSAGE_STOPPED,chatId);
+        e.typerId=typerId;
+        return e;
+    }
+
     public enum InboxEventType{ NEW_MESSAGE,
-        READ_RECEIPT,NEW_CHAT,SENT_MESSAGE,RECEIVED_MESSAGE,TYPING_MESSAGE}
+        READ_RECEIPT,NEW_CHAT,SENT_MESSAGE,RECEIVED_MESSAGE,TYPING_MESSAGE_STARTED,TYPING_MESSAGE_STOPPED}
 
 }
