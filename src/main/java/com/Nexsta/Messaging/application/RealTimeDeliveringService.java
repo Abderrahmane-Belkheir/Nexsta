@@ -14,7 +14,7 @@ public class RealTimeDeliveringService {
 
     public void deliverMessage(MessageDelivery messageDelivery){
         MessageView message=messageDelivery.getMessage();
-        for (String receiverId : messageDelivery.getReceiversId()) {
+        for (String receiverId : messageDelivery.getReceivers()) {
             messagingTemplate.convertAndSendToUser(
                    receiverId,
                     "/queue/messages",
@@ -25,7 +25,7 @@ public class RealTimeDeliveringService {
 
     public void deliverInboxEvent(InboxDelivery inboxDelivery){
         InboxEvent event=inboxDelivery.getEvent();
-        for (String receiverId:inboxDelivery.getReceiversId()){
+        for (String receiverId:inboxDelivery.getReceivers()){
             messagingTemplate.convertAndSendToUser(receiverId,
                     "/queue/preview",
                     event
@@ -39,6 +39,16 @@ public class RealTimeDeliveringService {
             messagingTemplate.convertAndSendToUser(userId,
                     "/queue/typing"
                     ,event
+            );
+        }
+    }
+
+    public void deliverMessageRemoved(MessageRemovedDelivery messageRemovedDelivery){
+        String messageId= messageRemovedDelivery.getMessageId();
+        for(String userId:messageRemovedDelivery.getReceivers()){
+            messagingTemplate.convertAndSendToUser(userId,
+                    "/queue/message.removed"
+                    ,messageId
             );
         }
     }

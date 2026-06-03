@@ -1,7 +1,9 @@
 package com.Nexsta.Messaging.api.Controllers;
 
 import com.Nexsta.Messaging.api.dto.*;
+import com.Nexsta.Messaging.application.ChatSendingService;
 import com.Nexsta.Messaging.application.ChatViewService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.repository.query.Param;
@@ -19,6 +21,7 @@ import java.time.Instant;
 public class ChatViewController {
 
     private final ChatViewService chatViewService;
+
 
     @GetMapping
     public ResponseEntity<ChatPage> getChats(@RequestParam(required = false)Instant cursor){
@@ -41,6 +44,7 @@ public class ChatViewController {
 
         return ResponseEntity.ok(chatViewService.getChatMessages(chatId,cursor));
     }
+
 
 
 }

@@ -19,7 +19,7 @@ public class Message {
     private String content;
     private Instant sentAt= Instant.now();
     private Instant seenAt;
-    private boolean edited=false;
+    private boolean deleted=false;
     public Message(String chatId,String senderId,String content){
         this.senderId=senderId;
         this.content=content;

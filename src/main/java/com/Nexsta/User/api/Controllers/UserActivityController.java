@@ -17,7 +17,6 @@ public class UserActivityController {
 
     @MessageMapping("/heartbeat")
     public void heartbeat(Principal principal){
-        log.info("heartbeat "+principal.getName());
         userActivityService.setUserActive(principal.getName());
         userActivityService.setUserLastSeen(principal.getName());
     }

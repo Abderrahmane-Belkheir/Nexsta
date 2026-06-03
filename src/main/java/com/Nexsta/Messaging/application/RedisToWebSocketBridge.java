@@ -30,6 +30,8 @@ public class RedisToWebSocketBridge implements MessageListener {
                     realTimeDeliveringService.deliverInboxEvent(i);
                 } else if (baseDelivery instanceof TypingDelivery t) {
                     realTimeDeliveringService.deliverTypingEvent(t);
+                }else if(baseDelivery instanceof MessageRemovedDelivery m){
+                    realTimeDeliveringService.deliverMessageRemoved(m);
                 }
 
             } catch (JsonProcessingException e) {

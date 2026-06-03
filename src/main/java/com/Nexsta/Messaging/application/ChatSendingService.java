@@ -87,14 +87,14 @@ public class ChatSendingService {
         if(recipientInstanceId.isPresent()){
             ProfileInfo profileInfo=profileQueryService.getUserProfileInfo(currentUserId);
             ChatSummary chatSummary=ChatSummary.builder().chatId(id).chatType(Chat.ChatType.DIRECT).chatName(profileInfo.getUsername()).chatAvatar(profileInfo.getAvatarPath()).preview(ChatPreview.unread(1)).build();
-            instanceRouter.routeToSingle(recipientId,new InboxDelivery(List.of(recipientId),InboxEvent.newChat(chatSummary)));
+            instanceRouter.routeToSingle(recipientId,new InboxDelivery(List.of(recipientId),InboxEvent.newChat(chatSummary)), InstanceRouter.SingleRoutingType.INBOX,null);
         }
 
         Optional<String> senderInstanceId=chatActivityTracker.isUserActiveInInbox(currentUserId);
         if(senderInstanceId.isPresent()){
             ProfileInfo profileInfo=profileQueryService.getUserProfileInfo(recipientId);
             ChatSummary chatSummary=ChatSummary.builder().chatId(id).chatType(Chat.ChatType.DIRECT).chatName(profileInfo.getUsername()).chatAvatar(profileInfo.getAvatarPath()).preview(ChatPreview.sent(message.getSentAt())).build();
-            instanceRouter.routeToSingle(currentUserId,new InboxDelivery(List.of(recipientId),InboxEvent.newChat(chatSummary)));
+            instanceRouter.routeToSingle(currentUserId,new InboxDelivery(List.of(recipientId),InboxEvent.newChat(chatSummary)), InstanceRouter.SingleRoutingType.INBOX,null);
         }
 
         }catch (Exception e){

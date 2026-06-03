@@ -146,8 +146,8 @@ public class ChatViewService {
         Pageable pageable=PageRequest.of(0,messagePageLimit+1);
         Chat chat=chatRepo.findById(chatId).orElseThrow(()->new ContentNotAvailableException("Chat Not Found"));
         List<Message> messages= cursor==null?
-                messageRepo.findByChatIdOrderByIdDesc(chatId,pageable):
-                messageRepo.findByChatIdAndIdLessThanOrderByIdDesc(chatId,currentUserId,pageable);
+                messageRepo.findLatestVisibleMessages(chatId,currentUserId,pageable):
+                messageRepo.findVisibleMessagesBeforeId(chatId,currentUserId,cursor,pageable);
 
         boolean hasMore = messages.size() > messagePageLimit;
         if (hasMore) messages = messages.subList(0, messagePageLimit);
@@ -180,7 +180,7 @@ public class ChatViewService {
                         new InboxDelivery(
                                 List.of(lastMessageSenderId),
                                 InboxEvent.readReceipt(chatId, List.of(currentUserId))
-                        )
+                        ), InstanceRouter.SingleRoutingType.INBOX,null
                 );
 
 

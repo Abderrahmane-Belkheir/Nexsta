@@ -51,7 +51,15 @@ public class InstanceRouter {
         });
     }
 
-    public void routeToSingle(String userId, BaseDelivery delivery) {
+    public void routeToSingle(String userId, BaseDelivery delivery,SingleRoutingType type,String chatId) {
+        String instanceId;
+        if(type==SingleRoutingType.INBOX) {
+
+          if (chatActivityTracker.isUserActiveInInbox(userId).is)
+        }
+
+        if(type==SingleRoutingType.CHAT&&chatActivityTracker.isUserActiveInChat(userId,chatId).isEmpty()) return;
+
         chatActivityTracker.isUserActiveInInbox(userId).ifPresent(instanceId -> {
             if (instanceId.equals(serverInstance.getInstanceId())) {
                 deliverLocally(delivery);
@@ -68,4 +76,5 @@ public class InstanceRouter {
         else log.warn("Unknown delivery type: {}", delivery.getClass().getSimpleName());
     }
 
+    public enum SingleRoutingType{CHAT,INBOX}
 }
