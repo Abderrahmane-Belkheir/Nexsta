@@ -1,22 +1,16 @@
 package com.Nexsta.Messaging.application;
 
-import com.Nexsta.Content.Exceptions.ContentNotAvailableException;
-import com.Nexsta.Messaging.api.dto.TypingDelivery;
-import com.Nexsta.Messaging.api.dto.TypingEvent;
-import com.Nexsta.Messaging.api.dto.TypingPayload;
-import com.Nexsta.Messaging.domain.Chat;
-import com.Nexsta.Messaging.domain.ChatMember;
+
 import com.Nexsta.Messaging.persistence.ChatRepo;
 import com.Nexsta.Shared.ServerInstance;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
+
 
 
 @Component
