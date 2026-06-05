@@ -46,12 +46,12 @@ public class TypingEventRelay {
         if(!inChatMap.isEmpty()){
             TypingEvent typingEvent=typingPayload.getTypingEventType()== TypingEvent.TypingEventType.TYPING_START?
                     TypingEvent.start(chatId,userId):TypingEvent.stop(chatId,userId);
-            instanceRouter.route(inChatMap,ids->new TypingDelivery(ids,typingEvent));
+            instanceRouter.routeBatch(inChatMap, ids->new TypingDelivery(ids,typingEvent));
         }
         if(!inInboxMap.isEmpty()){
             InboxEvent inboxEvent=typingPayload.getTypingEventType()== TypingEvent.TypingEventType.TYPING_START?
                     InboxEvent.typingMessageStarted(chatId,userId):InboxEvent.typingMessageStopped(chatId,userId);
-            instanceRouter.route(inInboxMap,ids->new InboxDelivery(ids,inboxEvent));
+            instanceRouter.routeBatch(inInboxMap, ids->new InboxDelivery(ids,inboxEvent));
         }
 
 

@@ -41,5 +41,9 @@ public class ChatMember {
         this.user=new User(userId);
         }
 
+    public void updateUnreadCount(int delta){
+        this.unReadCount+=delta;
+    }
+
 
 }

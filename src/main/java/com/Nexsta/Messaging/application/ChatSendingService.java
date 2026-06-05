@@ -40,7 +40,6 @@ public class ChatSendingService {
     private final ChatRepo chatRepo;
     private final FollowRepo followRepo;
     private final ChatActivityTracker chatActivityTracker;
-    private final RealTimeDeliveringService realTimeDeliveringService;
     private final InstanceRouter instanceRouter;
 
     @CheckUserExistence
@@ -90,12 +89,11 @@ public class ChatSendingService {
             instanceRouter.routeToSingle(recipientId,new InboxDelivery(List.of(recipientId),InboxEvent.newChat(chatSummary)), InstanceRouter.SingleRoutingType.INBOX,null);
         }
 
-        Optional<String> senderInstanceId=chatActivityTracker.isUserActiveInInbox(currentUserId);
-        if(senderInstanceId.isPresent()){
             ProfileInfo profileInfo=profileQueryService.getUserProfileInfo(recipientId);
             ChatSummary chatSummary=ChatSummary.builder().chatId(id).chatType(Chat.ChatType.DIRECT).chatName(profileInfo.getUsername()).chatAvatar(profileInfo.getAvatarPath()).preview(ChatPreview.sent(message.getSentAt())).build();
-            instanceRouter.routeToSingle(currentUserId,new InboxDelivery(List.of(recipientId),InboxEvent.newChat(chatSummary)), InstanceRouter.SingleRoutingType.INBOX,null);
-        }
+            instanceRouter.deliverLocally(new InboxDelivery(List.of(currentUserId),InboxEvent.newChat(chatSummary)));
+
+
 
         }catch (Exception e){
             throw new ChatMessagingException("could not send message to user");
@@ -123,7 +121,7 @@ public class ChatSendingService {
         chatMemberRepo.resetCountAndUpdateLastReadMessage(chat.getId(), currentUserId, message.getId());
 
 
-        instanceRouter.route(inInboxMap, ids ->
+        instanceRouter.routeBatch(inInboxMap, ids ->
                 new InboxDelivery(ids, InboxEvent.newMessage(chat.getId()))
         );
 
@@ -138,7 +136,7 @@ public class ChatSendingService {
         if (!inChatMap.isEmpty()) {
             messageView.setMine(false);
             messageView.setSeenByUserIds(null);
-            instanceRouter.route(inChatMap, ids -> new MessageDelivery(ids, messageView));
+            instanceRouter.routeBatch(inChatMap, ids -> new MessageDelivery(ids, messageView));
             instanceRouter.deliverLocally(new InboxDelivery(
                     List.of(currentUserId),
                     InboxEvent.readReceipt(chat.getId(), inChatIds)

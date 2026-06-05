@@ -38,7 +38,7 @@ public class InstanceRouter {
     }
 
 
-    public void route(Map<String, List<String>> instanceMap, Function<List<String>, BaseDelivery> deliveryFactory) {
+    public void routeBatch(Map<String, List<String>> instanceMap, Function<List<String>, BaseDelivery> deliveryFactory) {
         if(instanceMap.isEmpty()) return;
 
         instanceMap.forEach((instanceId, userIds) -> {
@@ -52,21 +52,24 @@ public class InstanceRouter {
     }
 
     public void routeToSingle(String userId, BaseDelivery delivery,SingleRoutingType type,String chatId) {
-        String instanceId;
-        if(type==SingleRoutingType.INBOX) {
+        Optional<String>  instanceId=Optional.empty();
 
-          if (chatActivityTracker.isUserActiveInInbox(userId).is)
+        if(type==SingleRoutingType.INBOX) {
+            instanceId=chatActivityTracker.isUserActiveInInbox(userId);
+        } else if(type==SingleRoutingType.CHAT){
+            instanceId=chatActivityTracker.isUserActiveInChat(userId,chatId);
         }
 
-        if(type==SingleRoutingType.CHAT&&chatActivityTracker.isUserActiveInChat(userId,chatId).isEmpty()) return;
+        if(instanceId.isEmpty()) {
+            return;
+        }
 
-        chatActivityTracker.isUserActiveInInbox(userId).ifPresent(instanceId -> {
-            if (instanceId.equals(serverInstance.getInstanceId())) {
+        if (instanceId.get().equals(serverInstance.getInstanceId())) {
                 deliverLocally(delivery);
-            } else {
-                redisTemplate.convertAndSend(instanceId, delivery);
-            }
-        });
+        } else {
+            redisTemplate.convertAndSend(instanceId.get(), delivery);
+        }
+
     }
 
     public void deliverLocally(BaseDelivery delivery) {

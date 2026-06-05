@@ -32,6 +32,19 @@ public interface ChatMemberRepo extends JpaRepository<ChatMember,UUID> {
     @Query(value = "SELECT chat_id As chatId ,un_read_count As unRead FROM Chat_Member WHERE user_id=:userId AND chat_id IN :chatsId ",nativeQuery = true)
     List<ChatUnread> findUnreadCountsForUser(@Param("userId") String userId,@Param("chatsId") List<String> chatsId);
 
+    @Transactional
+    @Modifying
+    @Query("""
+    UPDATE ChatMember cm SET cm.unReadCount = GREATEST(0, cm.unReadCount - 1)
+    WHERE cm.id.chatId = :chatId
+    AND cm.id.userId != :senderId
+    AND (cm.lastReadMessageId IS NULL OR cm.lastReadMessageId < :messageId)
+""")
+    void decrementUnreadCountIfAfterLastRead(
+            @Param("chatId") String chatId,
+            @Param("senderId") String senderId,
+            @Param("messageId") String messageId
+    );
 
     interface ChatUnread{
          String getChatId();

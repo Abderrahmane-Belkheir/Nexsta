@@ -16,6 +16,7 @@ public class MessageInteractionController {
 
     private final MessageInteractionService messageInteractionService;
 
+    @DeleteMapping
     public ResponseEntity<Void> removeMessage(@RequestBody @Valid RemoveMessage removeMessage){
         messageInteractionService.removeMessage(removeMessage);
         return ResponseEntity.noContent().build();

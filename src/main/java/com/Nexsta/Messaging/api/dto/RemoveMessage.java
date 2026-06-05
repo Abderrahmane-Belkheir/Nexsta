@@ -1,9 +1,7 @@
 package com.Nexsta.Messaging.api.dto;
 
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@NoArgsConstructor
 @Data
 public class RemoveMessage {
     private String messageId;

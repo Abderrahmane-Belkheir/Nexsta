@@ -13,13 +13,13 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserRegistration {
-    @Size(min = 6,max = 10)
+    @Size(min = 6,max = 20)
     @NotNull
     private String firstname;
-    @Size(min = 6,max = 10)
+    @Size(min = 6,max = 20)
     @NotNull
     private String lastname;
-    @Size(min = 6,max = 10)
+    @Size(min = 6,max = 20)
     @NotNull
     private String username;
     @Email

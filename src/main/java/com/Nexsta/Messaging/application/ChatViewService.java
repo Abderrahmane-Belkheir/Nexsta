@@ -18,8 +18,10 @@ import com.Nexsta.User.application.AuthenticatedUserService;
 import com.Nexsta.User.application.UserActivityTracker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.types.ObjectId;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -143,11 +145,11 @@ public class ChatViewService {
 
     public MessagePage getChatMessages(String chatId,String cursor){
         String currentUserId=authenticatedUserService.getCurrentUser();
-        Pageable pageable=PageRequest.of(0,messagePageLimit+1);
+        Pageable pageable=PageRequest.of(0,messagePageLimit+1, Sort.by(Sort.Direction.DESC,"_id"));
         Chat chat=chatRepo.findById(chatId).orElseThrow(()->new ContentNotAvailableException("Chat Not Found"));
         List<Message> messages= cursor==null?
                 messageRepo.findLatestVisibleMessages(chatId,currentUserId,pageable):
-                messageRepo.findVisibleMessagesBeforeId(chatId,currentUserId,cursor,pageable);
+                messageRepo.findVisibleMessagesBeforeId(chatId,currentUserId,new ObjectId(cursor),pageable);
 
         boolean hasMore = messages.size() > messagePageLimit;
         if (hasMore) messages = messages.subList(0, messagePageLimit);
@@ -198,7 +200,7 @@ public class ChatViewService {
 
         return MessagePage.builder().
                 messages(messagesView).
-                oldestCursor(messagesView.get(0).getId()).
+                oldestCursor(hasMore ? messagesView.get(0).getId() : null).
                 build();
     }
 

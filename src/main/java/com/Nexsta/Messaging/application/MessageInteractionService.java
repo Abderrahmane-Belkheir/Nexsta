@@ -9,6 +9,7 @@ import com.Nexsta.Messaging.persistence.MessageRepo;
 import com.Nexsta.User.application.AuthenticatedUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,7 @@ public class MessageInteractionService {
     private final ChatRepo chatRepo;
     private InstanceRouter instanceRouter;
 
+    @Transactional
     public void removeMessage(RemoveMessage removeMessage){
         String currentUserId=authenticatedUserService.getCurrentUser();
         Message message=messageRepo.findByIdAndSenderIdAndDeletedFalse(removeMessage.getMessageId(),currentUserId).orElseThrow(()->new ContentNotAvailableException(""));
@@ -31,11 +33,23 @@ public class MessageInteractionService {
         if(removeMessage.getRemoveType()== RemoveMessage.RemoveType.FOR_ME){
             message.setDeleted(true);
             messageRepo.save(message);
-            instanceRouter.routeToSingle(currentUserId,, InstanceRouter.SingleRoutingType.CHAT,chat.getId());
+            instanceRouter.deliverLocally(new MessageRemovedDelivery(List.of(currentUserId),message.getId()));
         }else{
+            chat.getMembers().stream().filter(m -> m.getLastReadMessageId() == null ||
+                    m.getLastReadMessageId().compareTo(message.getId()) < 0).forEach(chatMember ->chatMember.updateUnreadCount(-1));
+            if(chat.getLastMessageId().equals(message.getId())){
+                messageRepo.findFirstByChatIdAndIdLessThanOrderByIdDesc(chat.getId(),message.getId())
+                        .ifPresentOrElse(prev -> {
+                            chat.setLastMessageId(prev.getId());
+                            chat.setLastMessageAt(prev.getSentAt());
+                        }, () -> {
+                            chat.setLastMessageId(null);
+                            chat.setLastMessageAt(null);
+                        });
+            }
             ActivityMaps activityMaps=instanceRouter.buildActivityMaps(membersId,chat.getId());
             Map<String,List<String>> inChatMap=activityMaps.getInChatMap();
-            instanceRouter.route(inChatMap,ids ->
+            instanceRouter.routeBatch(inChatMap, ids ->
                     new MessageRemovedDelivery(ids, message.getId()));
         }
 
