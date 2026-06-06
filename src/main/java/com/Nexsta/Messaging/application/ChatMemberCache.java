@@ -31,7 +31,6 @@ public class ChatMemberCache {
     public Optional<List<String>> get(String chatId) {
         Set<String> members = redisTemplate.opsForSet().members(KEY + chatId);
         if (members == null || members.isEmpty()) return Optional.empty();
-        log.info("getting chat {} members from cache",chatId);
         return Optional.of(new ArrayList<>(members));
     }
 

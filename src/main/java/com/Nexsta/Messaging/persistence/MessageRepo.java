@@ -23,5 +23,5 @@ public interface MessageRepo extends MongoRepository<Message,String> {
     @Query("{ 'chatId': ?0,'_id': { $lt: ?2 }, $nor: [ { 'deleted': true, 'senderId': ?1 } ] }")
     List<Message> findVisibleMessagesBeforeId(String chatId, String viewerId, ObjectId beforeId, Pageable pageable);
 
-    Optional<Message> findFirstByChatIdAndIdLessThanOrderByIdDesc(String chatId, String messageId);
+    Optional<Message> findFirstByChatIdAndIdLessThanOrderByIdDesc(String chatId, ObjectId messageId);
 }

@@ -18,13 +18,13 @@ public interface ChatMemberRepo extends JpaRepository<ChatMember,UUID> {
 
     @Transactional
     @Modifying
-    @Query("UPDATE ChatMember cm SET cm.unReadCount=0,cm.lastReadMessageId=:lastReadMessageId WHERE cm.id.chatId=:chatId AND cm.id.userId = :userId ")
-    void resetCountAndUpdateLastReadMessage(@Param("chatId") String chatId,@Param("userId") String userId,@Param("lastReadMessageId") String lastReadMessageId);
+    @Query("UPDATE ChatMember cm SET cm.unReadCount=0,cm.lastReadMessageId=:lastReadMessageId WHERE cm.id.chatId=:chatId AND cm.id.userId IN :usersId ")
+    void resetCountAndUpdateLastReadMessage(@Param("chatId") String chatId,@Param("usersId") List<String> userId,@Param("lastReadMessageId") String lastReadMessageId);
 
     @Transactional
     @Modifying
-    @Query("UPDATE ChatMember cm SET cm.unReadCount=cm.unReadCount+1 WHERE cm.id.chatId=:chatId AND cm.id.userId!=:userId AND cm.id.userId NOT IN (:usersId) ")
-    void incrementUnReadCount(@Param("chatId") String chatId, @Param("userId") String userId, @Param("usersId") List<String> usersId);
+    @Query("UPDATE ChatMember cm SET cm.unReadCount=cm.unReadCount+1 WHERE cm.id.chatId=:chatId AND cm.id.userId NOT IN (:usersId) ")
+    void incrementUnReadCount(@Param("chatId") String chatId, @Param("usersId") List<String> usersId);
 
     @Query(value = "SELECT user_id As userId,chat_id As chatId FROM Chat_Member WHERE chat_id IN :chatsId AND user_id!=:userId AND un_read_count=0 ",nativeQuery = true)
     List<ChatMember> findMembersWhoSeenLastMessage(@Param("chatsId") List<String> chatsId,@Param("userId") String userId);
@@ -32,19 +32,7 @@ public interface ChatMemberRepo extends JpaRepository<ChatMember,UUID> {
     @Query(value = "SELECT chat_id As chatId ,un_read_count As unRead FROM Chat_Member WHERE user_id=:userId AND chat_id IN :chatsId ",nativeQuery = true)
     List<ChatUnread> findUnreadCountsForUser(@Param("userId") String userId,@Param("chatsId") List<String> chatsId);
 
-    @Transactional
-    @Modifying
-    @Query("""
-    UPDATE ChatMember cm SET cm.unReadCount = GREATEST(0, cm.unReadCount - 1)
-    WHERE cm.id.chatId = :chatId
-    AND cm.id.userId != :senderId
-    AND (cm.lastReadMessageId IS NULL OR cm.lastReadMessageId < :messageId)
-""")
-    void decrementUnreadCountIfAfterLastRead(
-            @Param("chatId") String chatId,
-            @Param("senderId") String senderId,
-            @Param("messageId") String messageId
-    );
+
 
     interface ChatUnread{
          String getChatId();

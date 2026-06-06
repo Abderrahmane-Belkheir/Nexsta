@@ -25,7 +25,6 @@ public class TypingEventRelay {
 
         List<String> memberIds=chatMemberCache.get(chatId).
                 orElseGet(()->{
-                    log.info("getting chat {} members from db",chatId);
                     List<String> membersId = chatRepo.findChatById(chatId,userId).
                             orElseThrow(()->new ContentNotAvailableException("Chat Not Found")).getMembers().
                             stream().map(chatMember -> chatMember.getId().getUserId()).toList();

@@ -117,8 +117,10 @@ public class ChatSendingService {
         List<String> inChatIds           = inChatMap.values().stream().flatMap(List::stream).toList();
         Map<String, List<String>> inInboxMap = activityMaps.getInInboxMap();
 
-        chatMemberRepo.incrementUnReadCount(chat.getId(), currentUserId, inChatIds);
-        chatMemberRepo.resetCountAndUpdateLastReadMessage(chat.getId(), currentUserId, message.getId());
+        List<String> p=new ArrayList<>(inChatIds);
+        p.add(currentUserId);
+        chatMemberRepo.incrementUnReadCount(chat.getId(),p);
+        chatMemberRepo.resetCountAndUpdateLastReadMessage(chat.getId(), p, message.getId());
 
 
         instanceRouter.routeBatch(inInboxMap, ids ->

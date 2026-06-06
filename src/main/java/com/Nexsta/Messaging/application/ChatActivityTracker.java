@@ -44,7 +44,6 @@ public class ChatActivityTracker {
     }
 
     public void userOpenedInbox(String userId) {
-        log.info("user {} opened chat {} ",userId,serverInstance.getInstanceId());
         redisTemplate.opsForValue().set(
                 INBOX_ACTIVE_KEY + userId,
                 serverInstance.getInstanceId(),

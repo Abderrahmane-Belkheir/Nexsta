@@ -76,6 +76,7 @@ public class InstanceRouter {
         if (delivery instanceof MessageDelivery m) realTimeDeliveringService.deliverMessage(m);
         else if (delivery instanceof InboxDelivery i) realTimeDeliveringService.deliverInboxEvent(i);
         else if (delivery instanceof TypingDelivery t) realTimeDeliveringService.deliverTypingEvent(t);
+        else if(delivery instanceof MessageRemovedDelivery m) realTimeDeliveringService.deliverMessageRemoved(m);
         else log.warn("Unknown delivery type: {}", delivery.getClass().getSimpleName());
     }
 

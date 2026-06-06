@@ -168,7 +168,7 @@ public class ChatViewService {
         if(cursor==null){
 
             Message latestMessage=messages.get(0);
-          chatMemberRepo.resetCountAndUpdateLastReadMessage(chatId,currentUserId,latestMessage.getId());
+          chatMemberRepo.resetCountAndUpdateLastReadMessage(chatId,List.of(currentUserId),latestMessage.getId());
           if(latestMessage.getSeenAt()==null&&!latestMessage.getSenderId().equals(currentUserId)&&chat.getType()== Chat.ChatType.DIRECT){
               latestMessage.setSeenAt(Instant.now());
               messageRepo.save(latestMessage);
