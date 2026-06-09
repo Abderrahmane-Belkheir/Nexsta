@@ -2,8 +2,8 @@ package com.Nexsta.SocialGraph.application;
 
 import com.Nexsta.Shared.VisibilityPolicy;
 import com.Nexsta.SocialGraph.Exceptions.FollowListNotVisibleException;
+import com.Nexsta.SocialGraph.api.dto.FollowQueryResponse;
 import com.Nexsta.User.application.AuthenticatedUserService;
-import com.Nexsta.Profile.api.dto.ProfileSummary;
 import com.Nexsta.Shared.CheckUserExistence;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,47 +18,47 @@ public class FollowQueryService {
     private final AuthenticatedUserService authenticatedUserService;
     private final VisibilityPolicy visibilityPolicy;
 
-    public List<ProfileSummary> listCurrentUserFollowers(int page) {
+    public FollowQueryResponse listCurrentUserFollowers(String cursor) {
         String currentUserId =authenticatedUserService.getCurrentUser();
-        return  followQueryHelper.listCurrentUserFollows(currentUserId, FollowQueryHelper.Position.FOLLOWERS,page);
+        return  followQueryHelper.listCurrentUserFollows(currentUserId, FollowQueryHelper.Position.FOLLOWERS,cursor);
     }
 
-    public List<ProfileSummary> listCurrentUserFollowings(int page) {
+    public FollowQueryResponse listCurrentUserFollowings(String cursor) {
        String currentUserId = authenticatedUserService.getCurrentUser();
-        return  followQueryHelper.listCurrentUserFollows(currentUserId, FollowQueryHelper.Position.FOLLOWINGS,page);
+        return  followQueryHelper.listCurrentUserFollows(currentUserId, FollowQueryHelper.Position.FOLLOWINGS,cursor);
     }
 
-    public List<ProfileSummary> listCurrentUserFollowRequests(int page) {
+    public FollowQueryResponse listCurrentUserFollowRequests(String cursor) {
         String currentUserId= authenticatedUserService.getCurrentUser();
         return followQueryHelper.
-                listCurrentUserPendingFollows(currentUserId,FollowQueryHelper.Position.FOLLOWERS,page);
+                listCurrentUserPendingFollows(currentUserId,FollowQueryHelper.Position.FOLLOWERS,cursor);
     }
 
-    public List<ProfileSummary> listCurrentUserFollowingRequests(int page) {
+    public FollowQueryResponse listCurrentUserFollowingRequests(String cursor) {
         String currentUserId= authenticatedUserService.getCurrentUser();
         return followQueryHelper.
-                listCurrentUserPendingFollows(currentUserId, FollowQueryHelper.Position.FOLLOWINGS,page);
+                listCurrentUserPendingFollows(currentUserId, FollowQueryHelper.Position.FOLLOWINGS,cursor);
 
     }
 
     @CheckUserExistence
-    public List<ProfileSummary> listUserFollowers(String targetUserId, int page){
+    public FollowQueryResponse listUserFollowers(String targetUserId, String cursor){
         String currentUserId= authenticatedUserService.getCurrentUser();
        boolean isAllowed= visibilityPolicy.isAllowed(currentUserId, targetUserId);
        if(!isAllowed){
            throw new FollowListNotVisibleException("followers list for user is not visible.");
        }
-        return followQueryHelper.listUserFollows(currentUserId, targetUserId, FollowQueryHelper.Position.FOLLOWERS,page);
+        return followQueryHelper.listUserFollows(currentUserId, targetUserId, FollowQueryHelper.Position.FOLLOWERS,cursor);
     }
 
     @CheckUserExistence
-    public List<ProfileSummary> listUserFollowing(String targetUserId, int page){
+    public FollowQueryResponse listUserFollowing(String targetUserId, String cursor){
         String currentUserId= authenticatedUserService.getCurrentUser();
         boolean isAllowed= visibilityPolicy.isAllowed(currentUserId,targetUserId);
         if(!isAllowed){
             throw new FollowListNotVisibleException("followings list for user is not visible.");
         }
-        return followQueryHelper.listUserFollows(currentUserId, targetUserId, FollowQueryHelper.Position.FOLLOWINGS,page);
+        return followQueryHelper.listUserFollows(currentUserId, targetUserId, FollowQueryHelper.Position.FOLLOWINGS,cursor);
 
     }
 

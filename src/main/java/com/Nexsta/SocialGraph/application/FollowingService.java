@@ -3,15 +3,13 @@ package com.Nexsta.SocialGraph.application;
 import com.Nexsta.SocialGraph.Exceptions.BadFollowRequestException;
 import com.Nexsta.SocialGraph.Exceptions.NoRelationShipException;
 import com.Nexsta.SocialGraph.api.dto.FollowToggleResponse;
-import com.Nexsta.SocialGraph.application.cache.FollowCacheUpdater;
+import com.Nexsta.SocialGraph.application.cache.FollowCache;
 import com.Nexsta.User.application.AuthenticatedUserService;
 import com.Nexsta.Notification.domain.events.FollowNotification;
 import com.Nexsta.Profile.persistence.ProfileRepo;
 import com.Nexsta.Shared.CheckUserExistence;
 import com.Nexsta.SocialGraph.domain.Follow;
 import com.Nexsta.SocialGraph.domain.RelationshipStatus;
-import com.Nexsta.SocialGraph.domain.events.FollowAdded;
-import com.Nexsta.SocialGraph.domain.events.FollowRemoved;
 import com.Nexsta.SocialGraph.persistence.BlocksRepo;
 import com.Nexsta.SocialGraph.persistence.FollowRepo;
 import jakarta.transaction.Transactional;
@@ -34,7 +32,7 @@ public class FollowingService {
     private final BlocksRepo blocksRepo;
     private final AuthenticatedUserService authenticatedUserService;
     private final ApplicationEventPublisher eventPublisher;
-    private final FollowCacheUpdater followCacheUpdater;
+    private final FollowCache followCacheUpdater;
 
     @CheckUserExistence
     public FollowToggleResponse toggleFollow(String targetUserId){
@@ -75,10 +73,9 @@ public class FollowingService {
             follow.setFollowDate(Instant.now());
             log.info("publishing follow event for "+targetUserId);
             eventPublisher.publishEvent(notification);
-            eventPublisher.publishEvent(new FollowAdded(follow));
             status=RelationshipStatus.FOLLOWING;
-            followCacheUpdater.UpdateCount(FollowQueryHelper.Position.FOLLOWINGS, currentUserId, FollowCacheUpdater.UpdateType.INCREMENT);
-            followCacheUpdater.UpdateCount(FollowQueryHelper.Position.FOLLOWERS, targetUserId, FollowCacheUpdater.UpdateType.INCREMENT);
+            followCacheUpdater.UpdateCount(FollowQueryHelper.Position.FOLLOWINGS, currentUserId, FollowCache.UpdateType.INCREMENT);
+            followCacheUpdater.UpdateCount(FollowQueryHelper.Position.FOLLOWERS, targetUserId, FollowCache.UpdateType.INCREMENT);
         } else {
             follow.setStatus(Follow.Status.PENDING);
             log.info("publishing follow request event for "+targetUserId);
@@ -95,9 +92,8 @@ public class FollowingService {
     public void unFollow(Follow follow) {
         followRepo.delete(follow);
         if(follow.getStatus()==Follow.Status.ACCEPTED){
-            eventPublisher.publishEvent(new FollowRemoved(follow));
-            followCacheUpdater.UpdateCount(FollowQueryHelper.Position.FOLLOWINGS,follow.getFollower_id(), FollowCacheUpdater.UpdateType.DECREMENT);
-            followCacheUpdater.UpdateCount(FollowQueryHelper.Position.FOLLOWERS, follow.getFollowing_id(), FollowCacheUpdater.UpdateType.DECREMENT);
+            followCacheUpdater.UpdateCount(FollowQueryHelper.Position.FOLLOWINGS,follow.getFollower_id(), FollowCache.UpdateType.DECREMENT);
+            followCacheUpdater.UpdateCount(FollowQueryHelper.Position.FOLLOWERS, follow.getFollowing_id(), FollowCache.UpdateType.DECREMENT);
         }
     }
 
@@ -108,9 +104,8 @@ public class FollowingService {
                 orElseThrow(()->new NoRelationShipException("No relationship with user found"));
         followRepo.delete(follow);
         if(follow.getStatus()== Follow.Status.ACCEPTED){
-            eventPublisher.publishEvent(new FollowRemoved(follow));
-            followCacheUpdater.UpdateCount(FollowQueryHelper.Position.FOLLOWERS,currentUserId, FollowCacheUpdater.UpdateType.DECREMENT);
-            followCacheUpdater.UpdateCount(FollowQueryHelper.Position.FOLLOWINGS, targetUserId, FollowCacheUpdater.UpdateType.DECREMENT);
+            followCacheUpdater.UpdateCount(FollowQueryHelper.Position.FOLLOWERS,currentUserId, FollowCache.UpdateType.DECREMENT);
+            followCacheUpdater.UpdateCount(FollowQueryHelper.Position.FOLLOWINGS, targetUserId, FollowCache.UpdateType.DECREMENT);
         }else{
             FollowNotification notification=new FollowNotification(currentUserId,targetUserId,
                     FollowNotification.notificationType.FOLLOWING_REJECTED);

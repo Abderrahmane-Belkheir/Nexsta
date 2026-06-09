@@ -9,7 +9,7 @@ import com.Nexsta.SocialGraph.Exceptions.NoRelationShipException;
 import com.Nexsta.SocialGraph.application.FollowQueryHelper;
 import com.Nexsta.SocialGraph.application.FollowerService;
 import com.Nexsta.SocialGraph.application.FollowingService;
-import com.Nexsta.SocialGraph.application.cache.FollowCacheUpdater;
+import com.Nexsta.SocialGraph.application.cache.FollowCache;
 import com.Nexsta.SocialGraph.domain.Follow;
 import com.Nexsta.SocialGraph.domain.RelationshipStatus;
 import com.Nexsta.SocialGraph.domain.events.FollowAdded;
@@ -55,7 +55,7 @@ public class FollowServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
     @Mock
-    private FollowCacheUpdater followCacheUpdater;
+    private FollowCache followCacheUpdater;
     @InjectMocks
     private FollowerService followRequestService;
     @InjectMocks
@@ -133,7 +133,7 @@ public class FollowServiceTest {
                assertEquals(RelationshipStatus.FOLLOWING, profileDetails.getRelationship());
                verify(eventPublisher).publishEvent(any(FollowAdded.class));
                ArgumentCaptor<FollowQueryHelper.Position> captor3=ArgumentCaptor.forClass(FollowQueryHelper.Position.class);
-                ArgumentCaptor<FollowCacheUpdater.UpdateType> captor4=ArgumentCaptor.forClass(FollowCacheUpdater.UpdateType.class);
+                ArgumentCaptor<FollowCache.UpdateType> captor4=ArgumentCaptor.forClass(FollowCache.UpdateType.class);
                 ArgumentCaptor<String> captor5=ArgumentCaptor.forClass(String.class);
                 verify(followCacheUpdater).UpdateCount(captor3.capture(),captor5.capture(),captor4.capture());
                 //assertEquals();
